@@ -494,6 +494,12 @@ body{background:var(--bg);font-family:Georgia,serif;color:var(--tx0);overscroll-
 .fav-btn.on{color:var(--ac);text-shadow:0 0 10px var(--ac-40)}
 .bplus{width:50px;height:50px;min-width:50px;border-radius:50%;background:linear-gradient(135deg,var(--ac),var(--ac-deep));border:none;color:var(--ac-fg);font-size:26px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-gold);flex-shrink:0;-webkit-user-select:none;line-height:1;transition:opacity .15s,transform .1s;touch-action:manipulation}
 .bplus:active{opacity:.7;transform:scale(0.95)}
+.bplus.tap-flash{animation:tapPulse 0.18s ease-out;}
+@keyframes tapPulse{
+  0%{transform:scale(1);box-shadow:var(--shadow-gold);}
+  40%{transform:scale(0.93);box-shadow:0 0 0 6px var(--ac-27);}
+  100%{transform:scale(1);box-shadow:var(--shadow-gold);}
+}
 .bminus{width:44px;height:44px;min-width:44px;border-radius:50%;background:var(--bg4);border:2px solid var(--ac-40);color:var(--ac);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-user-select:none;line-height:1;touch-action:manipulation;transition:background .15s}
 .bminus:active{background:var(--ac-20)}
 .dinfo{flex:1;min-width:0}
@@ -4803,7 +4809,15 @@ if(dt>=S.dailyGoal){const justCrossed=(dt-d.price)<S.dailyGoal;if(justCrossed){s
   const _svcLabel=_svc>0?' (+'+_svc+'% '+( S.lang==='en'?'service charge':'Service Charge')+')'  :'';
   showToastUndo(esc(d.name)+' '+(S.lang==='en'?'added':'hinzugefügt')+_svcLabel,()=>{const idx2=S.log.findIndex(e2=>e2.id===entry.id);if(idx2!==-1)S.log.splice(idx2,1);S.counts[id]=(S.counts[id]||1)-1;if(!S.counts[id])delete S.counts[id];saveState();renderDrinks(false);if(S.activeTab===1)renderLog();updateLimitBanner();});
   // V46: Haptisches Feedback 15ms (Taptic Engine – wie native App)
+  // V46: Haptisches Feedback
+  // navigator.vibrate() funktioniert auf Android; auf iOS nicht unterstützt.
+  // Für iOS: CSS tap-pulse Animation + AudioContext-Trick
   try{if(typeof navigator.vibrate==='function')navigator.vibrate(15);}catch(_){}
+  if(plusBtn){plusBtn.classList.add('tap-flash');setTimeout(()=>plusBtn.classList.remove('tap-flash'),200);}
+  try{
+    const _AC=window.AudioContext||window.webkitAudioContext;
+    if(_AC){const _ac=new _AC();const _b=_ac.createBuffer(1,1,22050);const _s=_ac.createBufferSource();_s.buffer=_b;_s.connect(_ac.destination);_s.start(0);setTimeout(()=>_ac.close(),100);}
+  }catch(_){}
 }
 
 function tapMinus(id){
@@ -9803,6 +9817,14 @@ async function initApp(){
 }
 
 function _initUI(){
+  // V46: Onboarding beim ersten Start (nach loadStateFromDB)
+  setTimeout(function(){
+    try{
+      if(!localStorage.getItem('a4_onboarding_done') && !window._idbOnboardingDone){
+        showOnboarding();
+      }
+    }catch(e){}
+  },300);
   // applyTitle/applyFontSize/applyLang/applyTheme – bereits in loadStateFromDB aufgerufen
   applyHeaderCollapse();
   initHeaderSwipe();
@@ -9919,10 +9941,7 @@ document.addEventListener('visibilitychange',function(){if(document.visibilitySt
 // V34 V6: PWA-Installations-Hinweis prüfen (nach kurzem Delay)
 setTimeout(()=>checkPwaBanner(),3500);
 // Onboarding: beim ersten App-Start anzeigen (600ms Delay – DOM muss vollständig bereit sein)
-setTimeout(function(){
-  // V46: Onboarding-Check: localStorage (file://) ODER IndexedDB (PWA)
-  try{if(!localStorage.getItem('a4_onboarding_done')&&!window._idbOnboardingDone)showOnboarding();}catch(e){}
-},600);
+// V46: Onboarding-Check in _initUI()
 
 // ══════════════════════════════════════════════════════════════════
 // EINRICHTUNGSASSISTENT v2 – 6-Schritt-Banner
