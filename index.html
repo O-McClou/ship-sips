@@ -5205,7 +5205,9 @@ function initHeaderSwipe(){
   },{passive:true});
 }
 
-function askReset(){showCfm('⚠️ '+T('confirm.reset.title'),'🗑 '+T('confirm.reset.msg')+' ⚠️ Diese Aktion löscht ALLE Einträge und ist nicht rückgängig zu machen!',T('confirm.reset.btn'),()=>{exportBackupSilent();setTimeout(()=>{S.log=[];S.counts={};S.stableOrder=[];S.expandedDays=new Set();S.expandedDaysInited=false;S.expandedMonths=new Set();S.expandedMonthsInited=false;S.limitShownToday=null;clearTimeout(S.sortTimer);saveState();renderDrinks(true);updateHeader();updateLimitBanner();showToast('✅ Backup gesichert – Daten zurückgesetzt');},400);});}
+function askReset(){showCfm('⚠️ '+T('confirm.reset.title'),'🗑 '+T('confirm.reset.msg')+' ⚠️ Diese Aktion löscht ALLE Einträge und ist nicht rückgängig zu machen!',T('confirm.reset.btn'),()=>{exportBackupSilent();setTimeout(()=>{S.log=[];S.counts={};S.stableOrder=[];S.expandedDays=new Set();S.expandedDaysInited=false;S.expandedMonths=new Set();S.expandedMonthsInited=false;S.limitShownToday=null;clearTimeout(S.sortTimer);// V46: auch IDB-Logs leeren
+      try{db.logs.clear();db.archive.clear();}catch(_){}
+      saveState();renderDrinks(true);updateHeader();updateLimitBanner();showToast('✅ Backup gesichert – Daten zurückgesetzt');},400);});}
 
 // ── OPTION A: Vollständiger Reset ──────────────────────────────────────────
 function openResetAll(){
@@ -5254,7 +5256,17 @@ function doResetAll(){
   clearInterval(_resetCountdownTimer);
   document.getElementById('resetAllOv2').className='ov';
   exportBackupSilent();
-  setTimeout(()=>{localStorage.clear();location.reload();},600);
+  // V46 Fix: auch IndexedDB vollständig leeren (localStorage allein reicht nicht mehr)
+  setTimeout(async ()=>{
+    try{
+      await db.logs.clear();
+      await db.config.clear();
+      await db.archive.clear();
+      // Migrated-Flag entfernen damit beim Neustart kein alter Stand aus localStorage übernommen wird
+    }catch(e){console.warn('[doResetAll] IDB clear error:',e);}
+    localStorage.clear();
+    location.reload();
+  },600);
 }
 
 // ── OPTION B: Teilweiser Reset ─────────────────────────────────────────────
@@ -5315,7 +5327,10 @@ function doResetPartial(ids){
   // Backup if log is included
   if(has('pr_log'))exportBackupSilent();
   setTimeout(()=>{
-    if(has('pr_log')){S.log=[];S.counts={};S.expandedDays=new Set();S.expandedDaysInited=false;S.expandedMonths=new Set();S.expandedMonthsInited=false;S.limitShownToday=null;clearTimeout(S.sortTimer);}
+    if(has('pr_log')){
+      // V46: auch IDB-Logs leeren
+      try{db.logs.clear().catch(()=>{});db.archive.clear().catch(()=>{});}catch(_){}
+      S.log=[];S.counts={};S.expandedDays=new Set();S.expandedDaysInited=false;S.expandedMonths=new Set();S.expandedMonthsInited=false;S.limitShownToday=null;clearTimeout(S.sortTimer);}
     if(has('pr_drinks')){S.drinks=[];S.ccm={};S.expandedCats=new Set();S.stableOrder=[];}
     if(has('pr_route')){S.voyageRoute=[];}
     if(has('pr_users')){
@@ -10488,12 +10503,13 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
     navigator.serviceWorker.register('./sw.js',{scope:'./'})
       .then(reg=>{
         // Auf Update-Meldung des SW reagieren
+        // V46 Fix: SW_UPDATED = neuer SW hat übernommen (echtes Update, kein False-Positive)
         navigator.serviceWorker.addEventListener('message', evt=>{
-          if(evt.data&&evt.data.type==='SW_UPDATE_AVAILABLE'){
+          if(evt.data&&evt.data.type==='SW_UPDATED'){
             if(typeof showToast==='function')
-              showToast('🔄 '+(typeof S!=='undefined'&&S.lang==='en'
-                ?'App update available – will apply on next start.'
-                :'App-Update verfügbar – wird beim nächsten Start aktiv.'),'info',5000);
+              showToast('✅ '+(typeof S!=='undefined'&&S.lang==='en'
+                ?'App updated successfully.'
+                :'App erfolgreich aktualisiert.'),'info',4000);
           }
         });
       })
