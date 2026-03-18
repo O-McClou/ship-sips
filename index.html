@@ -419,6 +419,8 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 .hdr{background:linear-gradient(180deg,var(--bg1) 0%,var(--bg) 100%);border-bottom:1px solid var(--ac-20);position:relative;z-index:100;box-shadow:0 4px 24px rgba(0,0,0,0.5);flex-shrink:0}
 /* Panes: füllen den gesamten verbleibenden Raum und scrollen intern */
 #p0,#p1,#p2,#p3,#p4{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:var(--bg);padding-bottom:max(28px,env(safe-area-inset-bottom,0px))}
+/* p0: flex-Spalte, damit der Spacer am Ende die volle Höhe ausfüllt */
+#p0{display:flex;flex-direction:column}
 .hdr-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:0}
 /* Quick backup button as tab-style next to Help */
 .hdr-quickbkp{background:transparent;border:none;font-size:18px;cursor:pointer;padding:2px 4px;opacity:.7;transition:opacity .15s;line-height:1;-webkit-user-select:none;touch-action:manipulation;flex-shrink:0;}
@@ -583,8 +585,8 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 .srow{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;color:var(--tx3)}
 .srow span:last-child{color:var(--ac)}
 .stot{border-top:1px solid var(--ac-20);margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;font-weight:bold;font-size:14px}
-.logpane{padding:14px 14px max(28px,calc(env(safe-area-inset-bottom,0px) + 14px)) 14px}
-.statpane{padding:14px 14px max(28px,calc(env(safe-area-inset-bottom,0px) + 14px)) 14px}
+.logpane{padding:14px 14px max(28px,calc(env(safe-area-inset-bottom,0px) + 14px)) 14px;min-height:100%;box-sizing:border-box}
+.statpane{padding:14px 14px max(28px,calc(env(safe-area-inset-bottom,0px) + 14px)) 14px;min-height:100%;box-sizing:border-box}
 .loghdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:6px;flex-wrap:wrap}
 .logtitle{font-size:16px;color:var(--ac);font-weight:bold;letter-spacing:0.5px}
 .log-hdr-btns{display:flex;gap:6px}
@@ -703,7 +705,7 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 .stat-empty{text-align:center;color:var(--tx2);padding:60px 0;font-size:13px}
 .stat-period-lbl{font-size:10px;color:var(--tx1);text-align:center;margin-bottom:10px;font-style:italic}
 .cat-avg{font-size:10px;color:#4a5a70;text-align:right;padding:0 0 3px}
-.vwpane{padding:14px 14px max(28px,calc(env(safe-area-inset-bottom,0px) + 14px)) 14px}
+.vwpane{padding:14px 14px max(28px,calc(env(safe-area-inset-bottom,0px) + 14px)) 14px;min-height:100%;box-sizing:border-box}
 .vw-section{background:var(--bg3);border:1px solid var(--ac-13);border-radius:10px;padding:14px;margin-bottom:12px}
 .vw-sec-title{font-size:11px;color:var(--ac);font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
 .vw-btn{display:block;width:100%;padding:10px;background:var(--bg2);color:var(--tx0);border:1px solid var(--ac-27);border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:13px;text-align:left;margin-bottom:8px}
@@ -781,7 +783,7 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 .adm-danger{background:#1a0808;border-color:#c0392b88;border-left:4px solid #e05555;border-radius:12px;padding:14px;margin-bottom:10px}
 .adm-danger-title{font-size:11px;color:#e05555;font-weight:bold;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px}
 
-.hlppane{padding:14px 14px max(28px,calc(env(safe-area-inset-bottom,0px) + 14px)) 14px}
+.hlppane{padding:14px 14px max(28px,calc(env(safe-area-inset-bottom,0px) + 14px)) 14px;min-height:100%;box-sizing:border-box}
 .hlp-hero{text-align:center;padding:28px 16px 24px;background:linear-gradient(135deg,var(--bg2),var(--bg1));border-radius:16px;border:1px solid var(--ac-27);margin-bottom:16px;box-shadow:var(--shadow-card)}{font-size:38px;margin-bottom:6px}
 .hlp-hero-title{font-size:18px;font-weight:bold;color:var(--ac);letter-spacing:1.5px}
 .hlp-hero-sub{font-size:10px;color:var(--tx1);letter-spacing:3px;text-transform:uppercase;margin-top:5px}
@@ -1393,7 +1395,7 @@ details.hlp-acc summary:active{opacity:.75}
   <div id="catGroupsView" style="display:none"></div>
   <div class="dlist" id="dlist"></div>
   <div id="sumbox"></div>
-  <div style="height:20px"></div>
+  <div style="flex:1;min-height:14px"></div>
 </div>
 
 <!-- PANE 1 -->
@@ -3241,7 +3243,7 @@ let S={
   statPeriod:'all',statCustomFrom:'',statCustomTo:'',statUserFilter:'all',logSearchQ:'',logCatFilter:'',logDateFrom:'',logDateTo:'',logPriceMin:null,logPriceMax:null,
   statDaySort:{},statDayShow:{}, // FIX FEHLER 6: Sortierstatus persistiert
   statOpen:{overview:true,topdrinks:true,byday:true}, // Nr.5: einklappbare Karten
-  limitShownToday:null,currency:'€',btnLayout:'plus-left',favCollapsed:false,
+  limitShownToday:null,currency:'€',btnLayout:'plus-left',favCollapsed:false,top10Collapsed:false,
   stableTop10:[],top10Timer:null,
   theme:'original',themeOpen:false,conceptTheme:'kapitaensbuch', // FIX V40 B9: konzept separat tracken
   conceptFavorites:['kapitaensbuch','atelier','sonnendeck'], // Favoriten für Schnellwechsel (max. 3)
@@ -5035,6 +5037,7 @@ document.getElementById('cscroll').addEventListener('click',function(e){const b=
 let _favDebounce={};
 function toggleFav(id){const now=Date.now();if(_favDebounce[id]&&now-_favDebounce[id]<400)return;_favDebounce[id]=now;if(S.favorites.has(id)){S.favorites.delete(id);S.favOrder=S.favOrder.filter(x=>x!==id);}else{S.favorites.add(id);if(!S.favOrder.includes(id))S.favOrder.push(id);}saveState();renderDrinks(false);}
 function toggleFavSection(){S.favCollapsed=!S.favCollapsed;renderDrinks(false);}
+function toggleTop10Section(){S.top10Collapsed=!S.top10Collapsed;renderDrinks(false);}
 
 function toggleIncluded(id){
   const d=S.drinks.find(x=>x.id===id);
@@ -5075,7 +5078,7 @@ function renderDrinksDebounced(full){
 }
 function renderDrinks(forceSort){
   // 12.2: Skip re-render if nothing visually changed
-  const hash=JSON.stringify([S.drinks.length,S.catFilter,S.fz,S.lang,JSON.stringify([...S.favorites]),S.btnLayout,JSON.stringify(S.counts),S.favCollapsed,S.favSortMode,JSON.stringify(S.favOrder),JSON.stringify([...S.drinkExpandedCats])]);
+  const hash=JSON.stringify([S.drinks.length,S.catFilter,S.fz,S.lang,JSON.stringify([...S.favorites]),S.btnLayout,JSON.stringify(S.counts),S.favCollapsed,S.top10Collapsed,S.favSortMode,JSON.stringify(S.favOrder),JSON.stringify([...S.drinkExpandedCats])]);
   if(!forceSort&&hash===_lastDrinksHash){return;}
   _lastDrinksHash=hash;
   // Scroll-Position aus dem echten Scroll-Container (#p0) retten
@@ -5109,7 +5112,7 @@ function renderDrinks(forceSort){
     const arr=S.favCollapsed?'▶':'▼';
     const sortLbl=S.lang==='en'?'Sort':'Sortieren';
     const sortActive=S.favSortMode;
-    favTitleEl.innerHTML=`<span style="cursor:pointer;display:flex;align-items:center;gap:5px;flex:1" onclick="toggleFavSection()"><span>${arr}</span><span>${T('fav.title')}</span></span><button class="fav-sort-btn${sortActive?' active':''}" onclick="event.stopPropagation();toggleFavSortMode()">⇅ ${sortLbl}</button>`;
+    favTitleEl.innerHTML=`<span style="cursor:pointer;display:flex;align-items:center;gap:5px;flex:1" data-fav-toggle="1"><span>${arr}</span><span>${T('fav.title')}</span></span><button class="fav-sort-btn${sortActive?' active':''}" onclick="event.stopPropagation();toggleFavSortMode()">⇅ ${sortLbl}</button>`;
     favListEl.style.display=S.favCollapsed?'none':'';
     if(!S.favCollapsed){
       if(S.favSortMode){
@@ -5130,7 +5133,14 @@ function renderDrinks(forceSort){
     S.stableTop10.forEach(id=>{const d=S.drinks.find(x=>x.id===id);if(d&&(S.counts[d.id]||0)>0)top10Drinks.push(d);});
     currentTop10Ids.forEach(id=>{if(!S.stableTop10.includes(id)){const d=S.drinks.find(x=>x.id===id);if(d)top10Drinks.push(d);}});
     const wc=top10Drinks.slice(0,10);
-    if(wc.length){top10.style.display='';document.getElementById('top10list').innerHTML=wc.map((d,i)=>drinkRow(d,i,true)).join('');}
+    if(wc.length){
+      top10.style.display='';
+      const arr10=S.top10Collapsed?'▶':'▼';
+      document.getElementById('top10title').innerHTML=`<span data-top10-toggle="1" style="cursor:pointer;display:flex;align-items:center;gap:5px;flex:1"><span>${arr10}</span><span>${T('top10.title')}</span></span>`;
+      const top10List=document.getElementById('top10list');
+      top10List.style.display=S.top10Collapsed?'none':'';
+      if(!S.top10Collapsed)top10List.innerHTML=wc.map((d,i)=>drinkRow(d,i,true)).join('');
+    }
     else{top10.style.display='none';S.stableTop10=[];}
     const cats=allCats();let html='';
     cats.forEach((cat,ci)=>{const ds=S.drinks.filter(d=>d.cat===cat),isOpen=S.drinkExpandedCats.has(cat);const ct=ds.reduce((s,d)=>s+(S.counts[d.id]||0),0),col=catColor(cat);html+=`<div class="drink-cat-group"><div class="drink-cat-hdr" data-dc="${ci}" style="border-left-color:${col}"><span class="drink-cat-hdr-name"><span class="cdot" style="background:${col}"></span>${esc(cat)}</span><span class="drink-cat-hdr-meta">${ct>0?ct+'× · ':''}${ds.length}</span><span class="drink-cat-hdr-arr${isOpen?' open':''}">▶</span></div><div class="drink-cat-body${isOpen?' open':''}">${ds.map(d=>drinkRow(d,-1,false)).join('')}</div></div>`;});
@@ -5143,9 +5153,10 @@ function renderDrinks(forceSort){
 
 function handleDrinkClick(e){
   const t=e.target;
-  const favTitleEl=document.getElementById('favTitle');
-  // Only toggle section when clicking the title span, not the sort button
-  if(favTitleEl&&(t===favTitleEl||favTitleEl.contains(t))&&!t.closest('.fav-sort-btn')){e.preventDefault();toggleFavSection();return;}
+  // Favoriten-Titel: nur über data-Attribut, kein onclick → kein Doppel-Auslösen
+  if(t.closest('[data-fav-toggle]')&&!t.closest('.fav-sort-btn')){e.preventDefault();toggleFavSection();return;}
+  // Top10-Titel
+  if(t.closest('[data-top10-toggle]')){e.preventDefault();toggleTop10Section();return;}
   const fav=t.closest('[data-fav]'),plus=t.closest('[data-plus]'),minus=t.closest('[data-minus]'),hdr=t.closest('[data-dc]');
   if(fav&&!plus&&!minus){toggleFav(fav.dataset.fav);return;}
   if(hdr&&!fav&&!plus&&!minus){e.preventDefault();const ci=parseInt(hdr.dataset.dc),cat=allCats()[ci];if(cat!==undefined){S.drinkExpandedCats.has(cat)?S.drinkExpandedCats.delete(cat):S.drinkExpandedCats.add(cat);renderDrinks(false);}return;}
@@ -5153,19 +5164,20 @@ function handleDrinkClick(e){
   if(minus)tapMinus(minus.dataset.minus);
 }
 // iOS braucht sowohl click als auch touchend für zuverlässige Interaktion
-['catGroupsView','dlist','top10list','favSection'].forEach(id=>{
+['catGroupsView','dlist','top10list','favSection','top10section'].forEach(id=>{
   const el=document.getElementById(id);
   el.addEventListener('click',handleDrinkClick);
   let _tY=0,_tX=0;
   el.addEventListener('touchstart',function(e){_tY=e.touches[0].clientY;_tX=e.touches[0].clientX;},{passive:true});
   el.addEventListener('touchend',function(e){
     const t=e.target;
-    // Ignore if finger moved more than 10px (was scrolling)
     const tc=e.changedTouches[0];
     if(tc&&(Math.abs(tc.clientY-_tY)>10||Math.abs(tc.clientX-_tX)>10))return;
+    // Favoriten-Toggle
+    if(t.closest('[data-fav-toggle]')&&!t.closest('.fav-sort-btn')){e.preventDefault();toggleFavSection();return;}
+    // Top10-Toggle
+    if(t.closest('[data-top10-toggle]')){e.preventDefault();toggleTop10Section();return;}
     const hdr=t.closest('[data-dc]');
-    const favTitleEl=document.getElementById('favTitle');
-    if(favTitleEl&&(t===favTitleEl||favTitleEl.contains(t))&&!t.closest('.fav-sort-btn')){e.preventDefault();toggleFavSection();return;}
     if(hdr&&!t.closest('[data-fav]')&&!t.closest('[data-plus]')&&!t.closest('[data-minus]')){
       e.preventDefault();
       const ci=parseInt(hdr.dataset.dc),cat=allCats()[ci];
