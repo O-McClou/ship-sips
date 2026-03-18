@@ -1,13 +1,18 @@
 /* ═══════════════════════════════════════════════════════════════════
-   sw.js – Service Worker für Getränke-Tracker PWA  (V46 fixed)
+   sw.js – Service Worker für Getränke-Tracker PWA  (V47)
    ─────────────────────────────────────────────────────────────────
-   • Erste Installation: alle Assets cachen
-   • Cache-First: sofortiger Start aus Cache
-   • Update-Erkennung: NUR beim activate-Event (neuer SW übernimmt)
-     → kein False-Positive mehr bei jedem Fetch
+   Update-Strategie (professionell / nutzergesteuert):
+   ① install  → Assets cachen, KEIN skipWaiting()
+                → neuer SW bleibt im "waiting"-Zustand
+   ② App-Seite erkennt registration.waiting
+                → zeigt persistentes Gold-Banner
+   ③ Nutzer klickt "Jetzt laden"
+                → sendet SKIP_WAITING → SW übernimmt
+   ④ controllerchange-Event → location.reload()
+                → App startet sauber aus neuem Cache
    ═══════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'tracker-v46';
+const CACHE_NAME = 'tracker-v47';
 const ASSETS = [
   './index.html',
   './manifest.json',
@@ -16,37 +21,25 @@ const ASSETS = [
   './icon-512.png'
 ];
 
-/* ── Install: alle Assets cachen ───────────────────────────────── */
+/* ── Install: alle Assets cachen, dann WARTEN ──────────────────── */
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(ASSETS))
-      .then(() => self.skipWaiting())
-      .catch(err => {
-        console.warn('[SW] Cache-Fehler beim Install:', err);
-        return self.skipWaiting();
-      })
+      /* ↓ KEIN self.skipWaiting() hier!
+           Der neue SW wartet, bis der Nutzer das Banner bestätigt.  */
+      .catch(err => console.warn('[SW] Cache-Fehler beim Install:', err))
   );
 });
 
-/* ── Activate: alte Caches löschen + Clients über Update informieren ─ */
+/* ── Activate: alte Caches löschen, Clients übernehmen ─────────── */
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys => {
-      const oldCaches = keys.filter(k => k !== CACHE_NAME);
-      // Wenn alte Caches vorhanden: das ist ein echtes Update (nicht erste Installation)
-      const isUpdate = oldCaches.length > 0;
-      return Promise.all(oldCaches.map(k => caches.delete(k)))
-        .then(() => self.clients.claim())
-        .then(() => {
-          // Nur bei echtem Update benachrichtigen, nicht bei erster Installation
-          if (isUpdate) {
-            return self.clients.matchAll({ includeUncontrolled: true }).then(clients => {
-              clients.forEach(client => client.postMessage({ type: 'SW_UPDATED' }));
-            });
-          }
-        });
-    })
+    caches.keys()
+      .then(keys => Promise.all(
+        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+      ))
+      .then(() => self.clients.claim())
   );
 });
 
