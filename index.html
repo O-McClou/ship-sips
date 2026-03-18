@@ -409,7 +409,7 @@ body.fz-xlarge #hdrUserDotMini{font-size:15px!important}
 html.theme-transitioning *{transition:background-color 0.28s ease,border-color 0.28s ease,color 0.18s ease,box-shadow 0.28s ease !important;}
 html,body{height:100%;overflow:hidden;position:fixed;width:100%}
 body{background:var(--bg);font-family:Georgia,serif;color:var(--tx0);overscroll-behavior:contain;-webkit-text-size-adjust:100%;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-#app{max-width:480px;margin:0 auto;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:20px;box-sizing:border-box}
+#app{max-width:480px;margin:0 auto;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:20px;box-sizing:border-box;background:var(--bg)}
 .hdr{background:linear-gradient(180deg,var(--bg1) 0%,var(--bg) 100%);border-bottom:1px solid var(--ac-20);position:sticky;top:0;z-index:100;box-shadow:0 4px 24px rgba(0,0,0,0.5)}
 .hdr-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:0}
 /* Quick backup button as tab-style next to Help */
@@ -696,7 +696,7 @@ body{background:var(--bg);font-family:Georgia,serif;color:var(--tx0);overscroll-
 .stat-empty{text-align:center;color:var(--tx2);padding:60px 0;font-size:13px}
 .stat-period-lbl{font-size:10px;color:var(--tx1);text-align:center;margin-bottom:10px;font-style:italic}
 .cat-avg{font-size:10px;color:#4a5a70;text-align:right;padding:0 0 3px}
-.vwpane{padding:14px}
+.vwpane{padding:14px 14px calc(24px + env(safe-area-inset-bottom,0px)) 14px}
 .vw-section{background:var(--bg3);border:1px solid var(--ac-13);border-radius:10px;padding:14px;margin-bottom:12px}
 .vw-sec-title{font-size:11px;color:var(--ac);font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
 .vw-btn{display:block;width:100%;padding:10px;background:var(--bg2);color:var(--tx0);border:1px solid var(--ac-27);border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:13px;text-align:left;margin-bottom:8px}
@@ -6907,7 +6907,7 @@ function toggleVwSec(k){
 }
 
 function renderVerwaltung(){
-  if(!S.vwOpen)S.vwOpen={bkp:true,settings:false,tracking:true,users:false,tz:false,design:false,drinks:false,route:false,dbstatus:false};
+  if(!S.vwOpen)S.vwOpen={bkp:true,settings:false,tracking:true,users:false,tz:false,design:false,drinks:false,route:false,dbstatus:false,sync:true};
   S.catIndex=allCats();
   const vw=document.getElementById('vwpane');
   const L=S.lang==='en';
@@ -7087,24 +7087,47 @@ function renderVerwaltung(){
 
   </div>
 
-  <!-- ── GERÄTE-SYNCHRONISATION (nur wenn aktiviert) ──── -->
-  <div class="adm-card" id="vw-sync-section" style="border-color:var(--ac-20);display:${S.syncEnabled?'block':'none'}">
+  <!-- ── GERÄTE-SYNCHRONISATION (immer sichtbar, Toggle inline) ──── -->
+  <div class="adm-card" id="vw-sync-section" style="border-color:var(--ac-20)">
     <div class="adm-card-hdr" onclick="toggleVwSec('sync')">
       <span class="adm-card-hdr-ico">🔄</span>
       <div class="adm-card-hdr-body">
         <div class="adm-card-hdr-title">${T('manage.sync.title')}</div>
-        <div class="adm-card-hdr-sub">${S.lastSyncDate?T('manage.sync.last')+' '+new Date(S.lastSyncDate).toLocaleDateString(L?'en-US':'de-DE')+' '+new Date(S.lastSyncDate).toLocaleTimeString(L?'en-US':'de-DE',{hour:'2-digit',minute:'2-digit'}):T('manage.sync.never')}</div>
+        <div class="adm-card-hdr-sub">${S.syncEnabled
+          ? (S.lastSyncDate
+              ? T('manage.sync.last')+' '+new Date(S.lastSyncDate).toLocaleDateString(L?'en-US':'de-DE')+' '+new Date(S.lastSyncDate).toLocaleTimeString(L?'en-US':'de-DE',{hour:'2-digit',minute:'2-digit'})
+              : T('manage.sync.never'))
+          : (L?'Not activated – tap to set up':'Nicht aktiviert – antippen zum Einrichten')
+        }</div>
       </div>
       <span class="adm-card-hdr-arr${S.vwOpen&&S.vwOpen.sync?' open':''}">►</span>
     </div>
     <div class="adm-card-body${S.vwOpen&&S.vwOpen.sync?' open':''}">
       <div style="padding-top:10px">
+        ${S.syncEnabled ? `
+        <!-- Sync AKTIV -->
         <button class="adm-btn-primary" onclick="createSyncPackage()" style="width:100%;margin-bottom:10px">
           <span class="adm-bico">📦</span>
           <span>${T('manage.sync.send')}</span>
         </button>
-        <div style="font-size:10px;color:var(--tx2);line-height:1.5">${L?'Send your entries via AirDrop, iMessage or WhatsApp. The recipient taps the file – done. Entries only, no settings.':'Sende deine Einträge per AirDrop, iMessage oder WhatsApp. Der Empfänger tippt die Datei an – fertig.'} <em>${T('manage.sync.hint')}</em></div>
-        <div style="font-size:10px;color:var(--tx2);margin-top:6px">${T('manage.sync.last')} <strong style="color:var(--tx1)">${S.lastSyncDate?new Date(S.lastSyncDate).toLocaleDateString(L?'en-US':'de-DE')+' '+new Date(S.lastSyncDate).toLocaleTimeString(L?'en-US':'de-DE',{hour:'2-digit',minute:'2-digit'}):T('manage.sync.never')}</strong></div>
+        <div style="font-size:10px;color:var(--tx2);line-height:1.5;margin-bottom:10px">${L?'Send your entries via AirDrop, iMessage or WhatsApp. The recipient taps the file – done.':'Sende deine Einträge per AirDrop, iMessage oder WhatsApp. Der Empfänger tippt die Datei an – fertig.'} <em>${T('manage.sync.hint')}</em></div>
+        <div style="font-size:10px;color:var(--tx2);margin-bottom:10px">${T('manage.sync.last')} <strong style="color:var(--tx1)">${S.lastSyncDate?new Date(S.lastSyncDate).toLocaleDateString(L?'en-US':'de-DE')+' '+new Date(S.lastSyncDate).toLocaleTimeString(L?'en-US':'de-DE',{hour:'2-digit',minute:'2-digit'}):T('manage.sync.never')}</strong></div>
+        <div style="border-top:1px solid var(--ac-07);padding-top:8px;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:10px;color:var(--tx2)">${T('settings.sync.label')}</span>
+          <button class="sbtn on" onclick="S.syncEnabled=false;saveStateDebounced();renderVerwaltung();" style="font-size:10px;padding:4px 10px">${L?'On – tap to disable':'An – tippen zum Deaktivieren'}</button>
+        </div>
+        ` : `
+        <!-- Sync INAKTIV – Erklärungs- und Aktivierungsbereich -->
+        <div style="padding:10px 12px;background:var(--ac-07);border-radius:8px;border-left:3px solid var(--ac-27);margin-bottom:12px">
+          <div style="font-size:12px;font-weight:bold;color:var(--ac);margin-bottom:5px">📦 ${T('manage.sync.title')}</div>
+          <div style="font-size:11px;color:var(--tx1);line-height:1.6">${T('settings.sync.hint')}</div>
+        </div>
+        <button class="adm-btn-primary" onclick="S.syncEnabled=true;saveStateDebounced();renderVerwaltung();" style="width:100%;background:linear-gradient(135deg,var(--ac),var(--ac-deep))">
+          <span class="adm-bico">🔄</span>
+          <span>${T('settings.sync.label')}</span>
+          <span style="font-size:9px;font-weight:normal;opacity:.8">${L?'Tap to activate':'Antippen zum Aktivieren'}</span>
+        </button>
+        `}
       </div>
     </div>
   </div>
@@ -7413,17 +7436,6 @@ function renderVerwaltung(){
         <div class="adm-row-ctrl">
           <button class="sbtn${(S.btnLayout||'plus-left')==='plus-left'?' on':''}" onclick="setBtnLayout('plus-left')">${T('settings.btnlayout.plus_left')} &#8722;</button>
           <button class="sbtn${S.btnLayout==='plus-right'?' on':''}" onclick="setBtnLayout('plus-right')">&#8722; ${T('settings.btnlayout.plus_right')}</button>
-        </div>
-      </div>
-
-      <!-- Geräte-Synchronisation Toggle -->
-      <div class="adm-row" style="border-top:1px solid var(--ac-07);margin-top:10px;padding-top:10px">
-        <div style="flex:1">
-          <div class="adm-row-label" style="font-size:12px;font-weight:bold;color:var(--tx0)">${T('settings.sync.label')}</div>
-          <div style="font-size:10px;color:var(--tx2);margin-top:2px;line-height:1.4">${T('settings.sync.hint')}</div>
-        </div>
-        <div class="adm-row-ctrl">
-          <button class="sbtn${S.syncEnabled?' on':''}" onclick="S.syncEnabled=!S.syncEnabled;saveStateDebounced();renderVerwaltung();">${S.syncEnabled?(L?'On':'An'):(L?'Off':'Aus')}</button>
         </div>
       </div>
 
