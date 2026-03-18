@@ -1827,7 +1827,7 @@ const I18N = {
     'goal.label':'Tageslimit','goal.reached':'🚨 Tageslimit erreicht!','goal.exceeded':'🚨 Tageslimit überschritten!',
     'goal.limit_banner':'Tageslimit erreicht!',
     'cat.avg':'∅ Preis/Drink','entry_lbl':'Einträge',
-    'bkp.success':'Backup gespeichert ✅','archive.msg':'ältere Einträge (>90 Tage) archiviert',
+    'bkp.success':'Backup gespeichert ✅',
     'bkp.banner.last':'Letztes Backup:','bkp.banner.never':'Noch kein Backup','bkp.banner.rec':'Backup empfohlen!','bkp.banner.now':'Jetzt sichern', // FIX V40 B5: Banner i18n
     'hdr.total':'Gesamt','search.drinks':'🔍 Getränk suchen…','cat.all':'Alle','btn.reset':'↺ Zurücksetzen',
     'summary.title':'Zusammenfassung','summary.total_drinks':'Getränke',
@@ -1849,8 +1849,7 @@ const I18N = {
     'manage.log.title':'📝 Protokoll exportieren','manage.log.export':'📤 Protokoll exportieren (CSV)',
     'manage.cats.title':'🍹 Kategorien & Getränke','manage.new.cat':'＋ Neue Kategorie hinzufügen',
     'manage.bkp.never':'⚠️ Noch kein Backup erstellt!',
-    'archive.title':'🗄️ Archiv','archive.export':'📤 Archiv exportieren (JSON)',
-    'archive.info':'ältere Einträge (>90 Tage) wurden archiviert.',
+
     'modal.cancel':'Abbrechen','modal.save':'Speichern','modal.delete':'Löschen',
     'modal.title.edit':'App-Titel anpassen','modal.title.line1':'Titelzeile (groß)','modal.title.line2':'Untertitel',
     'modal.entry.edit':'Eintrag bearbeiten','modal.entry.add':'Neuen Eintrag hinzufügen',
@@ -1927,7 +1926,7 @@ const I18N = {
     'goal.label':'Daily Limit','goal.reached':'🚨 Daily limit reached!','goal.exceeded':'🚨 Daily limit exceeded!',
     'goal.limit_banner':'Daily limit reached!',
     'cat.avg':'∅ Price/Drink','entry_lbl':'Entries',
-    'bkp.success':'Backup saved ✅','archive.msg':'old entries (>90 days) archived',
+    'bkp.success':'Backup saved ✅',
     'bkp.banner.last':'Last backup:','bkp.banner.never':'No backup yet','bkp.banner.rec':'Backup recommended!','bkp.banner.now':'Save now', // FIX V40 B5: Banner i18n
     'hdr.total':'Total','search.drinks':'🔍 Search drinks…','cat.all':'All','btn.reset':'↺ Reset',
     'summary.title':'Summary','summary.total_drinks':'Drinks',
@@ -1949,8 +1948,7 @@ const I18N = {
     'manage.log.title':'📝 Export Log','manage.log.export':'📤 Export log (CSV)',
     'manage.cats.title':'🍹 Categories & Drinks','manage.new.cat':'＋ Add new category',
     'manage.bkp.never':'⚠️ No backup created yet!',
-    'archive.title':'🗄️ Archive','archive.export':'📤 Export archive (JSON)',
-    'archive.info':'old entries (>90 days) have been archived.',
+
     'modal.cancel':'Cancel','modal.save':'Save','modal.delete':'Delete',
     'modal.title.edit':'Customize App Title','modal.title.line1':'Title line (large)','modal.title.line2':'Subtitle',
     'modal.entry.edit':'Edit entry','modal.entry.add':'Add new entry',
@@ -3135,7 +3133,7 @@ let S={
   expandedMonths:new Set(),expandedMonthsInited:false,
   lastBackupDate:null,lastBackupReminderDate:null,plusDebounce:{},
   favorites:new Set(),lang:'de',fontSize:'normal',ccm:{},dailyGoal:0,
-  statPeriod:'all',statCustomFrom:'',statCustomTo:'',statUserFilter:'all',logSearchQ:'',logCatFilter:'',logDateFrom:'',logDateTo:'',logPriceMin:null,logPriceMax:null,archiveCount:0,
+  statPeriod:'all',statCustomFrom:'',statCustomTo:'',statUserFilter:'all',logSearchQ:'',logCatFilter:'',logDateFrom:'',logDateTo:'',logPriceMin:null,logPriceMax:null,
   statDaySort:{},statDayShow:{}, // FIX FEHLER 6: Sortierstatus persistiert
   statOpen:{overview:true,topdrinks:true,byday:true}, // Nr.5: einklappbare Karten
   limitShownToday:null,currency:'€',btnLayout:'plus-left',favCollapsed:false,
@@ -3519,7 +3517,6 @@ return r;}
    Implementiert dieselbe Promise-API wie Dexie.js für die drei Stores:
      db.logs    – Protokoll-Einträge
      db.config  – Einstellungen (Key/Value)
-     db.archive – Archivierte Einträge
    ═══════════════════════════════════════════════════════════════════ */
 const TrackerDB = (function(){
   const DB_NAME = 'TrackerDB';
@@ -3539,10 +3536,6 @@ const TrackerDB = (function(){
         }
         if(!db.objectStoreNames.contains('config'))
           db.createObjectStore('config', {keyPath:'key'});
-        if(!db.objectStoreNames.contains('archive')){
-          const as=db.createObjectStore('archive', {keyPath:'id'});
-          as.createIndex('ts','ts',{unique:false});
-        }
       };
       req.onsuccess = e=>{ _db=e.target.result; resolve(_db); };
       req.onerror  = e=>reject(e.target.error);
@@ -3625,7 +3618,6 @@ const TrackerDB = (function(){
     open: ()=>_open(),
     logs:    _store('logs'),
     config:  _store('config'),
-    archive: _store('archive'),
     /* Hilfsmethode: cfg-Wert lesen */
     getCfg: async key=>{
       const r=await _store('config').get(key);
@@ -3648,36 +3640,8 @@ let _szCache=null,_szCacheTime=0;
 function storageSz(){return 0;} /* V46: IndexedDB – kein Byte-Counting nötig */
 function invalidateSzCache(){_szCache=null;}
 
-function archiveOld(){
-  // FIX V44 #9: Cutoff-Berechnung UTC-konsistent – verhindert ±14h-Diskrepanz bei Weltreisen.
-  // new Date() liefert lokale Zeit; Eintrags-Timestamps sind UTC. Wir berechnen den Cutoff
-  // als UTC-Mitternacht vor 180 Tagen, damit der Vergleich mit e.time (UTC) korrekt ist.
-  const nowUtc=Date.now();
-  const cutMs=nowUtc-90*24*60*60*1000; // V46: 90 Tage (war 180 Tage), rein UTC
-  const oldEntries=S.log.filter(e=>new Date(e.time).getTime()<cutMs);
-  if(!oldEntries.length)return 0;
-  try{
-    const ex=localStorage.getItem('a4_archive');
-    const arr=ex?JSON.parse(ex):[];
-    const ids=new Set(arr.map(e=>e.id));
-    const nw=oldEntries.filter(e=>!ids.has(e.id));
-    // ROLLBACK-SICHER: Erst in Archiv speichern, DANN aus Log entfernen
-    let combined=[...arr,...nw];
-    // Archiv-Größenlimit: max. 3000 Einträge (neueste behalten)
-    if(combined.length>3000){combined=combined.slice(combined.length-3000);}
-    localStorage.setItem('a4_archive',JSON.stringify(combined));
-    // V46: Archiv auch in IndexedDB synchronisieren
-    const combinedWithId=combined.map(e=>e.id?e:{...e,id:e.uid||(e.time?'arch_'+e.time:'arch_'+Date.now()+'_'+Math.random().toString(36).slice(2,5))});
-    db.archive.clear().then(()=>db.archive.bulkPut(combinedWithId)).catch(()=>{});
-    // Erst nach erfolgreichem Speichern aus dem aktiven Log entfernen
-    S.log=S.log.filter(e=>new Date(e.time).getTime()>=cutMs);
-    S.archiveCount=combined.length;
-    rebuildCounts();
-    // Warnung wenn Archiv fast voll (einmalig pro App-Start)
-    if(combined.length>=2500&&!window._archiveWarnShown){window._archiveWarnShown=true;showToast(S.lang==='en'?'⚠️ Archive almost full – please export archive!':'⚠️ Archiv fast voll – bitte Archiv exportieren!','warn',5000);}
-    return nw.length;
-  }catch(e){return 0;} // Bei Fehler: Log bleibt unverändert (Rollback)
-}
+
+
 
 /* ── V46: saveState() → IndexedDB (fire-and-forget async) ───────
    Das S-Objekt ist die synchrone Quelle der Wahrheit im RAM.
@@ -3690,13 +3654,6 @@ function saveState(){
   if(sd){sd.classList.add('show');setTimeout(()=>sd.classList.remove('show'),800);}
   // Async-Persistierung (fire-and-forget – blockiert UI nicht)
   _saveStateAsync().catch(e=>console.error('[saveState]',e));
-  // Archivierung bei langem Log (asynchron, wie bisher)
-  if(S.log.length>10000){
-    setTimeout(()=>{
-      const n=archiveOld();
-      if(n>0){showToast('🗄️ '+n+' '+T('archive.msg'),'info',4000);renderArchiveSec&&renderArchiveSec();}
-    },0);
-  }
   return true;
 }
 
@@ -3812,7 +3769,7 @@ function loadState(){
   S.tzMode=localStorage.getItem('a4_tzmode')||'auto';
   S.tzOffset=parseInt(localStorage.getItem('a4_tzoffset')||'0')||0;
   try{S.tzChangeLog=JSON.parse(localStorage.getItem('a4_tzchangelog')||'[]');}catch(e){S.tzChangeLog=[];}
-  try{const a=localStorage.getItem('a4_archive');if(a){const arr=JSON.parse(a);S.archiveCount=Array.isArray(arr)?arr.length:0;}}catch(e){}
+
   try{S.favOrder=JSON.parse(localStorage.getItem('a4_favorder')||'[]');}catch(e){S.favOrder=[];}
   S.headerCollapsed=localStorage.getItem('a4_hdrcoll')==='1';
   // Load user profiles
@@ -3928,7 +3885,6 @@ function checkFutureEntries(){
 
 /* ═══ BACKUP BANNER ═════════════════════════════════════════ */
 function hideStoWarn(){const b=document.getElementById('storageBanner');if(b)b.style.display='none';}
-/* FIX V43: Storage-Overflow aktive Archivierungs-Aufforderung als Dialog statt Toast */
 let _stoOverflowDialogShown=false;
 function showStorageOverflowDialog(){
   // V46: entfällt – IndexedDB hat kein festes Limit
@@ -4379,7 +4335,7 @@ function exportPDFReport(){
   // ── Tagesübersicht (für Tabelle, max 200 Tage) ──
   const showDays=dkeys.slice(0,365);
   // V45 #10: Hinweis wenn mehr als 300 Tage vorhanden (Bericht zeigt max. 365)
-  if(dkeys.length>300){showToast(L?'📅 Note: Report shows max. 365 days. Export archive for older data.':'📅 Hinweis: Der Bericht zeigt max. 365 Tage. Ältere Einträge per Archiv-Export sichern.','info',6000);}
+  if(dkeys.length>300){showToast(L?'📅 Note: Report shows max. 365 days.':'📅 Hinweis: Der Bericht zeigt max. 365 Tage.','info',6000);}
 
   // ── Inklusive-Daten ──
   const inclRealCount=allReal.filter(e=>{const d=S.drinks.find(x=>x.id===e.drinkId);return d&&d.included;}).length;
@@ -5207,7 +5163,7 @@ function initHeaderSwipe(){
 }
 
 function askReset(){showCfm('⚠️ '+T('confirm.reset.title'),'🗑 '+T('confirm.reset.msg')+' ⚠️ Diese Aktion löscht ALLE Einträge und ist nicht rückgängig zu machen!',T('confirm.reset.btn'),()=>{exportBackupSilent();setTimeout(()=>{S.log=[];S.counts={};S.stableOrder=[];S.expandedDays=new Set();S.expandedDaysInited=false;S.expandedMonths=new Set();S.expandedMonthsInited=false;S.limitShownToday=null;clearTimeout(S.sortTimer);// V46: auch IDB-Logs leeren
-      try{db.logs.clear();db.archive.clear();}catch(_){}
+      try{db.logs.clear();}catch(_){}
       saveState();renderDrinks(true);updateHeader();updateLimitBanner();showToast('✅ Backup gesichert – Daten zurückgesetzt');},400);});}
 
 // ── OPTION A: Vollständiger Reset ──────────────────────────────────────────
@@ -5262,7 +5218,6 @@ function doResetAll(){
     try{
       await db.logs.clear();
       await db.config.clear();
-      await db.archive.clear();
       // Migrated-Flag entfernen damit beim Neustart kein alter Stand aus localStorage übernommen wird
     }catch(e){console.warn('[doResetAll] IDB clear error:',e);}
     localStorage.clear();
@@ -5330,7 +5285,7 @@ function doResetPartial(ids){
   setTimeout(()=>{
     if(has('pr_log')){
       // V46: auch IDB-Logs leeren
-      try{db.logs.clear().catch(()=>{});db.archive.clear().catch(()=>{});}catch(_){}
+      try{db.logs.clear().catch(()=>{});}catch(_){}
       S.log=[];S.counts={};S.expandedDays=new Set();S.expandedDaysInited=false;S.expandedMonths=new Set();S.expandedMonthsInited=false;S.limitShownToday=null;clearTimeout(S.sortTimer);}
     if(has('pr_drinks')){S.drinks=[];S.ccm={};S.expandedCats=new Set();S.stableOrder=[];}
     if(has('pr_route')){S.voyageRoute=[];}
@@ -6501,36 +6456,6 @@ function renderStats(){
 }
 
 /* ═══ VERWALTUNG / SETTINGS TAB ══════════════════════════════ */
-function renderArchiveSec(){const sec=document.getElementById('archiveSec');if(!sec)return;const info=document.getElementById('archInfo');if(S.archiveCount>0){sec.style.display='';if(info)info.textContent=`${fmtNum(S.archiveCount)} ${T('archive.info')}`;}else sec.style.display='none';}
-function exportArchive(){try{const a=localStorage.getItem('a4_archive');if(!a){showToast(S.lang==='en'?'No archive available':'Kein Archiv vorhanden','error');return;}const nm=appNameClean();const dateStr=new Date().toLocaleDateString(S.lang==='en'?'en-US':'de-DE').replace(/[/.]/g,'-');dl(a,'Archiv_'+nm+'_'+dateStr+'.json','application/json');showToast('✅ Archiv '+T('toast.exported'));}catch(e){showToast('Fehler','error');}}
-
-function exportArchiveCSV(){
-  try{
-    const _raw=localStorage.getItem('a4_archive');
-    if(!_raw){showToast(S.lang==='en'?'No archive available.':'Kein Archiv vorhanden.','error',3500);return;}
-    let _arr;
-    try{_arr=JSON.parse(_raw);}catch(e){showToast(S.lang==='en'?'Archive read error.':'Fehler beim Lesen des Archivs.','error',3500);return;}
-    if(!Array.isArray(_arr)||!_arr.length){showToast(S.lang==='en'?'Archive is empty.':'Archiv ist leer.','error',3500);return;}
-    const L=S.lang==='en';
-    const BOM='﻿';
-    const hdr=(L?'Date;Time;User;Drink;Price;Location;Note':'Datum;Uhrzeit;Nutzer;Getränk;Preis;Ort;Notiz')+'\n';
-    const sorted=[..._arr].sort((a,b)=>new Date(a.time)-new Date(b.time));
-    const rows=sorted.map(e=>{
-      const off=typeof e.tz==='number'?e.tz:(S.tzOffset||0);
-      const d2=new Date(new Date(e.time).getTime()+off*60000);
-      const ymd=String(d2.getUTCDate()).padStart(2,'0')+'.'+String(d2.getUTCMonth()+1).padStart(2,'0')+'.'+d2.getUTCFullYear();
-      const hms=String(d2.getUTCHours()).padStart(2,'0')+':'+String(d2.getUTCMinutes()).padStart(2,'0')+':'+String(d2.getUTCSeconds()).padStart(2,'0');
-      const _u=getUserById(e.userId||'');
-      const uName=_u?_u.name:'';
-      const priceVal=(e.price||0).toFixed(2).replace('.',',');
-      return[csvEsc(ymd),csvEsc(hms),csvEsc(uName),csvEsc(e.name||''),csvEsc(priceVal),csvEsc(e.location||''),csvEsc(e.note||'')].join(';');
-    });
-    const nm=appNameClean();
-    const dateStr=new Date().toLocaleDateString('de-DE').replace(/\./g,'-');
-    dl(BOM+hdr+rows.join('\n'),nm+'_Archiv_'+dateStr+'.csv','text/csv;charset=utf-8;');
-    showToast('✅ '+(L?'Archive exported.':'Archiv exportiert.'),'info',3500);
-  }catch(e){showToast(S.lang==='en'?'Export error: '+e.message:'Exportfehler: '+e.message,'error',4000);}
-}
 
 function toggleVwSec(k){
   if(!S.vwOpen)S.vwOpen={};
@@ -6584,22 +6509,6 @@ function renderVerwaltung(){
     </div>
     <div style="font-size:9px;color:var(--tx2);margin-top:3px">${L?'No storage limit · iOS will not delete this data':'Kein Speicherlimit · iOS löscht diese Daten nicht'}</div>
   </div>`;
-
-  /* ── Archiv ──────────────────────────────────────── */
-  const archBtn=S.archiveCount>0?`
-    <div id="archiveSec" style="background:var(--bg2);border:1px solid var(--ac-27);border-radius:10px;padding:10px 12px;margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span style="font-size:22px;flex-shrink:0">📦</span>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:12px;font-weight:bold;color:var(--ac)">${L?'Archived entries':'Archivierte Einträge'}</div>
-        <div id="archInfo" style="font-size:10px;color:var(--tx2);margin-top:1px">${S.archiveCount} ${T('archive.info')}</div>
-      </div>
-      <button class="adm-btn-sm" onclick="exportArchive()" style="flex-shrink:0;padding:6px 10px">
-        <span>📤</span><span style="font-size:10px">${L?'Export':'Exportieren'}</span>
-      </button>
-      <button onclick="exportArchiveCSV()" style="padding:9px 14px;background:transparent;border:1px solid var(--ac-27);border-radius:8px;color:var(--tx1);font-family:Georgia,serif;font-size:12px;cursor:pointer;touch-action:manipulation;flex-shrink:0">
-        📥 ${L?'Export archive as CSV':'Archiv als CSV exportieren'}
-      </button>
-    </div>`:'';
 
   /* ── Kategorien ─────────────────────────────────── */
   let catHtml='';
@@ -6727,16 +6636,10 @@ function renderVerwaltung(){
         <span style="font-size:10px;font-weight:bold;color:var(--tx0)">${L?'Voyage Report':'Reisebericht'}</span>
         <span style="font-size:9px;color:var(--tx2)">PDF</span>
       </button>
-      <button class="adm-btn-sm" onclick="${S.archiveCount>0?'exportArchive()':'void(0)'}" style="flex-direction:column;gap:3px;padding:10px 6px;align-items:center;${S.archiveCount>0?'':'opacity:.38;cursor:default'}" ${S.archiveCount>0?'':'disabled'}>
-        <span style="font-size:18px">🗄️</span>
-        <span style="font-size:10px;font-weight:bold;color:var(--tx0)">${L?'Archive':'Archiv'}</span>
-        <span style="font-size:9px;color:var(--tx2)">${S.archiveCount>0?S.archiveCount+' '+(L?'entries':'Einträge'):(L?'Empty':'Leer')}</span>
-      </button>
+
     </div>
     </div>
 
-    <!-- Archiv-Info (wenn gefüllt) -->
-    ${archBtn||`<div id="archiveSec" style="display:none"></div>`}
   </div>
 
 
@@ -6755,15 +6658,11 @@ function renderVerwaltung(){
     </div>
     <div class="adm-card-body${S.vwOpen&&S.vwOpen.dbstatus?' open':''}">
       <div style="padding-top:10px">
-        <!-- 3 Stat-Kacheln -->
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+        <!-- 2 Stat-Kacheln -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
           <div style="background:var(--bg2);border:1px solid var(--ac-13);border-radius:10px;padding:10px 8px;text-align:center">
             <div style="font-size:20px;font-weight:bold;color:var(--ac);line-height:1.1">${fmtNum(S.log.length)}</div>
             <div style="font-size:9px;color:var(--tx2);letter-spacing:.5px;margin-top:3px;text-transform:uppercase">${L?'Active entries':'Aktive Eintr.'}</div>
-          </div>
-          <div style="background:var(--bg2);border:1px solid var(--ac-13);border-radius:10px;padding:10px 8px;text-align:center">
-            <div style="font-size:20px;font-weight:bold;color:var(--tx1);line-height:1.1">${fmtNum(S.archiveCount||0)}</div>
-            <div style="font-size:9px;color:var(--tx2);letter-spacing:.5px;margin-top:3px;text-transform:uppercase">${L?'Archived':'Archiviert'}</div>
           </div>
           <div style="background:var(--bg2);border:1px solid var(--ac-13);border-radius:10px;padding:10px 8px;text-align:center">
             <div style="font-size:20px;font-weight:bold;color:var(--col-ok);line-height:1.1">${(S.log.length*0.5/1024).toFixed(1)}</div>
@@ -6777,7 +6676,6 @@ function renderVerwaltung(){
         <!-- Kontext-Info -->
         <div style="font-size:10px;color:var(--tx2);line-height:1.6;border-top:1px solid var(--ac-07);padding-top:8px">
           <div>📝 ${L?'Drinks in list':'Getränke in der Liste'}: <strong style="color:var(--tx1)">${S.drinks.length}</strong></div>
-          <div>📅 ${L?'Entries older than 90 days are auto-archived.':'Einträge älter als 90 Tage werden automatisch archiviert.'}</div>
           ${S.log.length>0?`<div>🕐 ${L?'First entry':'Erster Eintrag'}: <strong style="color:var(--tx1)">${new Date(Math.min(...S.log.map(e=>new Date(e.time).getTime()))).toLocaleDateString('de-DE')}</strong></div>`:''}
           ${S.log.length>0?`<div>🕐 ${L?'Latest entry':'Letzter Eintrag'}: <strong style="color:var(--tx1)">${new Date(Math.max(...S.log.map(e=>new Date(e.time).getTime()))).toLocaleDateString('de-DE')}</strong></div>`:''}
         </div>
@@ -7739,8 +7637,7 @@ function renderHelp(){
       <div class="hlp-row"><span class="hlp-badge gold">📥 ${h('Backup importieren','Import backup')}</span><span>${h('JSON-Datei auswählen → <strong>Vorschau</strong> zeigt Details (Exportdatum, Zeitraum, Anzahl Einträge, neue Einträge, bereits vorhandene) → dann wählen:<br>• <strong>📥 Ergänzen (Merge)</strong> – fügt nur neue Einträge hinzu, vorhandene Daten und Einstellungen bleiben erhalten. Sicher für tägliche Synchronisation. Duplikate werden automatisch erkannt und übersprungen.<br>• <strong>⚠️ Ersetzen</strong> – löscht <em>alle</em> vorhandenen Daten und ersetzt durch Backup vollständig. Nur bei Gerätewechsel oder nach Reset verwenden.','Select JSON file → <strong>preview</strong> shows details (export date, period, entry count, new entries, already present) → then choose:<br>• <strong>📥 Merge</strong> – adds only new entries, existing data and settings are preserved. Safe for daily sync. Duplicates are detected and skipped automatically.<br>• <strong>⚠️ Replace</strong> – deletes <em>all</em> existing data and replaces with backup completely. Only use on device change or after reset.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge gold">👤 ${h('Nutzer-Zuordnungs-Dialog','User mapping dialog')}</span><span>${h('Wenn ein Backup <strong>andere Namen</strong> für die festen Nutzerplätze 1–4 enthält als lokal gespeichert, erscheint nach dem Import automatisch der Dialog <strong>„Nutzer-Zuordnung prüfen"</strong>. Er zeigt pro Platz:<br>• <strong>Lokalname</strong> (aktuell auf diesem Gerät) → <strong>Backup-Name</strong> (aus der Datei)<br>• Schaltfläche <strong>Umbenennen</strong> (standard: aktiv, gold): lokalen Namen durch Backup-Namen ersetzen<br>• Schaltfläche <strong>Behalten</strong>: lokalen Namen unverändert lassen<br>→ <strong>✓ Übernehmen</strong>: alle als „Umbenennen" markierten Plätze werden aktualisiert.<br>→ <strong>Überspringen</strong>: alle lokalen Namen bleiben unverändert.<br><em>Empfehlung: „Überspringen" wenn alle Geräte in der Gruppe bereits einheitlich benannt sind. „Übernehmen" wenn du von einem neuen Gerät importierst und die Backup-Namen korrekter sind.</em>','When a backup contains <strong>different names</strong> for fixed user slots 1–4 than stored locally, the dialog <strong>"Check user mapping"</strong> appears automatically after import. It shows per slot:<br>• <strong>Local name</strong> (currently on this device) → <strong>Backup name</strong> (from the file)<br>• Button <strong>Rename</strong> (default: active, gold): replace local name with backup name<br>• Button <strong>Keep</strong>: leave local name unchanged<br>→ <strong>✓ Apply</strong>: all slots marked "Rename" are updated.<br>→ <strong>Skip</strong>: all local names remain unchanged.<br><em>Recommendation: "Skip" if all devices in the group are already named consistently. "Apply" if importing from a new device where the backup names are more correct.</em>')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">📊 ${h('Protokoll CSV','Log CSV')}</span><span>${h('Exportiert das <strong>vollständige</strong> Protokoll als CSV-Datei (kein Filter, alle Einträge). Felder: Datum, Uhrzeit, Zeitzone, Nutzer, Getränkename, Preis, Kategorie, Hafen/Ort, Notiz. CSV-Import empfangen: Edge → Downloads → Teilen → Numbers oder Excel.','Exports the <strong>complete</strong> log as a CSV file (no filter, all entries). Fields: date, time, timezone, user, drink name, price, category, port/location, note. Receive CSV: Edge → Downloads → Share → Numbers or Excel.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">📄 ${h('PDF-Reisebericht','PDF voyage report')}</span><span>${h('Öffnet einen vollständigen <strong>Reisebericht</strong> als neue Browser-Seite (HTML-Druckansicht). Enthält:<br>• Übersichts-KPIs (Gesamtbetrag, Anzahl, Tage, Durchschnitte)<br>• Top-10-Getränke<br>• Ausgaben pro Nutzer (mit Budget falls gesetzt)<br>• Ausgaben nach Hafen (falls Hafen-Daten vorhanden)<br>• Ausgaben nach Kategorie<br>• Zeitzonenverlauf der Reise (falls vorhanden)<br>• Tagesübersicht (bis 365 Tage)<br>In Edge: <strong>Teilen → Drucken</strong> → Ziel: <strong>Als PDF sichern</strong> → iCloud Drive. Enthält immer <em>alle</em> Einträge, kein Filter. <strong>Hinweis:</strong> Die Tagesübersicht im Bericht zeigt maximal 365 Tage. Bei längeren Zeiträumen bitte zusätzlich den Archiv-Export nutzen.','Opens a complete <strong>voyage report</strong> as a new browser page (HTML print view). Contains:<br>• Overview KPIs (total, count, days, averages)<br>• Top-10 drinks<br>• Spending per user (with budget if set)<br>• Spending by port (if port data exists)<br>• Spending by category<br>• Timezone journey of the voyage (if present)<br>• Daily overview (up to 365 days)<br>In Edge: <strong>Share → Print</strong> → target: <strong>Save as PDF</strong> → iCloud Drive. Always contains <em>all</em> entries, no filter. <strong>Note:</strong> The daily overview in the report shows a maximum of 365 days. For longer periods please also use the archive export.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">🗄️ ${h('Archiv','Archive')}</span><span>${h('Erscheint nur, wenn ein Archiv vorhanden ist. Einträge, die älter als 180 Tage sind, werden automatisch archiviert (ab 10.000 Einträgen oder ~5 MB Speicher). Das Archiv fasst maximal 3.000 Einträge – ältere Einträge werden automatisch entfernt. Exportiere das Archiv regelmäßig als Sicherung. Der <strong>Archiv exportieren</strong>-Button lädt das Archiv als separate JSON-Datei herunter.','Appears only when an archive exists. Entries older than 180 days are automatically archived (from 10,000 entries or ~5 MB storage). The archive holds a maximum of 3,000 entries – older entries are removed automatically. Export the archive regularly as a backup. The <strong>Export archive</strong> button downloads the archive as a separate JSON file.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">📄 ${h('PDF-Reisebericht','PDF voyage report')}</span><span>${h('Öffnet einen vollständigen <strong>Reisebericht</strong> als neue Browser-Seite (HTML-Druckansicht). Enthält:<br>• Übersichts-KPIs (Gesamtbetrag, Anzahl, Tage, Durchschnitte)<br>• Top-10-Getränke<br>• Ausgaben pro Nutzer (mit Budget falls gesetzt)<br>• Ausgaben nach Hafen (falls Hafen-Daten vorhanden)<br>• Ausgaben nach Kategorie<br>• Zeitzonenverlauf der Reise (falls vorhanden)<br>• Tagesübersicht (bis 365 Tage)<br>In Edge: <strong>Teilen → Drucken</strong> → Ziel: <strong>Als PDF sichern</strong> → iCloud Drive. Enthält immer <em>alle</em> Einträge, kein Filter.','Opens a complete <strong>voyage report</strong> as a new browser page (HTML print view). Contains:<br>• Overview KPIs (total, count, days, averages)<br>• Top-10 drinks<br>• Spending per user (with budget if set)<br>• Spending by port (if port data exists)<br>• Spending by category<br>• Timezone journey of the voyage (if present)<br>• Daily overview (up to 365 days)<br>In Edge: <strong>Share → Print</strong> → target: <strong>Save as PDF</strong> → iCloud Drive. Always contains <em>all</em> entries, no filter.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">📤 ${h('Export &amp; Übertragung','Export &amp; Transfer')}</span><span>${h('Unter Backup &amp; Daten im Verwaltungs-Tab. CSV, App-Export und weitere Optionen sind hinter <strong>„Export &amp; Übertragung"</strong> versteckt – antippen zum Aufklappen.','Under Backup &amp; Data in the Settings tab. CSV, app export and more are behind <strong>"Export &amp; Transfer"</strong> – tap to expand.')}</span></div>
     </div>
 
@@ -7935,9 +7832,8 @@ function renderHelp(){
     'All data is stored in the browser\'s local storage (<strong>localStorage</strong>). iOS may <strong>delete this without warning</strong> when device storage is low.<br><br><strong>Situations with data loss risk:</strong><br>• iOS → Settings → Safari → Clear History and Website Data<br>• Microsoft Edge is uninstalled and reinstalled<br>• The iPhone is reset to factory settings<br>• The device is changed<br>• iOS system update (very rare but possible)<br>• Edge update (very rare)<br><br>→ <strong>Only protection: save regular JSON backups to iCloud Drive or locally on the iPhone!</strong>')}</div>
 
     <div class="hlp-card">
-      <div class="hlp-card-title">🌍 ${h('Weltreise &amp; Archiv – Besondere Hinweise','World Voyage &amp; Archive – Special Notes')}</div>
+      <div class="hlp-card-title">🌍 ${h('Weltreise – Besondere Hinweise','World Voyage – Special Notes')}</div>
       <div class="hlp-row"><span class="hlp-badge gold">🌍 ${h('Weltreise-Tipp','World voyage tip')}</span><span>${h('Wöchentliches Backup dringend empfohlen – bei Reisen über 160+ Tage unbedingt einhalten!','Weekly backup strongly recommended – essential for voyages of 160+ days!')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">🗄️ ${h('NEU – Archiv-Export','NEW – Archive export')}</span><span>${h('Einträge älter als 180 Tage werden automatisch archiviert. Export als CSV unter <strong>Verwaltung → Backup &amp; Daten → Archiv</strong>.','Entries older than 180 days are auto-archived. Export as CSV under <strong>Settings → Backup &amp; Data → Archive</strong>.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">📄 ${h('HTML-Export','HTML export')}</span><span>${h('HTML-Export = vollständige App-Kopie inkl. aller Daten. Auf dem iPhone: Im Teilen-Menü <strong>„In Dateien sichern\"</strong> wählen.','HTML export = complete app copy with all data. On iPhone: in the share menu choose <strong>\"Save to Files\"</strong>.')}</span></div>
     </div>
 
@@ -8080,9 +7976,8 @@ function renderHelp(){
     </div>
 
     <div class="hlp-card">
-      <div class="hlp-card-title">💽 ${h('Speicherlimits &amp; Archivierung','Storage limits &amp; archiving')}</div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('Maximaler Speicher','Maximum storage')}</span><span>${h('Edge auf iOS: max. ~<strong>5 MB</strong> localStorage. Bei ~120 Einträgen/Tag: über <strong>365 Tage</strong> nutzbar. Der Speicherbalken in der Verwaltung zeigt den aktuellen Verbrauch.','Edge on iOS: max. ~<strong>5 MB</strong> localStorage. At ~120 entries/day: over <strong>365 days</strong> usable. The storage bar in Management shows current usage.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('Auto-Archivierung','Auto-archiving')}</span><span>${h('Einträge älter als <strong>180 Tage</strong> werden automatisch archiviert, sobald 10.000 aktive Einträge vorliegen oder ~5 MB Speicher belegt sind. Archivierte Einträge sind in Backups enthalten und gehen nicht verloren. Die Statistik berücksichtigt nur aktive Einträge (nicht Archiv).','Entries older than <strong>180 days</strong> are automatically archived once 10,000 active entries exist or ~5 MB storage is used. Archived entries are included in backups and are not lost. Statistics only considers active entries (not archive).')}</span></div>
+      <div class="hlp-card-title">💽 ${h('Speicherlimits','Storage limits')}</div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('Maximaler Speicher','Maximum storage')}</span><span>${h('Alle Einträge werden in IndexedDB gespeichert – kein festes Limit. iOS löscht diese Daten nicht automatisch.','All entries are stored in IndexedDB – no fixed limit. iOS does not delete this data automatically.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('Hartes Limit','Hard limit')}</span><span>${h('Maximale Anzahl aktiver Einträge: <strong>30.000</strong>. Bei Annäherung erscheint eine Warnung. Abhilfe: Backup erstellen, dann Reset.','Maximum number of active entries: <strong>30,000</strong>. A warning appears when approaching. Solution: create backup, then reset.')}</span></div>
     </div>
 
@@ -8111,7 +8006,7 @@ function renderHelp(){
 
     <div class="hlp-card">
       <div class="hlp-card-title">🔧 ${h('Häufige Fragen &amp; Problemlösungen','FAQ &amp; Troubleshooting')}</div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('„Die App reagiert langsam"','App responds slowly')}</span><span>${h('Bei sehr vielen Einträgen (über 5.000) kann das Rendern kurz verzögern. Abhilfe: Backup erstellen → Reset → frisch starten. Oder: Ältere Einträge werden automatisch archiviert (nach 180 Tagen ab 10.000 Einträgen).','With very many entries (over 5,000) rendering may briefly delay. Solution: create backup → reset → fresh start. Or: older entries are automatically archived (after 180 days from 10,000 entries).')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('„Die App reagiert langsam"','App responds slowly')}</span><span>${h('Bei sehr vielen Einträgen (über 5.000) kann das Rendern kurz verzögern. Abhilfe: Backup erstellen → Reset → frisch starten.','With very many entries (over 5,000) rendering may briefly delay. Solution: create backup → reset → fresh start.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('„Einträge sind weg"','Entries are gone')}</span><span>${h('Mögliche Ursache: Edge wurde neu installiert, iOS hat den Speicher geleert, oder „Verlauf löschen" in Safari/Edge. Wenn ein Backup vorhanden ist: Verwaltung → Backup importieren → Ergänzen oder Ersetzen.','Possible cause: Edge was reinstalled, iOS cleared storage, or "Clear history" in Safari/Edge was used. If a backup exists: Management → Import backup → Merge or Replace.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('„Die Uhrzeit stimmt nicht"','Time is wrong')}</span><span>${h('Wenn im Auto-Modus: Edge/WebKit übernimmt die iPhone-Systemzeit. Prüfen: iPhone Einstellungen → Allgemein → Datum &amp; Uhrzeit → Automatisch. Alternativ: Zeitzone auf Manuell setzen.','In Auto mode: Edge/WebKit uses the iPhone system time. Check: iPhone Settings → General → Date &amp; Time → Set Automatically. Alternatively: set timezone to Manual.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('„Der Download-Dialog erscheint nicht"','Download dialog does not appear')}</span><span>${h('Edge auf iOS zeigt Downloads in der Benachrichtigungsleiste und im Menü → Downloads. Falls nichts passiert: Edge-Einstellungen prüfen, ob Downloads aktiviert sind. Alternativ: Edge neu starten.','Edge on iOS shows downloads in the notification bar and in menu → Downloads. If nothing happens: check Edge settings to see if downloads are enabled. Alternatively: restart Edge.')}</span></div>
@@ -8185,7 +8080,7 @@ function renderHelp(){
     <div class="hlp-card">
       <div class="hlp-card-title">💡 ${h('Smart Sync vs. Voll-Backup','Smart Sync vs. Full Backup')}</div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('Protokoll teilen (Smart Sync)','Share log (Smart Sync)')}</span><span>${h('Nur Protokoll-Einträge. <strong>Einstellungen bleiben erhalten.</strong> Ideal für den täglichen Abgleich zwischen Mitreisenden.','Log entries only. <strong>Settings are preserved.</strong> Ideal for daily sync between travel companions.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge gold">${h('Voll-Backup','Full Backup')}</span><span>${h('Alles: Einträge + Einstellungen + Getränkeliste + Archiv. Für eigene Datensicherung, Gerätewechsel, Notfall-Wiederherstellung.','Everything: entries + settings + drink list + archive. For personal backup, device change, emergency restore.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge gold">${h('Voll-Backup','Full Backup')}</span><span>${h('Alles: Einträge + Einstellungen + Getränkeliste. Für eigene Datensicherung, Gerätewechsel, Notfall-Wiederherstellung.','Everything: entries + settings + drink list. For personal backup, device change, emergency restore.')}</span></div>
     </div>
 
     <div class="hlp-info">ℹ️ ${h('Jeder Eintrag bekommt eine weltweit eindeutige ID (uid). Der Smart-Merge-Algorithmus prüft diese IDs – so entstehen keine Duplikate, egal wie oft geteilt wird.','Every entry gets a globally unique ID (uid). The Smart Merge algorithm checks these IDs – so no duplicates arise, no matter how many times you share.')}</div>
@@ -8346,11 +8241,8 @@ function cfmNo(){document.getElementById('cfmOv').className='ov';_cb=null;}
 
 /* ═══ BACKUP ═════════════════════════════════════════════════ */
 function exportBackupSilent(){const nm=appNameClean();
-  // Include archived entries (>180 days) so no data is lost
-  let archiveData=[];
-  try{const arc=localStorage.getItem('a4_archive');archiveData=arc?JSON.parse(arc):[];}catch(e){}
   const data={version:11,exportDate:new Date().toISOString(),appTitle1:S.appTitle1||'🍹 Mein Tracker',appTitle2:S.appTitle2||'Meine Reise',titleIcon:S.titleIcon||'', // FIX V32 U-5: Titel sichern
-tzMode:S.tzMode||'auto',tzOffset:S.tzOffset||0,tzChangeLog:S.tzChangeLog||[],drinks:S.drinks,log:S.log,archive:archiveData,favorites:[...S.favorites],favOrder:S.favOrder||[], // FIX V32 M-1: Favoritenreihenfolge sichern
+tzMode:S.tzMode||'auto',tzOffset:S.tzOffset||0,tzChangeLog:S.tzChangeLog||[],drinks:S.drinks,log:S.log,favorites:[...S.favorites],favOrder:S.favOrder||[], // FIX V32 M-1: Favoritenreihenfolge sichern
 lang:S.lang,fontSize:S.fontSize,dailyGoal:S.dailyGoal,currency:S.currency,catColorMap:S.ccm,dayEndHour:S.dayEndHour||0,dayEndMinute:S.dayEndMinute||0,users:S.users||[],activeUserId:S.activeUserId||'',userBudgets:S.userBudgets||{},
 voyageRoute:S.voyageRoute||[],currentLocation:S.currentLocation||'',
 serviceCharge:S.serviceCharge||0,customThemes:S.customThemes||[],btnLayout:S.btnLayout||'plus-left',conceptFavorites:S.conceptFavorites||['kapitaensbuch','atelier','sonnendeck'],conceptTheme:S.conceptTheme||'kapitaensbuch'};
@@ -8421,10 +8313,8 @@ async function shareBackup(){
   const L=S.lang==='en';
   // Backup-Daten aufbauen (identisch zu exportBackupSilent)
   const nm=appNameClean();
-  let archiveData=[];
-  try{const arc=localStorage.getItem('a4_archive');archiveData=arc?JSON.parse(arc):[];}catch(e){}
   const data={version:11,exportDate:new Date().toISOString(),appTitle1:S.appTitle1||'🍹 Mein Tracker',appTitle2:S.appTitle2||'Meine Reise',titleIcon:S.titleIcon||'',
-    tzMode:S.tzMode||'auto',tzOffset:S.tzOffset||0,tzChangeLog:S.tzChangeLog||[],drinks:S.drinks,log:S.log,archive:archiveData,favorites:[...S.favorites],favOrder:S.favOrder||[],
+    tzMode:S.tzMode||'auto',tzOffset:S.tzOffset||0,tzChangeLog:S.tzChangeLog||[],drinks:S.drinks,log:S.log,favorites:[...S.favorites],favOrder:S.favOrder||[],
     lang:S.lang,fontSize:S.fontSize,dailyGoal:S.dailyGoal,currency:S.currency,catColorMap:S.ccm,dayEndHour:S.dayEndHour||0,dayEndMinute:S.dayEndMinute||0,
     users:S.users||[],activeUserId:S.activeUserId||'',userBudgets:S.userBudgets||{},
     voyageRoute:S.voyageRoute||[],currentLocation:S.currentLocation||'',
@@ -8667,9 +8557,6 @@ function doImport(mode){
   if(mode==='replace'){
     S.drinks=JSON.parse(JSON.stringify(data.drinks&&data.drinks.length?data.drinks:S.drinks)).map(sanD);
     S.log=JSON.parse(JSON.stringify(data.log||[])).map(sanE).map(remapEntryUser);
-    // Restore archive from backup if present (Bug 1 fix)
-    if(data.archive&&Array.isArray(data.archive)&&data.archive.length){try{localStorage.setItem('a4_archive',JSON.stringify(data.archive));S.archiveCount=data.archive.length;const _impArch=(data.archive||[]).map(e=>e.id?e:{...e,id:e.uid||(e.time?'arch_'+e.time:'arch_'+Date.now())});
-db.archive.clear().then(()=>db.archive.bulkPut(_impArch)).catch(()=>{});}catch(e){}}
     if(data.favorites)S.favorites=new Set(Array.isArray(data.favorites)?data.favorites:[]);
     if(data.favOrder&&Array.isArray(data.favOrder))S.favOrder=data.favOrder; // FIX V32 M-1: Favoritenreihenfolge wiederherstellen
     if(data.appTitle1)S.appTitle1=data.appTitle1; // FIX V32 U-5: Titel aus Backup
@@ -8821,22 +8708,6 @@ db.archive.clear().then(()=>db.archive.bulkPut(_impArch)).catch(()=>{});}catch(e
     // currentLocation: nur übernehmen wenn lokal leer
     if(typeof data.currentLocation==='string'&&data.currentLocation&&!S.currentLocation){
       S.currentLocation=data.currentLocation;
-    }
-    // 4b. Merge archive entries from backup (Bug 1 fix)
-    if(data.archive&&Array.isArray(data.archive)&&data.archive.length){
-      try{
-        const existArc=localStorage.getItem('a4_archive');
-        const existArr=existArc?JSON.parse(existArc):[];
-        const existIds=new Set(existArr.map(e=>e.id).filter(Boolean));
-        const newArcEntries=data.archive.filter(e=>e.id&&!existIds.has(e.id));
-        if(newArcEntries.length){
-          const merged=[...existArr,...newArcEntries];
-          localStorage.setItem('a4_archive',JSON.stringify(merged));
-          S.archiveCount=merged.length;
-          const _mrgArch=merged.map(e=>e.id?e:{...e,id:e.uid||(e.time?'arch_'+e.time:'arch_'+Date.now())});
-          db.archive.clear().then(()=>db.archive.bulkPut(_mrgArch)).catch(()=>{});
-        }
-      }catch(e){}
     }
 
     // Aufgabe 6: Hinweis bei Schiffszeit-Abweichung
@@ -9689,14 +9560,6 @@ async function migrateFromLocalStorage(){
         await db.logs.bulkPut(logsWithId);
       }
     }catch(e){console.warn('[migrate] Log-Fehler:',e);}
-    // Archiv migrieren
-    try{
-      const oldArch=JSON.parse(localStorage.getItem('a4_archive')||'[]');
-      if(Array.isArray(oldArch)&&oldArch.length){
-        const archWithId=oldArch.map((e,i)=>e.id?e:{...e,id:e.uid||(e.time?'arch_'+e.time:'arch_'+i+'_'+Date.now())});
-        await db.archive.bulkPut(archWithId);
-      }
-    }catch(e){console.warn('[migrate] Archiv-Fehler:',e);}
     // Config migrieren
     const keyMap={
       'a4_title1':'appTitle1','a4_title2':'appTitle2','a4_titleicon':'titleIcon',
@@ -9765,7 +9628,6 @@ async function loadStateFromDB(){
     S.tzMode=cfg.tzMode||'auto';
     S.tzOffset=parseInt(cfg.tzOffset||'0')||0;
     try{S.tzChangeLog=JSON.parse(cfg.tzChangeLog||'[]');}catch(e){S.tzChangeLog=[];}
-    try{const a=await db.archive.toArray();S.archiveCount=a.length;}catch(e){S.archiveCount=0;}
     try{S.favOrder=JSON.parse(cfg.favOrder||'[]');}catch(e){S.favOrder=[];}
     S.headerCollapsed=cfg.headerCollapsed==='1';
     // Nutzer laden
@@ -9852,12 +9714,6 @@ function _initUI(){
   setTimeout(()=>{checkBackupReminder();updateAdmBadge();},1500);
   setTimeout(()=>checkFutureEntries(),2000);
   setTimeout(()=>checkShipTimeWarning(),500);
-  // V46: Auto-Archivierung beim Start
-  setTimeout(function(){
-    const n=archiveOld();
-    if(n>0){showToast('🗄️ '+n+' '+(S.lang==='en'?'old entries auto-archived (>90 days)':'alte Einträge auto-archiviert (>90 Tage)'),'info',4000);
-    if(typeof renderArchiveSec==='function')renderArchiveSec();}
-  },800);
   // V46: Offline-Dot initialisieren
   (function(){
     function _upd(){var dot=document.getElementById('hdrOfflineDot');if(!dot)return;var off=!navigator.onLine;dot.style.display=off?'inline-block':'none';}
