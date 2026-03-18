@@ -459,6 +459,7 @@ body{background:var(--bg);font-family:Georgia,serif;color:var(--tx0);overscroll-
 }
 #swUpdateBanner.visible{display:block;}
 @keyframes swBannerIn{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}}
+@keyframes fadeInUp{from{opacity:0;transform:translateX(-50%) translateY(16px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 .swub-inner{display:flex;align-items:center;gap:12px;max-width:500px;margin:0 auto}
 .swub-icon{font-size:22px;flex-shrink:0;line-height:1}
 .swub-text{flex:1;font-size:12px;color:var(--tx1);font-family:Georgia,serif;line-height:1.45}
@@ -1976,7 +1977,24 @@ const I18N = {
     'settings.tz.device':'Ger\xe4te-Zeitzone:','settings.tz.mismatch':'\u26a0\ufe0f App-Zeit weicht von Ger\xe4te-Zeit ab',
     'settings.tz':'🕐 Schiffszeit','settings.tz.auto':'Automatisch (Gerät)',
     'settings.tz.hint.auto':'Die App übernimmt automatisch die Zeitzone des Geräts. Wechselt das Gerät die Zone, passt sich die App automatisch an.',
-    'modal.entry.tz':'Schiffszeit'
+    'modal.entry.tz':'Schiffszeit',
+    'manage.backup.title':'💾 Backup',
+    'manage.backup.hint':'Sichert alles: Einträge + Einstellungen. Intern speichern = sofort auf diesem Gerät. Exportieren = Datei für andere Geräte.',
+    'manage.backup.save':'💾 Intern speichern',
+    'manage.backup.loadlatest':'⚡ Letztes Backup laden',
+    'manage.backup.export':'📤 Exportieren (JSON)',
+    'manage.backup.import':'📥 Importieren (JSON)',
+    'manage.sync.title':'🔄 Geräte-Synchronisation',
+    'manage.sync.send':'📦 Sync-Paket senden',
+    'manage.sync.hint':'Nur Einträge, keine Einstellungen.',
+    'manage.sync.last':'Letzter Sync:',
+    'manage.sync.never':'Noch nicht synchronisiert',
+    'settings.sync.label':'🔄 Geräte-Synchronisation aktivieren',
+    'settings.sync.hint':'Tausche Protokoll-Einträge mit anderen Geräten aus – ohne Internet, per AirDrop oder Messenger. Einstellungen bleiben unberührt.',
+    'bkp.internal.saved':'💾 Intern gespeichert ✅',
+    'bkp.internal.none':'⚠️ Kein internes Backup gefunden',
+    'bkp.reminder.ext':'📤 Externes Backup empfohlen',
+    'bkp.reminder.never':'⚠️ Noch kein externes Backup erstellt'
   },
   en:{
     'tab.drinks':'Drinks','tab.log':'Log','tab.stats':'Statistics','tab.manage':'Settings','tab.help':'Help',
@@ -2075,7 +2093,24 @@ const I18N = {
     'settings.tz.change.ok':'\u2705 Ship\'s time saved','settings.tz.now':'Current app time:',
     'settings.tz.device':'Device timezone:','settings.tz.mismatch':'\u26a0\ufe0f App time differs from device time',
     'settings.tz.hint.auto':'The app automatically uses the device timezone. If the device changes zone (e.g. arriving at a new port), the app adjusts automatically.',
-    'modal.entry.tz':'Ship\'s time'
+    'modal.entry.tz':'Ship\'s time',
+    'manage.backup.title':'💾 Backup',
+    'manage.backup.hint':'Backs up everything: entries + settings. Save internally = instant, on this device. Export = file for other devices.',
+    'manage.backup.save':'💾 Save internally',
+    'manage.backup.loadlatest':'⚡ Load latest backup',
+    'manage.backup.export':'📤 Export (JSON)',
+    'manage.backup.import':'📥 Import (JSON)',
+    'manage.sync.title':'🔄 Device sync',
+    'manage.sync.send':'📦 Send sync package',
+    'manage.sync.hint':'Entries only, no settings.',
+    'manage.sync.last':'Last sync:',
+    'manage.sync.never':'Not yet synced',
+    'settings.sync.label':'🔄 Enable device sync',
+    'settings.sync.hint':'Exchange log entries with other devices – no internet needed, via AirDrop or messenger. Settings are not affected.',
+    'bkp.internal.saved':'💾 Saved internally ✅',
+    'bkp.internal.none':'⚠️ No internal backup found',
+    'bkp.reminder.ext':'📤 External backup recommended',
+    'bkp.reminder.never':'⚠️ No external backup created yet'
   }
 };
 function T(k){return(I18N[S&&S.lang||'de']||I18N.de)[k]||(I18N.de[k]||k);}
@@ -3755,6 +3790,8 @@ async function _saveStateAsync(){
     {key:'statDaySort',value:JSON.stringify(S.statDaySort||{})},
     {key:'statDayShow',value:JSON.stringify(S.statDayShow||{})},
     {key:'statOpen',   value:JSON.stringify(S.statOpen||{})},
+    {key:'syncEnabled',value:S.syncEnabled?'1':''},
+    {key:'lastSyncDate',value:S.lastSyncDate||''},
   ];
   await db.config.bulkPut(cfgPairs);
   // Logs: upsert via bulkPut (kein clear nötig, vermeidet kurzzeitigen Datenverlust)
@@ -3800,7 +3837,9 @@ function _saveStateLocalStorageFallback(){
     ['a4_customthemes',JSON.stringify(S.customThemes||[])],
     ['a4_statdaysort',JSON.stringify(S.statDaySort||{})],
     ['a4_statdayshow',JSON.stringify(S.statDayShow||{})],
-    ['a4_statopen',JSON.stringify(S.statOpen||{})]];
+    ['a4_statopen',JSON.stringify(S.statOpen||{})],
+    ['a4_syncenabled',S.syncEnabled?'1':''],
+    ['a4_lastsync',S.lastSyncDate||'']];
   for(const[k,v]of pairs){try{localStorage.setItem(k,v);}catch(e){break;}}
 }
 let _saveTimer=null;
@@ -3868,6 +3907,8 @@ function loadState(){
   try{S.statDaySort=JSON.parse(localStorage.getItem('a4_statdaysort')||'{}');}catch(e){S.statDaySort={};} // FIX FEHLER 6
   try{S.statDayShow=JSON.parse(localStorage.getItem('a4_statdayshow')||'{}');}catch(e){S.statDayShow={};} // FIX FEHLER 6
   try{const _so=JSON.parse(localStorage.getItem('a4_statopen')||'null');S.statOpen=_so&&typeof _so==='object'?_so:{overview:true,topdrinks:true,byday:true};}catch(e){S.statOpen={overview:true,topdrinks:true,byday:true};} // Nr.5
+  S.syncEnabled=localStorage.getItem('a4_syncenabled')==='1';
+  S.lastSyncDate=localStorage.getItem('a4_lastsync')||null;
   syncCustomThemesToRuntime();
   // Sync favOrder with actual favorites (remove stale, append new)
   S.favOrder=S.favOrder.filter(id=>S.favorites.has(id));
@@ -3993,6 +4034,56 @@ function updateAdmBadge(){
 }
 function showBackupBanner(){}
 function hideBackupBanner(){}
+
+/* ═══════════════════════════════════════════════════════════════
+   MODULE B-2 – Erinnerungs-Banner (beim App-Start nach State-Laden)
+   ═══════════════════════════════════════════════════════════════ */
+async function checkInternalBackupReminder(){
+  const L=S.lang==='en';
+  // Nur einmal pro App-Session prüfen
+  if(window._reminderBannerShown)return;
+  window._reminderBannerShown=true;
+  try{
+    const all=await InternalBackupDB.getAll();
+    const hasInternal=all.length>0;
+    const lastExt=S.lastBackupDate;
+    const daysSinceExt=lastExt?Math.floor((Date.now()-new Date(lastExt).getTime())/86400000):9999;
+    let msg='';
+    let key='';
+    // Noch nie externes Backup
+    if(!lastExt){
+      msg=T('bkp.reminder.never');
+      key='never';
+    } else if(daysSinceExt>=7&&hasInternal){
+      // Letztes externes Backup älter als 7 Tage und mind. 1 internes vorhanden
+      msg=T('bkp.reminder.ext');
+      key='ext';
+    }
+    if(!msg)return;
+    // Session-Key: einmal pro Tag pro Typ zeigen
+    const dayKey='a4_bkp_reminder_'+key+'_'+logicalTodayStr();
+    try{if(localStorage.getItem(dayKey))return;}catch(e){}
+    // Banner erstellen
+    const banner=document.createElement('div');
+    banner.id='internalBkpReminderBanner';
+    banner.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);'+
+      'z-index:9000;background:var(--bg2);border:1px solid var(--ac-27);'+
+      'border-radius:12px;padding:10px 14px;font-size:12px;color:var(--tx1);'+
+      'display:flex;align-items:center;gap:10px;max-width:340px;width:90%;'+
+      'box-shadow:0 4px 20px rgba(0,0,0,0.55);cursor:pointer;touch-action:manipulation;'+
+      'animation:fadeInUp .3s ease';
+    banner.innerHTML=`<span style="flex:1">${esc(msg)}</span>
+      <button onclick="event.stopPropagation();document.getElementById('internalBkpReminderBanner')?.remove()" style="background:transparent;border:none;color:var(--tx2);font-size:16px;cursor:pointer;padding:0;line-height:1;touch-action:manipulation">✕</button>`;
+    banner.onclick=function(){
+      banner.remove();
+      switchTab(3); // Verwaltung öffnen
+    };
+    document.body.appendChild(banner);
+    // Nach 8 s automatisch ausblenden
+    setTimeout(()=>{try{if(banner.parentNode)banner.style.opacity='0';setTimeout(()=>{try{banner.remove();}catch(e){}},400);}catch(e){}},8000);
+    try{localStorage.setItem(dayKey,'1');}catch(e){}
+  }catch(e){/* Stille Fehlerbehandlung – Banner ist optional */}
+}
 
 function dismissSwipeLegend(){
   const el=document.getElementById('swipeLegend');
@@ -4282,8 +4373,279 @@ function csvEsc(v){const s=String(v==null?'':v);if(s.includes(';')||s.includes('
 function csvParse(line){const f=[];let c='',q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(q){if(ch==='"'){if(line[i+1]==='"'){c+='"';i++;}else q=false;}else c+=ch;}else{if(ch==='"')q=true;else if(ch===';'){f.push(c);c='';}else c+=ch;}}f.push(c);return f;}
 function dl(content,filename,mime){const b=new Blob([content],{type:mime}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(u),300);}
 
+/* ═══════════════════════════════════════════════════════════════════
+   MODULE C – shareOrDownload (Web Share API mit Fallback)
+   ═══════════════════════════════════════════════════════════════════ */
+async function shareOrDownload(content, filename, mime){
+  try{
+    const blob=new Blob([content],{type:mime});
+    const file=new File([blob],filename,{type:mime});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:filename});
+    }else{
+      dl(content,filename,mime);
+    }
+  }catch(e){
+    if(e&&e.name!=='AbortError'){
+      // Fallback auf Download bei echtem Fehler
+      try{dl(content,filename,mime);}catch(e2){showToast('⚠️ Export fehlgeschlagen','error',4000);}
+    }
+    // AbortError = Nutzer hat abgebrochen → kein Fehler
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODULE A – InternalBackupDB (IndexedDB mit localStorage-Fallback)
+   ═══════════════════════════════════════════════════════════════════ */
+const InternalBackupDB = (function(){
+  const DB_NAME='aida_backups';
+  const STORE='backups';
+  const LS_KEY='aida_bkp_store';
+  const MAX_BACKUPS=5;
+  let _db=null;
+  let _useLS=false;
+
+  function _openDB(){
+    return new Promise((resolve,reject)=>{
+      if(!window.indexedDB){_useLS=true;resolve(null);return;}
+      const req=indexedDB.open(DB_NAME,1);
+      req.onupgradeneeded=function(e){
+        const db=e.target.result;
+        if(!db.objectStoreNames.contains(STORE)){
+          db.createObjectStore(STORE,{keyPath:'id',autoIncrement:false});
+        }
+      };
+      req.onsuccess=function(e){_db=e.target.result;resolve(_db);};
+      req.onerror=function(){_useLS=true;resolve(null);};
+    });
+  }
+
+  /* ── localStorage fallback helpers ── */
+  function _lsGetAll(){
+    try{return JSON.parse(localStorage.getItem(LS_KEY)||'[]');}catch(e){return[];}
+  }
+  function _lsSave(arr){try{localStorage.setItem(LS_KEY,JSON.stringify(arr));}catch(e){}}
+
+  return{
+    initDB:async function(){
+      if(_db||_useLS)return;
+      await _openDB();
+    },
+
+    saveBackup:async function(data){
+      await this.initDB();
+      if(_useLS||!_db){
+        const arr=_lsGetAll();
+        arr.push(data);
+        arr.sort((a,b)=>b.id-a.id);
+        while(arr.length>MAX_BACKUPS)arr.pop();
+        _lsSave(arr);
+        return;
+      }
+      return new Promise((resolve,reject)=>{
+        const tx=_db.transaction([STORE],'readwrite');
+        const store=tx.objectStore(STORE);
+        store.put(data);
+        tx.oncomplete=async function(){
+          // Prüfe Anzahl → ältesten löschen wenn >5
+          const allReq=_db.transaction([STORE],'readwrite').objectStore(STORE).getAll();
+          allReq.onsuccess=function(e){
+            const all=(e.target.result||[]).sort((a,b)=>b.id-a.id);
+            if(all.length>MAX_BACKUPS){
+              const toDelete=all.slice(MAX_BACKUPS);
+              const tx2=_db.transaction([STORE],'readwrite');
+              toDelete.forEach(item=>tx2.objectStore(STORE).delete(item.id));
+            }
+            resolve();
+          };
+          allReq.onerror=()=>resolve();
+        };
+        tx.onerror=()=>reject(new Error('IDB saveBackup failed'));
+      });
+    },
+
+    getAll:async function(){
+      await this.initDB();
+      if(_useLS||!_db){
+        return _lsGetAll().sort((a,b)=>b.id-a.id);
+      }
+      return new Promise((resolve,reject)=>{
+        const req=_db.transaction([STORE],'readonly').objectStore(STORE).getAll();
+        req.onsuccess=e=>resolve((e.target.result||[]).sort((a,b)=>b.id-a.id));
+        req.onerror=()=>resolve([]);
+      });
+    },
+
+    getLatest:async function(){
+      const all=await this.getAll();
+      return all.length?all[0]:null;
+    },
+
+    delete:async function(id){
+      await this.initDB();
+      if(_useLS||!_db){
+        const arr=_lsGetAll().filter(x=>x.id!==id);
+        _lsSave(arr);
+        return;
+      }
+      return new Promise((resolve,reject)=>{
+        const req=_db.transaction([STORE],'readwrite').objectStore(STORE).delete(id);
+        req.onsuccess=()=>resolve();
+        req.onerror=()=>reject(new Error('IDB delete failed'));
+      });
+    },
+
+    clear:async function(){
+      await this.initDB();
+      if(_useLS||!_db){_lsSave([]);return;}
+      return new Promise((resolve,reject)=>{
+        const req=_db.transaction([STORE],'readwrite').objectStore(STORE).clear();
+        req.onsuccess=()=>resolve();
+        req.onerror=()=>reject(new Error('IDB clear failed'));
+      });
+    }
+  };
+})();
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODULE A-2 – saveBackupInternal()
+   ═══════════════════════════════════════════════════════════════════ */
+async function saveBackupInternal(){
+  const L=S.lang==='en';
+  try{
+    const nm=appNameClean();
+    const data={version:11,exportDate:new Date().toISOString(),appTitle1:S.appTitle1||'🍹 Mein Tracker',appTitle2:S.appTitle2||'Meine Reise',titleIcon:S.titleIcon||'',
+      tzMode:S.tzMode||'auto',tzOffset:S.tzOffset||0,tzChangeLog:S.tzChangeLog||[],drinks:S.drinks,log:S.log,favorites:[...S.favorites],favOrder:S.favOrder||[],
+      lang:S.lang,fontSize:S.fontSize,dailyGoal:S.dailyGoal,currency:S.currency,catColorMap:S.ccm,dayEndHour:S.dayEndHour||0,dayEndMinute:S.dayEndMinute||0,
+      users:S.users||[],activeUserId:S.activeUserId||'',userBudgets:S.userBudgets||{},
+      voyageRoute:S.voyageRoute||[],currentLocation:S.currentLocation||'',
+      serviceCharge:S.serviceCharge||0,customThemes:S.customThemes||[],btnLayout:S.btnLayout||'plus-left',
+      conceptFavorites:S.conceptFavorites||['kapitaensbuch','atelier','sonnendeck'],conceptTheme:S.conceptTheme||'kapitaensbuch'};
+    const jsonStr=JSON.stringify(data,null,2);
+    const sizeKb=Math.round(jsonStr.length/1024*10)/10;
+    const now=new Date();
+    const label=nm+' '+now.toLocaleDateString(L?'en-US':'de-DE')+' '+now.toLocaleTimeString(L?'en-US':'de-DE',{hour:'2-digit',minute:'2-digit'});
+    await InternalBackupDB.saveBackup({
+      id:Date.now(),
+      date:now.toISOString(),
+      label:label,
+      size_kb:sizeKb,
+      data:jsonStr
+    });
+    showToast(T('bkp.internal.saved'),undefined,4000);
+    renderVerwaltung&&renderVerwaltung();
+  }catch(e){
+    showToast('⚠️ '+(L?'Internal backup failed: ':'Internes Backup fehlgeschlagen: ')+e.message,'error',5000);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODULE A-3 – importLatestInternal()
+   ═══════════════════════════════════════════════════════════════════ */
+async function importLatestInternal(){
+  const L=S.lang==='en';
+  try{
+    const latest=await InternalBackupDB.getLatest();
+    if(!latest){showToast(T('bkp.internal.none'),'warn',4000);return;}
+    const d=new Date(latest.date);
+    const dateStr=d.toLocaleDateString(L?'en-US':'de-DE')+' '+d.toLocaleTimeString(L?'en-US':'de-DE',{hour:'2-digit',minute:'2-digit'});
+    const msg=(L?'⚡ Load last backup from ':'⚡ Letztes Backup vom ')+dateStr+(L?' ?':' laden?');
+    if(confirm(msg)){
+      try{
+        const data=JSON.parse(latest.data);
+        if(!data||(!data.log&&!data.drinks)){showToast('⚠️ '+(L?'Invalid backup data.':'Ungültige Backup-Daten.'),'error',4000);return;}
+        const vl=(data.log||[]).filter(e=>e&&e.time);
+        const vd=Array.isArray(data.drinks)?data.drinks:[];
+        _bkp=Object.assign({},data,{log:vl,drinks:vd});
+        doImport('replace');
+        showToast('✅ '+(L?'Internal backup restored.':'Internes Backup wiederhergestellt.'),'info',4000);
+      }catch(e2){showToast('⚠️ '+(L?'Could not parse backup.':'Backup konnte nicht gelesen werden.'),'error',4000);}
+    }
+  }catch(e){
+    showToast('⚠️ '+(L?'Error loading internal backup: ':'Fehler beim Laden: ')+e.message,'error',5000);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODULE A-4 – renderInternalBackups() → HTML-String
+   ═══════════════════════════════════════════════════════════════════ */
+async function renderInternalBackups(){
+  const L=S.lang==='en';
+  const el=document.getElementById('internalBackupsList');
+  if(!el)return;
+  try{
+    const all=await InternalBackupDB.getAll();
+    if(!all.length){
+      el.innerHTML=`<div style="font-size:11px;color:var(--tx2);padding:10px 0;text-align:center">${L?'No internal backups yet.':'Noch keine internen Backups.'}</div>`;
+      const summary=document.getElementById('internalBackupsSummary');
+      if(summary)summary.innerHTML='';
+      return;
+    }
+    const totalKb=all.reduce((s,b)=>s+(b.size_kb||0),0).toFixed(1);
+    el.innerHTML=all.map(b=>{
+      const d=new Date(b.date);
+      const ds=d.toLocaleDateString(L?'en-US':'de-DE')+' '+d.toLocaleTimeString(L?'en-US':'de-DE',{hour:'2-digit',minute:'2-digit'});
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg2);border:1px solid var(--ac-13);border-radius:8px;margin-bottom:6px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;font-weight:bold;color:var(--tx0)">${esc(b.label||ds)}</div>
+          <div style="font-size:10px;color:var(--tx2)">${esc(ds)} · ${b.size_kb||'?'} KB</div>
+        </div>
+        <button onclick="internalRestoreById(${b.id})" style="padding:5px 9px;font-size:11px;background:var(--ac-13);border:1px solid var(--ac-27);border-radius:6px;color:var(--ac);cursor:pointer;font-family:Georgia,serif;white-space:nowrap;touch-action:manipulation">🔄 ${L?'Restore':'Wiederherstellen'}</button>
+        <button onclick="internalDeleteById(${b.id})" style="padding:5px 7px;font-size:14px;background:transparent;border:none;color:var(--col-err);cursor:pointer;touch-action:manipulation">🗑️</button>
+      </div>`;
+    }).join('');
+    const summary=document.getElementById('internalBackupsSummary');
+    if(summary)summary.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
+      <span style="font-size:10px;color:var(--tx2)">${all.length} ${L?'Backups':'Backups'} · ${totalKb} KB</span>
+      <button onclick="internalClearAll()" style="padding:4px 10px;font-size:10px;background:transparent;border:1px solid var(--col-err-bg);color:var(--col-err);border-radius:6px;cursor:pointer;font-family:Georgia,serif;touch-action:manipulation">🗑️ ${L?'Delete all':'Alle löschen'}</button>
+    </div>`;
+  }catch(e){
+    el.innerHTML=`<div style="font-size:11px;color:var(--col-err)">${L?'Error loading backups.':'Fehler beim Laden.'}</div>`;
+  }
+}
+
+async function internalRestoreById(id){
+  const L=S.lang==='en';
+  try{
+    const all=await InternalBackupDB.getAll();
+    const bkp=all.find(b=>b.id===id);
+    if(!bkp){showToast('⚠️ '+(L?'Backup not found.':'Backup nicht gefunden.'),'error');return;}
+    const d=new Date(bkp.date);
+    const ds=d.toLocaleDateString(L?'en-US':'de-DE')+' '+d.toLocaleTimeString(L?'en-US':'de-DE',{hour:'2-digit',minute:'2-digit'});
+    if(confirm((L?'Restore backup from ':'Backup vom ')+ds+(L?' – replace all current data?':' laden und alle aktuellen Daten ersetzen?'))){
+      const data=JSON.parse(bkp.data);
+      const vl=(data.log||[]).filter(e=>e&&e.time);
+      const vd=Array.isArray(data.drinks)?data.drinks:[];
+      _bkp=Object.assign({},data,{log:vl,drinks:vd});
+      doImport('replace');
+      showToast('✅ '+(L?'Restored.':'Wiederhergestellt.'),'info',3500);
+    }
+  }catch(e){showToast('⚠️ '+(L?'Restore failed: ':'Fehler: ')+e.message,'error',5000);}
+}
+
+async function internalDeleteById(id){
+  const L=S.lang==='en';
+  try{
+    await InternalBackupDB.delete(id);
+    showToast('🗑️ '+(L?'Backup deleted.':'Backup gelöscht.'),'info',2500);
+    renderInternalBackups();
+    renderVerwaltung&&renderVerwaltung();
+  }catch(e){showToast('⚠️ '+(L?'Delete failed: ':'Löschen fehlgeschlagen: ')+e.message,'error',5000);}
+}
+
+async function internalClearAll(){
+  const L=S.lang==='en';
+  if(!confirm(L?'Delete all internal backups?':'Alle internen Backups löschen?'))return;
+  try{
+    await InternalBackupDB.clear();
+    showToast('🗑️ '+(L?'All internal backups deleted.':'Alle internen Backups gelöscht.'),'info',3000);
+    renderInternalBackups();
+    renderVerwaltung&&renderVerwaltung();
+  }catch(e){showToast('⚠️ '+(L?'Failed: ':'Fehler: ')+e.message,'error',5000);}
+}
+
 /* ═══ EXPORT CSV DRINKS ══════════════════════════════════════ */
-function exportDrinksCSV(){const nm=appNameClean();const BOM='\uFEFF';const meta='#TITEL;'+csvEsc(S.appTitle1)+';'+csvEsc(S.appTitle2)+'\n'+'#CURRENCY;'+csvEsc(S.currency)+'\n';const hdr='ID;Kategorie;Name;Preis;Währung;Inklusive\n';const rows=S.drinks.map(d=>[csvEsc(d.id),csvEsc(d.cat),csvEsc(d.name),(()=>{const p=d.price||0;const lang=(S&&S.lang)||'de';const parts=p.toFixed(2).split('.');const intP=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return intP+','+parts[1];})(),csvEsc(S.currency),d.included?'●':''].join(';')).join('\n');const dateStr=new Date().toLocaleDateString(S.lang==='en'?'en-US':'de-DE').replace(/[/.]/g,'-');dl(BOM+meta+hdr+rows,'Getrankeliste_'+nm+'_'+dateStr+'.csv','text/csv;charset=utf-8;');showToast('✅ Getränkeliste '+T('toast.exported'));}
+function exportDrinksCSV(){const nm=appNameClean();const BOM='\uFEFF';const meta='#TITEL;'+csvEsc(S.appTitle1)+';'+csvEsc(S.appTitle2)+'\n'+'#CURRENCY;'+csvEsc(S.currency)+'\n';const hdr='ID;Kategorie;Name;Preis;Währung;Inklusive\n';const rows=S.drinks.map(d=>[csvEsc(d.id),csvEsc(d.cat),csvEsc(d.name),(()=>{const p=d.price||0;const lang=(S&&S.lang)||'de';const parts=p.toFixed(2).split('.');const intP=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return intP+','+parts[1];})(),csvEsc(S.currency),d.included?'●':''].join(';')).join('\n');const dateStr=new Date().toLocaleDateString(S.lang==='en'?'en-US':'de-DE').replace(/[/.]/g,'-');shareOrDownload(BOM+meta+hdr+rows,'Getrankeliste_'+nm+'_'+dateStr+'.csv','text/csv;charset=utf-8;');showToast('✅ Getränkeliste '+T('toast.exported'));}
 
 /* ═══ EXPORT CSV LOG ═════════════════════════════════════════ */
 // FIX V33 F1: App-Zeitzone für Datumsfilter (konsistent mit renderLog)
@@ -4343,7 +4705,9 @@ function exportLogCSV(){
     base.push(_isRouteOverridden(e)?csvEsc('Route geändert: '+_rp):'');
     rows.push(base.join(';'));
   });
-  dl(BOM+tzInfo+hdr+rows.join('\n'),'Protokoll_'+nm+'_'+appFmtDateShort(new Date().toISOString()).replace(/\./g,'-')+'.csv','text/csv;charset=utf-8;');
+  const _csvContent=BOM+tzInfo+hdr+rows.join('\n');
+  const _csvName='Protokoll_'+nm+'_'+appFmtDateShort(new Date().toISOString()).replace(/\./g,'-')+'.csv';
+  shareOrDownload(_csvContent,_csvName,'text/csv;charset=utf-8;');
   showToast('✅ Protokoll '+T('toast.exported'));
 }
 
@@ -6635,8 +6999,8 @@ function renderVerwaltung(){
       <div style="display:flex;align-items:center;gap:7px">
         <span style="font-size:20px">💾</span>
         <div>
-          <div style="font-size:11px;font-weight:bold;color:var(--ac);letter-spacing:1px;text-transform:uppercase">${L?'Backup &amp; Data':'Backup &amp; Daten'}</div>
-          <div style="font-size:10px;color:var(--tx2);margin-top:1px">${L?'Protect your cruise diary – back up regularly!':'Reisetagebuch sichern – regelmäßig erstellen!'}</div>
+          <div style="font-size:11px;font-weight:bold;color:var(--ac);letter-spacing:1px;text-transform:uppercase">${T('manage.backup.title')}</div>
+          <div style="font-size:10px;color:var(--tx2);margin-top:1px">${T('manage.backup.hint')}</div>
         </div>
       </div>
     </div>
@@ -6647,28 +7011,40 @@ function renderVerwaltung(){
     <!-- Letztes Backup -->
     ${bkpStatusHtml}
 
-    <!-- ── Primäre Aktionen: Backup ──────────── -->
-    <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin:10px 0 6px">${L?'Full backup (all data)':'Vollständiges Backup (alle Daten)'}</div>
-    <div class="adm-bkp-actions" style="grid-template-columns:1fr 1fr 1fr">
-      <button class="adm-btn-primary" onclick="exportBackup()">
-        <span class="adm-bico">📤</span>
-        <span>${L?'Save Backup':'Backup speichern'}</span>
-        <span style="font-size:9px;font-weight:normal;opacity:.8">JSON · ${L?'Download':'Download'}</span>
+    <!-- ── SCHNELL-BACKUP ──────────── -->
+    <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin:12px 0 6px">${L?'Quick backup (this device)':'Schnell-Backup (dieses Gerät)'}</div>
+    <div class="adm-bkp-actions" style="grid-template-columns:1fr 1fr">
+      <button class="adm-btn-primary" onclick="saveBackupInternal()">
+        <span class="adm-bico">💾</span>
+        <span>${T('manage.backup.save')}</span>
+        <span style="font-size:9px;font-weight:normal;opacity:.8">${L?'Instant, no dialog':'Sofort, kein Dialog'}</span>
       </button>
-      <button class="adm-btn-primary" onclick="shareBackup()" style="background:linear-gradient(135deg,#1a4060,#0d2a45);box-shadow:0 2px 12px rgba(30,90,160,0.30)">
-        <span class="adm-bico">📡</span>
-        <span>${L?'Share Backup':'Backup teilen'}</span>
-        <span style="font-size:9px;font-weight:normal;opacity:.8">${L?'AirDrop &amp; more':'AirDrop &amp; mehr'}</span>
+      <button class="adm-btn-primary" onclick="importLatestInternal()" style="background:linear-gradient(135deg,#1a4060,#0d2a45);box-shadow:0 2px 12px rgba(30,90,160,0.30)">
+        <span class="adm-bico">⚡</span>
+        <span>${T('manage.backup.loadlatest')}</span>
+        <span style="font-size:9px;font-weight:normal;opacity:.8">${L?'Last internal backup':'Letztes internes Backup'}</span>
+      </button>
+    </div>
+    <div style="font-size:10px;color:var(--tx2);margin:4px 0 10px;line-height:1.4">${L?'Saves immediately on this device. No dialog needed.':'Sichert sofort auf diesem Gerät. Kein Dialog nötig.'}</div>
+
+    <!-- ── EXTERNE SICHERUNG ──────────── -->
+    <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin:4px 0 6px">${L?'External backup (other devices)':'Externe Sicherung (andere Geräte)'}</div>
+    <div class="adm-bkp-actions" style="grid-template-columns:1fr 1fr">
+      <button class="adm-btn-primary" onclick="shareBackup()" style="background:linear-gradient(135deg,#1a3040,#0a1f30)">
+        <span class="adm-bico">📤</span>
+        <span>${T('manage.backup.export')}</span>
+        <span style="font-size:9px;font-weight:normal;opacity:.8">AirDrop · iCloud</span>
       </button>
       <label class="adm-btn-primary adm-btn-import" style="cursor:pointer">
         <span class="adm-bico">📥</span>
-        <span>${L?'Restore Backup':'Backup laden'}</span>
-        <span style="font-size:9px;opacity:.7">JSON · ${L?'Merge or replace':'Ergänzen/Ersetzen'}</span>
+        <span>${T('manage.backup.import')}</span>
+        <span style="font-size:9px;opacity:.7">${L?'Merge or replace':'Ergänzen/Ersetzen'}</span>
         <input type="file" accept=".json" id="bkpFileInput" onchange="onBkpFile(this)" style="display:none">
       </label>
     </div>
+    <div style="font-size:10px;color:var(--tx2);margin:4px 0 10px;line-height:1.4">${L?'For other devices, iCloud Drive, AirDrop.':'Für andere Geräte, iCloud Drive, AirDrop.'}</div>
 
-    <!-- ── Sekundäre Aktionen: Export & Übertragen ──── -->
+    <!-- ── SEKUNDÄRE AKTIONEN: Export & Übertragen ──── -->
     <button onclick="
       const p=document.getElementById('bkpExtraPanel');
       const open=p.style.display!=='none';
@@ -6704,6 +7080,33 @@ function renderVerwaltung(){
     </div>
     </div>
 
+    <!-- ── GESPEICHERTE BACKUPS ──────────── -->
+    <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin:14px 0 6px">${L?'Saved backups (this device)':'Gespeicherte Backups (dieses Gerät)'}</div>
+    <div id="internalBackupsList"><div style="font-size:11px;color:var(--tx2);padding:8px 0">${L?'Loading…':'Lade…'}</div></div>
+    <div id="internalBackupsSummary"></div>
+
+  </div>
+
+  <!-- ── GERÄTE-SYNCHRONISATION (nur wenn aktiviert) ──── -->
+  <div class="adm-card" id="vw-sync-section" style="border-color:var(--ac-20);display:${S.syncEnabled?'block':'none'}">
+    <div class="adm-card-hdr" onclick="toggleVwSec('sync')">
+      <span class="adm-card-hdr-ico">🔄</span>
+      <div class="adm-card-hdr-body">
+        <div class="adm-card-hdr-title">${T('manage.sync.title')}</div>
+        <div class="adm-card-hdr-sub">${S.lastSyncDate?T('manage.sync.last')+' '+new Date(S.lastSyncDate).toLocaleDateString(L?'en-US':'de-DE')+' '+new Date(S.lastSyncDate).toLocaleTimeString(L?'en-US':'de-DE',{hour:'2-digit',minute:'2-digit'}):T('manage.sync.never')}</div>
+      </div>
+      <span class="adm-card-hdr-arr${S.vwOpen&&S.vwOpen.sync?' open':''}">►</span>
+    </div>
+    <div class="adm-card-body${S.vwOpen&&S.vwOpen.sync?' open':''}">
+      <div style="padding-top:10px">
+        <button class="adm-btn-primary" onclick="createSyncPackage()" style="width:100%;margin-bottom:10px">
+          <span class="adm-bico">📦</span>
+          <span>${T('manage.sync.send')}</span>
+        </button>
+        <div style="font-size:10px;color:var(--tx2);line-height:1.5">${L?'Send your entries via AirDrop, iMessage or WhatsApp. The recipient taps the file – done. Entries only, no settings.':'Sende deine Einträge per AirDrop, iMessage oder WhatsApp. Der Empfänger tippt die Datei an – fertig.'} <em>${T('manage.sync.hint')}</em></div>
+        <div style="font-size:10px;color:var(--tx2);margin-top:6px">${T('manage.sync.last')} <strong style="color:var(--tx1)">${S.lastSyncDate?new Date(S.lastSyncDate).toLocaleDateString(L?'en-US':'de-DE')+' '+new Date(S.lastSyncDate).toLocaleTimeString(L?'en-US':'de-DE',{hour:'2-digit',minute:'2-digit'}):T('manage.sync.never')}</strong></div>
+      </div>
+    </div>
   </div>
 
 
@@ -7013,6 +7416,16 @@ function renderVerwaltung(){
         </div>
       </div>
 
+      <!-- Geräte-Synchronisation Toggle -->
+      <div class="adm-row" style="border-top:1px solid var(--ac-07);margin-top:10px;padding-top:10px">
+        <div style="flex:1">
+          <div class="adm-row-label" style="font-size:12px;font-weight:bold;color:var(--tx0)">${T('settings.sync.label')}</div>
+          <div style="font-size:10px;color:var(--tx2);margin-top:2px;line-height:1.4">${T('settings.sync.hint')}</div>
+        </div>
+        <div class="adm-row-ctrl">
+          <button class="sbtn${S.syncEnabled?' on':''}" onclick="S.syncEnabled=!S.syncEnabled;saveStateDebounced();renderVerwaltung();">${S.syncEnabled?(L?'On':'An'):(L?'Off':'Aus')}</button>
+        </div>
+      </div>
 
     </div>
   </div>
@@ -7310,6 +7723,8 @@ function renderVerwaltung(){
   const dm=document.getElementById('drinkMgmt');
   if(dm)dm.addEventListener('click',drinkMgmtClick);
   // vwClockDisp is updated by the global updateClock() interval – no local interval needed
+  // Render internal backups list asynchronously (IndexedDB)
+  setTimeout(()=>renderInternalBackups(),50);
 }
 
 function saveTzFixed(){
@@ -7703,6 +8118,12 @@ function renderHelp(){
       <div class="hlp-row"><span class="hlp-badge blue">📊 ${h('Protokoll CSV','Log CSV')}</span><span>${h('Exportiert das <strong>vollständige</strong> Protokoll als CSV-Datei (kein Filter, alle Einträge). Felder: Datum, Uhrzeit, Zeitzone, Nutzer, Getränkename, Preis, Kategorie, Hafen/Ort, Notiz. CSV-Import empfangen: Edge → Downloads → Teilen → Numbers oder Excel.','Exports the <strong>complete</strong> log as a CSV file (no filter, all entries). Fields: date, time, timezone, user, drink name, price, category, port/location, note. Receive CSV: Edge → Downloads → Share → Numbers or Excel.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">📄 ${h('PDF-Reisebericht','PDF voyage report')}</span><span>${h('Öffnet einen vollständigen <strong>Reisebericht</strong> als neue Browser-Seite (HTML-Druckansicht). Enthält:<br>• Übersichts-KPIs (Gesamtbetrag, Anzahl, Tage, Durchschnitte)<br>• Top-10-Getränke<br>• Ausgaben pro Nutzer (mit Budget falls gesetzt)<br>• Ausgaben nach Hafen (falls Hafen-Daten vorhanden)<br>• Ausgaben nach Kategorie<br>• Zeitzonenverlauf der Reise (falls vorhanden)<br>• Tagesübersicht (bis 365 Tage)<br>In Edge: <strong>Teilen → Drucken</strong> → Ziel: <strong>Als PDF sichern</strong> → iCloud Drive. Enthält immer <em>alle</em> Einträge, kein Filter.','Opens a complete <strong>voyage report</strong> as a new browser page (HTML print view). Contains:<br>• Overview KPIs (total, count, days, averages)<br>• Top-10 drinks<br>• Spending per user (with budget if set)<br>• Spending by port (if port data exists)<br>• Spending by category<br>• Timezone journey of the voyage (if present)<br>• Daily overview (up to 365 days)<br>In Edge: <strong>Share → Print</strong> → target: <strong>Save as PDF</strong> → iCloud Drive. Always contains <em>all</em> entries, no filter.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">📤 ${h('Export &amp; Übertragung','Export &amp; Transfer')}</span><span>${h('Unter Backup &amp; Daten im Verwaltungs-Tab. CSV, App-Export und weitere Optionen sind hinter <strong>„Export &amp; Übertragung"</strong> versteckt – antippen zum Aufklappen.','Under Backup &amp; Data in the Settings tab. CSV, app export and more are behind <strong>"Export &amp; Transfer"</strong> – tap to expand.')}</span></div>
+    <div class="hlp-card">
+      <div class="hlp-card-title">💾 ${h('Daten sichern &amp; synchronisieren','Backup &amp; sync data')}</div>
+      <div class="hlp-row"><span class="hlp-badge gold">💾 ${h('Intern speichern','Save internally')}</span><span>${h('Speichert sofort auf diesem Gerät. Schnell, kein Dialog. Bis zu 5 Backups werden intern gehalten – älteste werden automatisch gelöscht.','Saves instantly on this device. Fast, no dialog. Up to 5 backups are kept internally – oldest are deleted automatically.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge gold">📤 ${h('Exportieren','Export')}</span><span>${h('Erstellt eine Datei für iCloud, AirDrop, WhatsApp etc. Für regelmäßige externe Sicherungen.','Creates a file for iCloud, AirDrop, WhatsApp etc. For regular external backups.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge gold">⚡ ${h('Letztes Backup laden','Load latest backup')}</span><span>${h('Stellt das letzte interne Backup sofort wieder her.','Restores the last internal backup instantly.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">📦 ${h('Sync-Paket','Sync package')}</span><span>${h('Tauscht Protokoll-Einträge mit anderen Geräten aus – ohne Internet. Einstellungen bleiben unberührt. Per AirDrop (nebeneinander) oder iMessage/WhatsApp (auf Distanz). Aktivierung unter Einstellungen → 🔄 Geräte-Synchronisation.','Exchanges log entries with other devices – no internet needed. Settings stay untouched. Via AirDrop (nearby) or iMessage/WhatsApp (across distances). Enable under Settings → 🔄 Device sync.')}</span></div>
     </div>
 
     <div class="hlp-card">
@@ -8311,7 +8732,11 @@ lang:S.lang,fontSize:S.fontSize,dailyGoal:S.dailyGoal,currency:S.currency,catCol
 voyageRoute:S.voyageRoute||[],currentLocation:S.currentLocation||'',
 serviceCharge:S.serviceCharge||0,customThemes:S.customThemes||[],btnLayout:S.btnLayout||'plus-left',conceptFavorites:S.conceptFavorites||['kapitaensbuch','atelier','sonnendeck'],conceptTheme:S.conceptTheme||'kapitaensbuch'};
   const dateStr=new Date().toLocaleDateString(S.lang==='en'?'en-US':'de-DE');
-  const _bfh=Math.floor(Math.abs(appOffset())/60),_bfm=Math.abs(appOffset())%60;const _bfTag='_UTC'+(appOffset()>=0?'+':'-')+_bfh+(_bfm?'-'+String(_bfm).padStart(2,'0'):'');dl(JSON.stringify(data,null,2),'Backup_'+nm+'_'+dateStr.replace(/[/.]/g,'-')+_bfTag+'.json','application/json');S.lastBackupDate=new Date().toISOString();saveStateDebounced();}
+  const _bfh=Math.floor(Math.abs(appOffset())/60),_bfm=Math.abs(appOffset())%60;const _bfTag='_UTC'+(appOffset()>=0?'+':'-')+_bfh+(_bfm?'-'+String(_bfm).padStart(2,'0'):'');
+  const _fname='Backup_'+nm+'_'+dateStr.replace(/[/.]/g,'-')+_bfTag+'.json';
+  const _json=JSON.stringify(data,null,2);
+  shareOrDownload(_json,_fname,'application/json');
+  S.lastBackupDate=new Date().toISOString();saveStateDebounced();}
 /* ═══════════════════════════════════════════════════════════════════
    V46: Smart Merge – Protokoll teilen ohne Einstellungen zu überschreiben
    Jeder Eintrag hat eine eindeutige uid. Beim Import werden nur
@@ -8341,6 +8766,71 @@ async function smartMerge(incomingLogs){
   updateHeader();updateLimitBanner();
   const L=S.lang==='en';
   showToast('✅ '+newEntries.length+' '+(L?'new entries added':'neue Einträge hinzugefügt')+(dupes>0?' ('+dupes+' '+(L?'duplicates skipped':'Duplikate übersprungen')+')'  :''),'info',5000);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODULE E – GERÄTE-SYNCHRONISATION
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* E-3: createSyncPackage() */
+async function createSyncPackage(){
+  const L=S.lang==='en';
+  try{
+    if(!S.syncEnabled){showToast(L?'Sync not activated.':'Sync nicht aktiviert.','warn',3000);return;}
+    // UIDs für alle Einträge sicherstellen
+    S.log=S.log.map(e=>e.uid?e:{...e,uid:'sp_'+e.time+'_'+Math.random().toString(36).slice(2,7)});
+    const activeUser=S.users&&S.activeUserId?S.users.find(u=>u.id===S.activeUserId):null;
+    const deviceLabel=activeUser?activeUser.name:'Gerät';
+    const now=new Date();
+    const appName=(S.appTitle1||'Tracker').replace(/[^a-zA-Z0-9äöüÄÖÜß\- ]/g,'').trim().replace(/ /g,'_');
+    const ds=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    const fname='Sync_'+appName+'_'+ds+'_'+deviceLabel.replace(/[^a-zA-Z0-9]/g,'_')+'.json';
+    const payload={
+      type:'sync_package',
+      version:1,
+      created:now.toISOString(),
+      deviceLabel:deviceLabel,
+      appTitle:S.appTitle1||'Mein Tracker',
+      entryCount:S.log.length,
+      log:S.log
+    };
+    const jsonStr=JSON.stringify(payload,null,2);
+    await shareOrDownload(jsonStr,fname,'application/json');
+    S.lastSyncDate=now.toISOString();
+    saveStateDebounced();
+    renderVerwaltung&&renderVerwaltung();
+    showToast(L?'📦 Sync package shared':'📦 Sync-Paket geteilt','info',3000);
+  }catch(e){
+    if(e&&e.name!=='AbortError')showToast('⚠️ '+(L?'Sync failed: ':'Sync fehlgeschlagen: ')+e.message,'error',5000);
+  }
+}
+
+/* E-4: handleIncomingSyncPackage() */
+async function handleIncomingSyncPackage(data){
+  const L=S.lang==='en';
+  try{
+    if(!S.syncEnabled){
+      showToast(L?'Sync not activated.':'Sync nicht aktiviert.','warn',3000);
+      return;
+    }
+    if(!data||data.type!=='sync_package'||!Array.isArray(data.log)){
+      showToast('⚠️ '+(L?'Invalid sync package.':'Ungültiges Sync-Paket.'),'error',4000);
+      return;
+    }
+    const d=data.created?new Date(data.created):new Date();
+    const ds=d.toLocaleDateString(L?'en-US':'de-DE')+', '+d.toLocaleTimeString(L?'en-US':'de-DE',{hour:'2-digit',minute:'2-digit'});
+    const msg='📦 '+(L?'Sync package from ':'Sync-Paket von ')+esc(data.deviceLabel||'?')+'\n'
+      +(data.entryCount||data.log.length)+' '+(L?'entries':'Einträge')+' · '+(L?'Created: ':'Erstellt: ')+ds+'\n'
+      +(L?'New entries will be added to yours.':'Neue Einträge werden zu deinen hinzugefügt.');
+    if(confirm(msg)){
+      await smartMerge(data.log);
+      S.lastSyncDate=new Date().toISOString();
+      saveStateDebounced();
+      renderVerwaltung&&renderVerwaltung();
+    }
+  }catch(e){
+    showToast('⚠️ '+(L?'Sync error: ':'Sync-Fehler: ')+e.message,'error',5000);
+  }
 }
 
 /* exportProtocol() – nur Einträge, keine Einstellungen (für Smart Merge) */
@@ -8498,6 +8988,12 @@ function onBkpFile(inp){
   r.onload=ev=>{
     try{
       const data=JSON.parse(ev.target.result);
+      // Module E-5: Sync-Paket erkennen
+      if(data.type==='sync_package'&&Array.isArray(data.log)){
+        inp.value='';
+        handleIncomingSyncPackage(data);
+        return;
+      }
       // V46: Protokoll-Datei (type:'protocol') → Smart Merge ohne Einstellungen
       if(data.type==='protocol'&&Array.isArray(data.logs)){
         smartMerge(data.logs);
@@ -9733,6 +10229,13 @@ async function loadStateFromDB(){
   }
 }
 
+/* MANIFEST.JSON – file_handlers ergänzen (außerhalb dieser Datei):
+   "file_handlers": [{
+     "action": "/",
+     "accept": { "application/json": [".json"] }
+   }]
+   Voraussetzung: PWA installiert (Home-Bildschirm), iOS 16.4+
+*/
 /* initApp() – asynchrone Startlogik (ersetzt synchrones Inline-Init) */
 async function initApp(){
   try{
@@ -9775,7 +10278,7 @@ function _initUI(){
   switchTab(0);
   setTimeout(function(){try{maybeShowSwipeHint();}catch(e){}},1200);
   updateClock();
-  setTimeout(()=>{checkBackupReminder();updateAdmBadge();},1500);
+  setTimeout(()=>{checkBackupReminder();updateAdmBadge();checkInternalBackupReminder();},1800);
   setTimeout(()=>checkFutureEntries(),2000);
   setTimeout(()=>checkShipTimeWarning(),500);
   // V46: Offline-Dot initialisieren
@@ -10519,17 +11022,28 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
   function _tryLaunchQueue(){
     if(!window.launchQueue)return;
     try{
-      window.launchQueue.setConsumer(function(lp){
+      window.launchQueue.setConsumer(async function(lp){
         if(!lp.files||!lp.files.length)return;
-        lp.files[0].getFile().then(function(file){
-          if(!file.name.endsWith('.json'))return;
-          file.text().then(function(text){
+        for(var i=0;i<lp.files.length;i++){
+          try{
+            var file=await lp.files[i].getFile();
+            if(!file.name.endsWith('.json'))continue;
+            var text=await file.text();
             try{
               var data=JSON.parse(text);
-              if(data&&Array.isArray(data.log))setTimeout(function(){window._handleImportData(data);},700);
-            }catch(e){}
-          }).catch(function(){});
-        }).catch(function(){});
+              // Sync-Paket
+              if(data&&data.type==='sync_package'&&Array.isArray(data.log)){
+                setTimeout(function(d){handleIncomingSyncPackage(d);}(data),700);
+                break;
+              }
+              // Backup-Datei
+              if(data&&(data.version||Array.isArray(data.log))){
+                setTimeout(function(d){window._handleImportData(d);}(data),700);
+                break;
+              }
+            }catch(e){try{showToast('⚠️ Datei konnte nicht gelesen werden','error',4000);}catch(e2){}}
+          }catch(fe){}
+        }
       });
     }catch(e){}
   }
@@ -10539,7 +11053,12 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
       if(typeof isVE!=='function'||typeof isVD!=='function'){
         showToast('⚠️ App noch nicht bereit – bitte erneut tippen.','warn',3000);return;
       }
-      var vl=data.log.filter(isVE);
+      // Sync-Paket erkennen (Module E-5)
+      if(data.type==='sync_package'&&Array.isArray(data.log)){
+        setTimeout(function(){handleIncomingSyncPackage(data);},200);
+        return;
+      }
+      var vl=data.log?data.log.filter(isVE):[];
       var vd=Array.isArray(data.drinks)?data.drinks.filter(isVD):[];
       // Protocol-type (Smart Merge) – direkt verarbeiten, kein Dialog
       if(data.type==='protocol'&&Array.isArray(data.logs)){
