@@ -409,7 +409,7 @@ body.fz-xlarge #hdrUserDotMini{font-size:15px!important}
 html.theme-transitioning *{transition:background-color 0.28s ease,border-color 0.28s ease,color 0.18s ease,box-shadow 0.28s ease !important;}
 html{background:var(--bg);height:100%;width:100%}
 html,body{overflow:hidden;position:fixed;width:100%}
-body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0);overscroll-behavior:contain;-webkit-text-size-adjust:100%;padding-top:env(safe-area-inset-top,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0);overscroll-behavior:contain;overscroll-behavior-y:none;-webkit-text-size-adjust:100%;padding-top:env(safe-area-inset-top,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 /* #app: flex-Spalte, kein eigenes Scrollen — Panes scrollen intern */
 #app{max-width:480px;margin:0 auto;height:100%;height:100dvh;display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;background:var(--bg)}
 /* Safe-Area: wird über padding-bottom der Panes gehandhabt */
@@ -1883,7 +1883,7 @@ details.hlp-acc summary:active{opacity:.75}
 /* ═══════════════════════════════════════════════════════════════
    TRANSLATIONS – Complete DE / EN
 ═══════════════════════════════════════════════════════════════ */
-const APP_VERSION = 'V44';
+const APP_VERSION = 'V47';
 const I18N = {
   de:{
     'tab.drinks':'Getränke','tab.log':'Protokoll','tab.stats':'Statistik','tab.manage':'Verwaltung','tab.help':'Hilfe',
@@ -2918,7 +2918,7 @@ function renderCustomThemeEditor(){
     </div>
 
     <!-- Vorschau oben -->
-    <div style="margin-bottom:18px">
+    <div style="position:sticky;top:0;z-index:10;background:var(--bg);padding-bottom:10px;margin-bottom:8px">
       <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">${L?'▶ Live Preview (updates automatically)':'▶ Live-Vorschau (aktualisiert automatisch)'}</div>
       ${preview}
     </div>
@@ -3994,32 +3994,9 @@ function checkFutureEntries(){
 }
 
 /* ═══ BACKUP BANNER ═════════════════════════════════════════ */
+/* V47: showStorageOverflowDialog, _stoOverflowDialogShown und updateStorageBanner
+   entfernt – App nutzt seit V46 IndexedDB (kein 5-MB-Limit mehr). */
 function hideStoWarn(){const b=document.getElementById('storageBanner');if(b)b.style.display='none';}
-let _stoOverflowDialogShown=false;
-function showStorageOverflowDialog(){
-  // V46: entfällt – IndexedDB hat kein festes Limit
-  return;
-  if(_stoOverflowDialogShown)return;
-  _stoOverflowDialogShown=true;
-  const L=S.lang==='en';
-  const mb=(storageSz()/1024/1024).toFixed(1);
-  const ov=document.createElement('div');
-  ov.id='stoOverflowDlg';
-  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box';
-  ov.innerHTML=`<div style="background:var(--bg1);border-radius:16px;padding:22px 18px;max-width:340px;width:100%;font-family:Georgia,serif;box-shadow:0 8px 40px rgba(0,0,0,0.6);border:2px solid #dd6633">
-    <div style="font-size:28px;text-align:center;margin-bottom:10px">⚠️</div>
-    <div style="font-size:15px;font-weight:bold;color:#dd8833;text-align:center;margin-bottom:8px">${L?'Storage almost full!':'Speicher fast voll!'}</div>
-    <div style="font-size:12px;color:var(--tx1);line-height:1.6;margin-bottom:16px;text-align:center">${L?`${mb} MB of ~5 MB used. Please create a backup immediately and delete older data to prevent data loss!`:`${mb} MB von ~5 MB belegt. Bitte sofort ein Backup erstellen und ältere Daten löschen, um Datenverlust zu verhindern!`}</div>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <button onclick="exportBackup();document.getElementById('stoOverflowDlg').remove();_stoOverflowDialogShown=false;" style="padding:11px;background:#dd6633;color:#fff;border:none;border-radius:10px;font-family:Georgia,serif;font-size:13px;font-weight:bold;cursor:pointer;touch-action:manipulation">💾 ${L?'Create backup now':'Backup jetzt erstellen'}</button>
-      <button onclick="switchTab(3);document.getElementById('stoOverflowDlg').remove();_stoOverflowDialogShown=false;" style="padding:10px;background:var(--bg2);color:var(--tx0);border:1px solid var(--ac-27);border-radius:10px;font-family:Georgia,serif;font-size:12px;cursor:pointer;touch-action:manipulation">⚙️ ${L?'Go to management (delete data)':'Zur Verwaltung (Daten löschen)'}</button>
-      <button onclick="document.getElementById('stoOverflowDlg').remove();_stoOverflowDialogShown=false;" style="padding:8px;background:transparent;color:var(--tx2);border:none;font-family:Georgia,serif;font-size:11px;cursor:pointer;touch-action:manipulation">${L?'Dismiss (not recommended)':'Schließen (nicht empfohlen)'}</button>
-    </div>
-  </div>`;
-  document.body.appendChild(ov);
-}
-function updateStorageBanner(){return; /* V46: IndexedDB – kein Limit */
-const sz=0;const b=document.getElementById('storageBanner');if(!b)return;const mb=sz/1024/1024;if(mb>4.5){const pct=(mb).toFixed(1);const msg=S.lang==='en'?`Storage ${pct} MB of ~5 MB used – please create a backup and delete old data!`:`Speicher: ${pct} MB von ~5 MB belegt – bitte Backup erstellen und alte Daten löschen!`;document.getElementById('storageBannerMsg').textContent=msg;b.style.display='flex';}else{b.style.display='none';}}
 function checkBackupReminder(){
   if(S.log.length<30){updateAdmBadge();return;}
   const warnKey='a4_bkp_warn_day';
@@ -4964,9 +4941,12 @@ function exportPDFReport(){
         iframe.contentWindow.print();
         _printed=true;
       }catch(e){_printed=false;}
+      // FIX V47: Kein window.open('_blank') – würde Nutzer aus der PWA werfen.
+      // Stattdessen shareOrDownload() → iOS-Teilen-Dialog bleibt in der App.
       setTimeout(function(){
         if(!_printed){
-          window.open(url,'_blank');
+          const fname=(appNameClean()+'_Report.html');
+          shareOrDownload(h,fname,'text/html;charset=utf-8');
         }
       },1200);
     };
@@ -8008,7 +7988,7 @@ function renderHelp(){
       <div class="hlp-row"><span class="hlp-badge gold">${h('Tagesziel-Balken','Daily goal bar')}</span><span>${h('Wenn ein Tageslimit gesetzt ist (Verwaltung → Einstellungen → Tageslimit), erscheint in der Kopfzeile ein Fortschrittsbalken mit Betrag und Prozentwert:<br>• <strong>Grün</strong> = unter 80 % des Limits<br>• <strong>Orange</strong> = 80–99 %<br>• <strong>Rot + 🚨</strong> = Limit überschritten','When a daily limit is set (Management → Settings → Daily limit), a progress bar appears in the header:<br>• <strong>Green</strong> = below 80 % of limit<br>• <strong>Orange</strong> = 80–99 %<br>• <strong>Red + 🚨</strong> = limit exceeded')}</span></div>
       <div class="hlp-row"><span class="hlp-badge red">🚨 ${h('Limit-Banner','Limit banner')}</span><span>${h('Wenn das Tageslimit überschritten ist, erscheint ein blinkender roter 🚨-Banner direkt unter der Kopfzeile. Er verschwindet automatisch am nächsten Schiffstag.','When the daily limit is exceeded, a flashing red 🚨 banner appears directly below the header. It disappears automatically the next ship day.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge orange">💾 ${h('Backup-Erinnerung','Backup reminder')}</span><span>${h('Erscheint als dezenter Toast-Hinweis (einmal pro Tag), wenn mehr als 30 Einträge vorhanden sind und seit mehr als 72 Stunden kein Backup erstellt wurde. Zusätzlich erscheint ein <strong>roter Punkt</strong> am ⚙️ Verwaltungs-Tab, bis ein Backup erstellt wird. Backup nur über <strong>Verwaltung → Backup &amp; Daten</strong> erstellen.','Appears as a subtle toast notification (once per day) when more than 30 entries exist and no backup was created for more than 72 hours. Additionally a <strong>red dot</strong> appears on the ⚙️ Settings tab until a backup is created. Create backups via <strong>Settings → Backup &amp; Data</strong> only.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge red">⚠️ ${h('Speicher-Warnung','Storage warning')}</span><span>${h('Erscheint als oranger Banner, wenn mehr als 4,5 MB von ~5 MB Browserspeicher belegt sind. Sofort Backup erstellen und ältere Daten löschen, bevor der Speicher voll ist!','Appears as an orange banner when more than 4.5 MB of ~5 MB browser storage is used. Create a backup immediately and delete older data before storage is full!')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge green">✅ ${h('Speicher: kein Limit','Storage: no limit')}</span><span>${h('Die App speichert in IndexedDB – kein 5-MB-Limit mehr. Hunderte MB sind möglich. iOS löscht diese Daten nicht automatisch. Regelmäßige Backups sind trotzdem empfohlen!','The app stores data in IndexedDB – no 5 MB limit. Hundreds of MB are possible. iOS does not delete this data automatically. Regular backups are still recommended!')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">📱 ${h('App zum Homescreen','App to homescreen')}</span><span>${h('Ein blauer Banner erscheint gelegentlich mit dem Hinweis, die App zum iPhone-Homescreen hinzuzufügen. Schaltfläche <strong>Anleitung</strong> zeigt Schritt-für-Schritt-Anleitung. ✕ schließt den Banner dauerhaft. <em>Hinweis: Die App funktioniert auch ohne Homescreen-Icon – der Hinweis ist optional.</em>','A blue banner occasionally suggests adding the app to the iPhone home screen. Tap <strong>Guide</strong> for step-by-step instructions. ✕ permanently dismisses the banner. <em>Note: The app works fine without a home screen icon – the hint is optional.</em>')}</span></div>
     </div>
 
@@ -8182,7 +8162,7 @@ function renderHelp(){
 
     <div class="hlp-card" style="margin-top:10px">
       <div class="hlp-card-title">💾 ${h('Backup &amp; Daten (immer sichtbar)','Backup &amp; Data (always visible)')}</div>
-      <div class="hlp-row"><span class="hlp-badge blue">💽 ${h('Speicherbalken','Storage bar')}</span><span>${h('Zeigt den belegten Browser-Speicher als Balken und Prozentwert (max. ~5 MB). Ab ~90 % wird der Balken rot → sofort Backup erstellen und ggf. einen Reset durchführen!','Shows used browser storage as bar and percentage (max. ~5 MB). Above ~90 % the bar turns red → create a backup immediately and consider a reset!')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">💽 ${h('Speicher','Storage')}</span><span>${h('Die App nutzt IndexedDB – kein festes Speicherlimit. Einträge werden zuverlässig gespeichert, egal wie lang die Reise dauert. Regelmäßige Backups trotzdem empfohlen.','The app uses IndexedDB – no fixed storage limit. Entries are saved reliably no matter how long the voyage. Regular backups are still recommended.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge gold">📤 ${h('Backup speichern','Save backup')}</span><span>${h('Speichert <strong>alle Daten</strong> als JSON-Datei (Download): Getränkeliste, komplettes Protokoll, Einstellungen, Nutzer-Profile, Reisebudgets, Zeitzone, Farbschema, Titelzeilen. Im Edge-Download-Menü die Datei antippen → <strong>Teilen</strong> → <em>In Dateien sichern</em> → iCloud Drive oder „Auf meinem iPhone".','Saves <strong>all data</strong> as a JSON file (download): drink list, complete log, settings, user profiles, travel budgets, timezone, colour scheme, title lines. In Edge downloads tap the file → <strong>Share</strong> → <em>Save to Files</em> → iCloud Drive or "On My iPhone".')}</span></div>
       <div class="hlp-row"><span class="hlp-badge gold">📡 ${h('Backup teilen','Share backup')}</span><span>${h('Öffnet den <strong>nativen iOS-Teilen-Dialog</strong> direkt aus der App heraus – ohne Umweg über das Edge-Download-Menü. Die Backup-JSON-Datei wird über folgende Wege geteilt:<br>• <strong>AirDrop</strong>: Empfänger-iPhone erscheint im Sheet → Ein Tap → Datei wird übertragen → landet in Dateien-App des Empfängers<br>• <strong>WhatsApp / iMessage / Signal</strong>: Kontakt wählen → Senden → Empfänger kann Anhang direkt in Dateien sichern<br>• <strong>E-Mail</strong>: Mail-App öffnet sich, Datei als Anhang, Betreff vorausgefüllt<br>• <strong>In Dateien sichern</strong>: Ordner auf eigenem Gerät wählen (lokales Backup, kein Empfänger nötig)<br>• <strong>iCloud Drive / Google Drive / Dropbox</strong>: falls installiert, erscheinen direkt im Sheet<br><em>Hinweis: Der Empfänger erhält die JSON-Backup-Datei (nicht die App selbst). Er importiert sie über VERWALTUNG → 📥 Backup laden.</em>','Opens the <strong>native iOS share sheet</strong> directly from within the app – without going via the Edge download menu. The backup JSON file can be shared via:<br>• <strong>AirDrop</strong>: recipient iPhone appears in the sheet → one tap → file is transferred → lands in recipient\'s Files app<br>• <strong>WhatsApp / iMessage / Signal</strong>: choose contact → send → recipient can save attachment to Files<br>• <strong>Email</strong>: Mail app opens with file attached, subject pre-filled<br>• <strong>Save to Files</strong>: choose a folder on your own device (local backup, no recipient needed)<br>• <strong>iCloud Drive / Google Drive / Dropbox</strong>: if installed, appear directly in the sheet<br><em>Note: the recipient gets the JSON backup file (not the app itself). They import it via MANAGEMENT → 📥 Restore backup.</em>')}</span></div>
       <div class="hlp-row"><span class="hlp-badge gold">📥 ${h('Backup importieren','Import backup')}</span><span>${h('JSON-Datei auswählen → <strong>Vorschau</strong> zeigt Details (Exportdatum, Zeitraum, Anzahl Einträge, neue Einträge, bereits vorhandene) → dann wählen:<br>• <strong>📥 Ergänzen (Merge)</strong> – fügt nur neue Einträge hinzu, vorhandene Daten und Einstellungen bleiben erhalten. Sicher für tägliche Synchronisation. Duplikate werden automatisch erkannt und übersprungen.<br>• <strong>⚠️ Ersetzen</strong> – löscht <em>alle</em> vorhandenen Daten und ersetzt durch Backup vollständig. Nur bei Gerätewechsel oder nach Reset verwenden.','Select JSON file → <strong>preview</strong> shows details (export date, period, entry count, new entries, already present) → then choose:<br>• <strong>📥 Merge</strong> – adds only new entries, existing data and settings are preserved. Safe for daily sync. Duplicates are detected and skipped automatically.<br>• <strong>⚠️ Replace</strong> – deletes <em>all</em> existing data and replaces with backup completely. Only use on device change or after reset.')}</span></div>
@@ -8546,8 +8526,7 @@ function renderHelp(){
       <div class="hlp-row"><span class="hlp-badge orange">${h('Gelber Toast','Yellow toast')}</span><span>${h('Warnung: Aufmerksamkeit nötig (z. B. Tageslimit fast erreicht, Zeitzonenmismatch, keine Einträge gefunden).','Warning: attention needed (e.g. daily limit almost reached, timezone mismatch, no entries found).')}</span></div>
       <div class="hlp-row"><span class="hlp-badge green">${h('Backup-Erinnerung','Backup reminder')}</span><span>${h('Backup-Erinnerung: seit 72 Stunden kein Backup (ab 30 Einträgen). Erscheint einmal pro Tag als kurzer Toast-Hinweis. Zusätzlich zeigt ein <strong>roter Punkt</strong> am ⚙️ Verwaltungs-Tab an, dass ein Backup fällig ist – er verschwindet nach dem nächsten Backup. Backup erstellen über <strong>Verwaltung → Backup &amp; Daten</strong>.','Backup reminder: no backup for 72 hours (from 30 entries). Appears once per day as a brief toast notification. Additionally a <strong>red dot</strong> on the ⚙️ Settings tab shows a backup is due – it disappears after the next backup. Create backup via <strong>Settings → Backup &amp; Data</strong>.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge red">${h('Roter 🚨-Banner','Red 🚨 banner')}</span><span>${h('Tageslimit überschritten. Blinkt zur Aufmerksamkeit. Verschwindet automatisch am nächsten Schiffstag.','Daily limit exceeded. Blinks for attention. Disappears automatically the next ship day.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge orange">${h('Oranger Speicher-Banner','Orange storage banner')}</span><span>${h('Browser-Speicher über 4,5 MB: sofort Backup erstellen und ggf. Reset durchführen, bevor der Speicher voll ist und keine Einträge mehr gespeichert werden können.','Browser storage above 4.5 MB: create backup immediately and consider a reset before storage is full and no more entries can be saved.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge red">⚠️ ${h('Speicher-Dialog','Storage dialog')}</span><span>${h('Bei über 5,5 MB Speichernutzung erscheint ein aktiver Dialog (nicht nur Toast), der sofortige Maßnahmen fordert: Backup erstellen oder in die Verwaltung wechseln, um Daten zu löschen.','When storage exceeds 5.5 MB, an active dialog (not just a toast) appears requiring immediate action: create a backup or go to management to delete data.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('Speicher-Info','Storage info')}</span><span>${h('Die App nutzt IndexedDB ohne festes Limit. Ein Speicher-Überlauf-Banner oder -Dialog erscheint nicht mehr. Regelmäßige Backups bleiben trotzdem empfohlen, um Daten zu sichern.','The app uses IndexedDB with no fixed limit. No storage overflow banner or dialog will appear. Regular backups are still recommended to keep your data safe.')}</span></div>
     </div>
 
     <div class="hlp-card">
