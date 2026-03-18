@@ -407,7 +407,7 @@ body.fz-xlarge #hdrUserDotMini{font-size:15px!important}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
 /* ── Theme Crossfade Transition ── */
 html.theme-transitioning *{transition:background-color 0.28s ease,border-color 0.28s ease,color 0.18s ease,box-shadow 0.28s ease !important;}
-html,body{height:100%;overflow:hidden;position:fixed;width:100%}
+html,body{height:100%;overflow:hidden;position:fixed;width:100%;background:var(--bg)}
 body{background:var(--bg);font-family:Georgia,serif;color:var(--tx0);overscroll-behavior:contain;-webkit-text-size-adjust:100%;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 #app{max-width:480px;margin:0 auto;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:20px;box-sizing:border-box;background:var(--bg)}
 .hdr{background:linear-gradient(180deg,var(--bg1) 0%,var(--bg) 100%);border-bottom:1px solid var(--ac-20);position:sticky;top:0;z-index:100;box-shadow:0 4px 24px rgba(0,0,0,0.5)}
@@ -6907,7 +6907,7 @@ function toggleVwSec(k){
 }
 
 function renderVerwaltung(){
-  if(!S.vwOpen)S.vwOpen={bkp:true,settings:false,tracking:true,users:false,tz:false,design:false,drinks:false,route:false,dbstatus:false,sync:true};
+  if(!S.vwOpen)S.vwOpen={bkp:true,settings:false,tracking:true,users:false,tz:false,design:false,drinks:false,route:false,dbstatus:false,sync:true,appupdate:false};
   S.catIndex=allCats();
   const vw=document.getElementById('vwpane');
   const L=S.lang==='en';
@@ -6989,149 +6989,124 @@ function renderVerwaltung(){
   vw.innerHTML=`
 
   <!-- ══════════════════════════════════════════
-       HERO: BACKUP & DATEN
+       SYNC-SCHNELLZUGRIFF (ganz oben, immer sichtbar)
+  ══════════════════════════════════════════ -->
+  ${S.syncEnabled ? `
+  <button onclick="createSyncPackage()" style="
+    display:flex;align-items:center;gap:12px;
+    width:100%;padding:13px 16px;margin-bottom:10px;
+    background:linear-gradient(135deg,var(--bg2),var(--bg3));
+    border:1px solid var(--ac-27);border-radius:12px;
+    color:var(--tx0);font-family:Georgia,serif;text-align:left;
+    cursor:pointer;touch-action:manipulation;
+    box-shadow:0 2px 10px rgba(0,0,0,.25)">
+    <span style="font-size:22px;flex-shrink:0">📦</span>
+    <span style="flex:1">
+      <span style="display:block;font-size:13px;font-weight:bold;color:var(--ac)">${T('manage.sync.send')}</span>
+      <span style="display:block;font-size:10px;color:var(--tx2);margin-top:2px">${T('manage.sync.last')} ${S.lastSyncDate ? new Date(S.lastSyncDate).toLocaleDateString(L?'en-US':'de-DE')+' '+new Date(S.lastSyncDate).toLocaleTimeString(L?'en-US':'de-DE',{hour:'2-digit',minute:'2-digit'}) : T('manage.sync.never')}</span>
+    </span>
+    <span style="font-size:18px;color:var(--ac-60)">›</span>
+  </button>` : ''}
+
+  <!-- ══════════════════════════════════════════
+       HERO: BACKUP & SICHERUNG
        (Immer sichtbar – wichtigster Bereich)
   ══════════════════════════════════════════ -->
   <div class="adm-hero" id="vw-backup">
 
-    <!-- Titel + Speicherstatus -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div style="display:flex;align-items:center;gap:7px">
+    <!-- Kopfzeile mit letztem Backup-Status -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:20px">💾</span>
         <div>
-          <div style="font-size:11px;font-weight:bold;color:var(--ac);letter-spacing:1px;text-transform:uppercase">${T('manage.backup.title')}</div>
-          <div style="font-size:10px;color:var(--tx2);margin-top:1px">${T('manage.backup.hint')}</div>
+          <div style="font-size:11px;font-weight:bold;color:var(--ac);letter-spacing:1px;text-transform:uppercase">${L?'Backup &amp; Sync':'Backup &amp; Sync'}</div>
+          <div style="font-size:10px;color:var(--tx2);margin-top:1px">${bkpStatusHtml.replace(/<div[^>]*>|<\/div>/g,'').replace(/<strong>/g,'').replace(/<\/strong>/g,'').trim()}</div>
         </div>
       </div>
+      ${storageHtml.replace(/.*<div.*?<\/div>.*?<\/div>/s,'')}
     </div>
 
-    <!-- Speicher-Anzeige -->
-    ${storageHtml}
-
-    <!-- Letztes Backup -->
-    ${bkpStatusHtml}
-
-    <!-- ── SCHNELL-BACKUP ──────────── -->
-    <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin:12px 0 6px">${L?'Quick backup (this device)':'Schnell-Backup (dieses Gerät)'}</div>
-    <div class="adm-bkp-actions" style="grid-template-columns:1fr 1fr">
+    <!-- ── ROW 1: Sofort-Sicherung ──────────── -->
+    <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px">${L?'Quick save – this device':'Schnellsicherung – dieses Gerät'}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
       <button class="adm-btn-primary" onclick="saveBackupInternal()">
         <span class="adm-bico">💾</span>
-        <span>${T('manage.backup.save')}</span>
-        <span style="font-size:9px;font-weight:normal;opacity:.8">${L?'Instant, no dialog':'Sofort, kein Dialog'}</span>
+        <span>${L?'Save now':'Jetzt sichern'}</span>
+        <span style="font-size:9px;font-weight:normal;opacity:.75">${L?'Instant · no dialog':'Sofort · kein Dialog'}</span>
       </button>
-      <button class="adm-btn-primary" onclick="importLatestInternal()" style="background:linear-gradient(135deg,#1a4060,#0d2a45);box-shadow:0 2px 12px rgba(30,90,160,0.30)">
+      <button class="adm-btn-primary" onclick="importLatestInternal()" style="background:linear-gradient(135deg,#162840,#0a1e30);box-shadow:0 2px 10px rgba(15,40,70,.4)">
         <span class="adm-bico">⚡</span>
-        <span>${T('manage.backup.loadlatest')}</span>
-        <span style="font-size:9px;font-weight:normal;opacity:.8">${L?'Last internal backup':'Letztes internes Backup'}</span>
+        <span>${L?'Load last':'Letztes laden'}</span>
+        <span style="font-size:9px;font-weight:normal;opacity:.75">${L?'Restore internal backup':'Int. Backup wiederherstellen'}</span>
       </button>
     </div>
-    <div style="font-size:10px;color:var(--tx2);margin:4px 0 10px;line-height:1.4">${L?'Saves immediately on this device. No dialog needed.':'Sichert sofort auf diesem Gerät. Kein Dialog nötig.'}</div>
 
-    <!-- ── EXTERNE SICHERUNG ──────────── -->
-    <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin:4px 0 6px">${L?'External backup (other devices)':'Externe Sicherung (andere Geräte)'}</div>
-    <div class="adm-bkp-actions" style="grid-template-columns:1fr 1fr">
-      <button class="adm-btn-primary" onclick="shareBackup()" style="background:linear-gradient(135deg,#1a3040,#0a1f30)">
+    <!-- ── ROW 2: Extern / Datei ──────────── -->
+    <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin:10px 0 5px">${L?'External – share file':'Extern – Datei teilen'}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
+      <button class="adm-btn-primary" onclick="shareBackup()" style="background:linear-gradient(135deg,#0d2030,#071525)">
         <span class="adm-bico">📤</span>
-        <span>${T('manage.backup.export')}</span>
-        <span style="font-size:9px;font-weight:normal;opacity:.8">AirDrop · iCloud</span>
+        <span>${L?'Export':'Exportieren'}</span>
+        <span style="font-size:9px;font-weight:normal;opacity:.75">AirDrop · iCloud · …</span>
       </button>
       <label class="adm-btn-primary adm-btn-import" style="cursor:pointer">
         <span class="adm-bico">📥</span>
-        <span>${T('manage.backup.import')}</span>
-        <span style="font-size:9px;opacity:.7">${L?'Merge or replace':'Ergänzen/Ersetzen'}</span>
+        <span>${L?'Import':'Importieren'}</span>
+        <span style="font-size:9px;opacity:.7">${L?'Merge or replace':'Ergänzen / Ersetzen'}</span>
         <input type="file" accept=".json" id="bkpFileInput" onchange="onBkpFile(this)" style="display:none">
       </label>
     </div>
-    <div style="font-size:10px;color:var(--tx2);margin:4px 0 10px;line-height:1.4">${L?'For other devices, iCloud Drive, AirDrop.':'Für andere Geräte, iCloud Drive, AirDrop.'}</div>
 
-    <!-- ── SEKUNDÄRE AKTIONEN: Export & Übertragen ──── -->
+    <!-- ── SYNC-TOGGLE ──────────── -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:12px 0 0;padding:9px 11px;background:var(--bg3);border:1px solid var(--ac-13);border-radius:9px">
+      <div>
+        <div style="font-size:11px;font-weight:bold;color:var(--tx0)">📦 ${L?'Device sync':'Geräte-Sync'}</div>
+        <div style="font-size:10px;color:var(--tx2);margin-top:1px">${S.syncEnabled ? (L?'Active – send/receive entries via AirDrop':'Aktiv – Einträge per AirDrop senden/empfangen') : (L?'Inactive – exchange entries with other devices':'Inaktiv – Einträge mit anderen Geräten austauschen')}</div>
+      </div>
+      <button class="sbtn${S.syncEnabled?' on':''}" onclick="S.syncEnabled=!S.syncEnabled;saveStateDebounced();renderVerwaltung();" style="flex-shrink:0;margin-left:10px;min-width:44px">${S.syncEnabled?(L?'On':'An'):(L?'Off':'Aus')}</button>
+    </div>
+
+    <!-- ── MEHR-EXPORTS (aufklappbar) ──────────── -->
     <button onclick="
       const p=document.getElementById('bkpExtraPanel');
       const open=p.style.display!=='none';
       p.style.display=open?'none':'block';
-      this.textContent=open?
-        '\u25BC '+(${L}?'Export \u0026 Transfer':'Export \u0026 \u00dcbertragung'):
-        '\u25B2 '+(${L}?'Export \u0026 Transfer':'Export \u0026 \u00dcbertragung');"
+      this.querySelector('.bep-arr').textContent=open?'▼':'▲';"
       style="width:100%;text-align:left;padding:7px 10px;
-      background:transparent;border:1px solid var(--ac-20);
-      border-radius:8px;color:var(--tx1);font-size:11px;
+      background:transparent;border:1px solid var(--ac-13);
+      border-radius:8px;color:var(--tx2);font-size:10px;
       cursor:pointer;font-family:Georgia,serif;
-      touch-action:manipulation;margin:6px 0 4px">
-      &#9660; ${L?'Export &amp; Transfer':'Export &amp; Übertragung'}
+      touch-action:manipulation;margin:10px 0 4px;
+      display:flex;align-items:center;justify-content:space-between">
+      <span>${L?'More exports (CSV · PDF · HTML)':'Mehr Exporte (CSV · PDF · HTML)'}</span>
+      <span class="bep-arr" style="font-size:10px">▼</span>
     </button>
     <div id="bkpExtraPanel" style="display:none">
-    <div class="adm-secondary-row" style="grid-template-columns:1fr 1fr 1fr">
-      <button class="adm-btn-sm" onclick="exportProtocol()" style="flex-direction:column;gap:3px;padding:10px 6px;align-items:center">
-        <span style="font-size:18px">📤</span>
-        <span style="font-size:10px;font-weight:bold;color:var(--tx0)">${L?'Share log':'Protokoll teilen'}</span>
-        <span style="font-size:9px;color:var(--tx2)">Smart Merge</span>
-      </button>
-      <button class="adm-btn-sm" onclick="exportLogCSV()" style="flex-direction:column;gap:3px;padding:10px 6px;align-items:center">
-        <span style="font-size:18px">📊</span>
-        <span style="font-size:10px;font-weight:bold;color:var(--tx0)">${L?'Log as CSV':'Protokoll CSV'}</span>
-        <span style="font-size:9px;color:var(--tx2)">${L?'For Excel/Numbers':'Für Excel/Numbers'}</span>
-      </button>
-      <button class="adm-btn-sm" onclick="exportPDFReport()" style="flex-direction:column;gap:3px;padding:10px 6px;align-items:center">
-        <span style="font-size:18px">📄</span>
-        <span style="font-size:10px;font-weight:bold;color:var(--tx0)">${L?'Voyage Report':'Reisebericht'}</span>
-        <span style="font-size:9px;color:var(--tx2)">PDF</span>
-      </button>
-
-    </div>
+      <div class="adm-secondary-row" style="grid-template-columns:1fr 1fr 1fr">
+        <button class="adm-btn-sm" onclick="exportProtocol()" style="flex-direction:column;gap:3px;padding:10px 6px;align-items:center">
+          <span style="font-size:18px">📤</span>
+          <span style="font-size:10px;font-weight:bold;color:var(--tx0)">${L?'Share log':'Protokoll'}</span>
+          <span style="font-size:9px;color:var(--tx2)">Smart Merge</span>
+        </button>
+        <button class="adm-btn-sm" onclick="exportLogCSV()" style="flex-direction:column;gap:3px;padding:10px 6px;align-items:center">
+          <span style="font-size:18px">📊</span>
+          <span style="font-size:10px;font-weight:bold;color:var(--tx0)">CSV</span>
+          <span style="font-size:9px;color:var(--tx2)">Excel · Numbers</span>
+        </button>
+        <button class="adm-btn-sm" onclick="exportPDFReport()" style="flex-direction:column;gap:3px;padding:10px 6px;align-items:center">
+          <span style="font-size:18px">📄</span>
+          <span style="font-size:10px;font-weight:bold;color:var(--tx0)">PDF</span>
+          <span style="font-size:9px;color:var(--tx2)">${L?'Voyage Report':'Reisebericht'}</span>
+        </button>
+      </div>
     </div>
 
     <!-- ── GESPEICHERTE BACKUPS ──────────── -->
-    <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin:14px 0 6px">${L?'Saved backups (this device)':'Gespeicherte Backups (dieses Gerät)'}</div>
+    <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin:14px 0 6px">${L?'Saved on this device':'Auf diesem Gerät gespeichert'}</div>
     <div id="internalBackupsList"><div style="font-size:11px;color:var(--tx2);padding:8px 0">${L?'Loading…':'Lade…'}</div></div>
     <div id="internalBackupsSummary"></div>
 
   </div>
-
-  <!-- ── GERÄTE-SYNCHRONISATION (immer sichtbar, Toggle inline) ──── -->
-  <div class="adm-card" id="vw-sync-section" style="border-color:var(--ac-20)">
-    <div class="adm-card-hdr" onclick="toggleVwSec('sync')">
-      <span class="adm-card-hdr-ico">🔄</span>
-      <div class="adm-card-hdr-body">
-        <div class="adm-card-hdr-title">${T('manage.sync.title')}</div>
-        <div class="adm-card-hdr-sub">${S.syncEnabled
-          ? (S.lastSyncDate
-              ? T('manage.sync.last')+' '+new Date(S.lastSyncDate).toLocaleDateString(L?'en-US':'de-DE')+' '+new Date(S.lastSyncDate).toLocaleTimeString(L?'en-US':'de-DE',{hour:'2-digit',minute:'2-digit'})
-              : T('manage.sync.never'))
-          : (L?'Not activated – tap to set up':'Nicht aktiviert – antippen zum Einrichten')
-        }</div>
-      </div>
-      <span class="adm-card-hdr-arr${S.vwOpen&&S.vwOpen.sync?' open':''}">►</span>
-    </div>
-    <div class="adm-card-body${S.vwOpen&&S.vwOpen.sync?' open':''}">
-      <div style="padding-top:10px">
-        ${S.syncEnabled ? `
-        <!-- Sync AKTIV -->
-        <button class="adm-btn-primary" onclick="createSyncPackage()" style="width:100%;margin-bottom:10px">
-          <span class="adm-bico">📦</span>
-          <span>${T('manage.sync.send')}</span>
-        </button>
-        <div style="font-size:10px;color:var(--tx2);line-height:1.5;margin-bottom:10px">${L?'Send your entries via AirDrop, iMessage or WhatsApp. The recipient taps the file – done.':'Sende deine Einträge per AirDrop, iMessage oder WhatsApp. Der Empfänger tippt die Datei an – fertig.'} <em>${T('manage.sync.hint')}</em></div>
-        <div style="font-size:10px;color:var(--tx2);margin-bottom:10px">${T('manage.sync.last')} <strong style="color:var(--tx1)">${S.lastSyncDate?new Date(S.lastSyncDate).toLocaleDateString(L?'en-US':'de-DE')+' '+new Date(S.lastSyncDate).toLocaleTimeString(L?'en-US':'de-DE',{hour:'2-digit',minute:'2-digit'}):T('manage.sync.never')}</strong></div>
-        <div style="border-top:1px solid var(--ac-07);padding-top:8px;display:flex;align-items:center;justify-content:space-between">
-          <span style="font-size:10px;color:var(--tx2)">${T('settings.sync.label')}</span>
-          <button class="sbtn on" onclick="S.syncEnabled=false;saveStateDebounced();renderVerwaltung();" style="font-size:10px;padding:4px 10px">${L?'On – tap to disable':'An – tippen zum Deaktivieren'}</button>
-        </div>
-        ` : `
-        <!-- Sync INAKTIV – Erklärungs- und Aktivierungsbereich -->
-        <div style="padding:10px 12px;background:var(--ac-07);border-radius:8px;border-left:3px solid var(--ac-27);margin-bottom:12px">
-          <div style="font-size:12px;font-weight:bold;color:var(--ac);margin-bottom:5px">📦 ${T('manage.sync.title')}</div>
-          <div style="font-size:11px;color:var(--tx1);line-height:1.6">${T('settings.sync.hint')}</div>
-        </div>
-        <button class="adm-btn-primary" onclick="S.syncEnabled=true;saveStateDebounced();renderVerwaltung();" style="width:100%;background:linear-gradient(135deg,var(--ac),var(--ac-deep))">
-          <span class="adm-bico">🔄</span>
-          <span>${T('settings.sync.label')}</span>
-          <span style="font-size:9px;font-weight:normal;opacity:.8">${L?'Tap to activate':'Antippen zum Aktivieren'}</span>
-        </button>
-        `}
-      </div>
-    </div>
-  </div>
-
 
   <!-- ══════════════════════════════════════════
        0b-STATUS: DATENBANKÜBERSICHT (V46)
@@ -7682,6 +7657,36 @@ function renderVerwaltung(){
   </div>
 
   <!-- ══════════════════════════════════════════
+       APP-UPDATE (manueller Check)
+  ══════════════════════════════════════════ -->
+  <div class="adm-card" style="border-color:var(--ac-13);margin-top:10px">
+    <div class="adm-card-hdr" onclick="toggleVwSec('appupdate')">
+      <span class="adm-card-hdr-ico">🔄</span>
+      <div class="adm-card-hdr-body">
+        <div class="adm-card-hdr-title">${L?'App update':'App-Update'}</div>
+        <div class="adm-card-hdr-sub" id="appUpdateSub">${L?'Current version: ':'Aktuelle Version: '}${typeof APP_VERSION!=='undefined'?APP_VERSION:'–'}</div>
+      </div>
+      <span class="adm-card-hdr-arr${S.vwOpen&&S.vwOpen.appupdate?' open':''}">►</span>
+    </div>
+    <div class="adm-card-body${S.vwOpen&&S.vwOpen.appupdate?' open':''}">
+      <div style="padding-top:10px">
+        <div id="appUpdateInfo" style="font-size:11px;color:var(--tx2);margin-bottom:10px;line-height:1.6">
+          ${L?'Updates are downloaded automatically in the background when the app is online. You will see a gold banner at the bottom when a new version is ready.':'Updates werden automatisch im Hintergrund geladen, wenn die App online ist. Sobald eine neue Version bereit ist, erscheint ein goldenes Banner unten.'}
+        </div>
+        <button onclick="checkForAppUpdate()" style="
+          display:flex;align-items:center;justify-content:center;gap:8px;
+          width:100%;padding:11px;
+          background:var(--bg2);border:1px solid var(--ac-27);border-radius:10px;
+          color:var(--ac);font-family:Georgia,serif;font-size:12px;font-weight:bold;
+          cursor:pointer;touch-action:manipulation">
+          🔍 ${L?'Check for updates now':'Jetzt nach Updates suchen'}
+        </button>
+        <div id="appUpdateResult" style="margin-top:8px;font-size:11px;color:var(--tx2);text-align:center;min-height:18px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
        DANGER ZONE: RESET-OPTIONEN
   ══════════════════════════════════════════ -->
   <!-- V45: Erweitert-Bereich (zugeklappt) -->
@@ -7744,6 +7749,43 @@ function saveTzFixed(){
   const off=parseInt(sel.value);
   setTimezone('fixed',off);
   renderVerwaltung();
+}
+
+/* ── Manueller App-Update-Check ─────────────────────────────── */
+function checkForAppUpdate(){
+  const L=S.lang==='en';
+  const resultEl=document.getElementById('appUpdateResult');
+  const btn=event&&event.currentTarget;
+  if(resultEl)resultEl.textContent=L?'Checking…':'Suche läuft…';
+  if(!('serviceWorker' in navigator)){
+    if(resultEl)resultEl.textContent=L?'Service Worker not supported in this context.':'Service Worker in diesem Kontext nicht verfügbar.';
+    return;
+  }
+  navigator.serviceWorker.getRegistration('./').then(function(reg){
+    if(!reg){
+      if(resultEl)resultEl.textContent=L?'App not installed as PWA yet.':'App ist noch nicht als PWA installiert.';
+      return;
+    }
+    // Check if update already waiting
+    if(reg.waiting){
+      if(resultEl){resultEl.style.color='var(--col-ok)';resultEl.textContent=L?'✅ Update ready – tap the banner below to install.':'✅ Update bereit – Banner unten antippen zum Installieren.';}
+      if(typeof swUpdateApply==='function')swUpdateApply();
+      return;
+    }
+    // Trigger network check
+    reg.update().then(function(){
+      if(reg.waiting){
+        if(resultEl){resultEl.style.color='var(--col-ok)';resultEl.textContent=L?'✅ New version found! Installing…':'✅ Neue Version gefunden! Wird installiert…';}
+        setTimeout(function(){if(typeof swUpdateApply==='function')swUpdateApply();},800);
+      } else {
+        if(resultEl){resultEl.style.color='var(--tx2)';resultEl.textContent=L?'✓ Already up to date.':'✓ Bereits auf dem neuesten Stand.';}
+      }
+    }).catch(function(){
+      if(resultEl)resultEl.textContent=L?'⚠️ Could not check – no internet connection?':'⚠️ Prüfung fehlgeschlagen – kein Internet?';
+    });
+  }).catch(function(){
+    if(resultEl)resultEl.textContent=L?'⚠️ Error checking for updates.':'⚠️ Fehler bei der Update-Prüfung.';
+  });
 }
 function drinkMgmtClick(e){
   const tog=e.target.closest('[data-tc]');if(tog&&!e.target.closest('[data-rc],[data-dc],[data-ed],[data-dd],[data-ad]')){const cat=S.catIndex[parseInt(tog.dataset.tc)];if(cat!==undefined){S.expandedCats.has(cat)?S.expandedCats.delete(cat):S.expandedCats.add(cat);renderVerwaltung();}return;}
