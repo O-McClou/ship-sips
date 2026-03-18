@@ -25,7 +25,7 @@
   ],
   "file_handlers": [
     {
-      "action": "/index.html",
+      "action": "/",
       "accept": {
         "application/json": [".json"]
       }
