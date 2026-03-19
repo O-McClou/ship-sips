@@ -5238,7 +5238,8 @@ function handleDrinkClick(e){
   },{passive:false});
 });
 setInterval(()=>{const n=Date.now();Object.keys(S.plusDebounce).forEach(k=>{if(n-S.plusDebounce[k]>60000)delete S.plusDebounce[k];});},300000);
-setInterval(updateClock,1000);
+/* FIX V47: setInterval(updateClock,1000) wurde hierher verschoben → jetzt in _initUI() gestartet,
+   damit es erst nach vollständiger App-Initialisierung läuft und keine Fehler vor DB-Load erzeugt. */
 
 /* FIX V47+: Pro-Getränk-Debounce statt globaler 600ms-Sperre (Multi-User-sicher) */
 var _tapPlusLast={};
@@ -10523,6 +10524,7 @@ function _initUI(){
   switchTab(0);
   setTimeout(function(){try{maybeShowSwipeHint();}catch(e){}},1200);
   updateClock();
+  setInterval(updateClock, 1000); /* FIX V47: Clock-Interval erst nach App-Init starten */
   setTimeout(()=>{checkBackupReminder();updateAdmBadge();checkInternalBackupReminder();},1800);
   setTimeout(()=>checkFutureEntries(),2000);
   setTimeout(()=>checkShipTimeWarning(),500);
@@ -11219,9 +11221,12 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
       })
       .catch(function(){}); // privates Fenster, CSP etc. – ignorieren
 
-    /* Nach SKIP_WAITING: Seite neu laden */
+    /* Nach SKIP_WAITING: Seite neu laden – NUR wenn Nutzer es aktiv angefordert hat.
+       FIX V47: Verhindert Endlos-Reload-Schleife, da sw.js beim Install sofort
+       skipWaiting() aufruft und sonst bei jedem Start controllerchange → reload
+       → install → skipWaiting → controllerchange → reload … ausgelöst wurde. */
     navigator.serviceWorker.addEventListener('controllerchange', function(){
-      window.location.reload();
+      if(window._swUpdateRequested) window.location.reload();
     });
 
   }catch(e){}
@@ -11232,6 +11237,7 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
     if(b) b.classList.remove('visible');
     var reg = _swReg;
     if(reg && reg.waiting){
+      window._swUpdateRequested = true; /* FIX V47: Reload nur bei expliziter Nutzer-Aktion */
       reg.waiting.postMessage({type:'SKIP_WAITING'});
     }
   };

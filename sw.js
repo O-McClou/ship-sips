@@ -1,24 +1,26 @@
 /* ═══════════════════════════════════════════════════════════════════
-   sw.js – Service Worker für Getränke-Tracker PWA  (V47)
+   sw.js – Service Worker für Getränke-Tracker PWA  (V48)
    ─────────────────────────────────────────────────────────────────
-   NOTFALL-FIX:
-   Nach einem fehlerhaften Deploy (rekursiver onerror-Handler) war
-   der alte Cache blockiert. Die App fror im PWA-Modus sofort ein,
-   weil der neue SW nie aktiviert wurde (kein skipWaiting).
+   FIX V48:
+   V47 hatte eine Endlos-Reload-Schleife:
+     Install → skipWaiting() → controllerchange → location.reload()
+     → Install → skipWaiting() → controllerchange → reload → …
+   Das ließ die App im PWA-Modus sofort einfrieren.
 
-   EINMALIGE MASSNAHME – tracker-v47-fix:
-   skipWaiting() im Install-Handler sorgt dafür, dass dieser SW
-   sofort übernimmt, den alten kaputten Cache löscht und die
-   korrigierte index.html ausliefert.
+   LÖSUNG:
+   ① skipWaiting() beim Install bleibt für den Erststart (Cache-Aufbau).
+   ② In index.html reagiert controllerchange nur noch auf Reload wenn
+      window._swUpdateRequested === true (gesetzt nur durch swUpdateApply()).
+   ③ So startet ein normaler App-Start KEINE Reload-Schleife mehr.
 
-   NORMALE UPDATE-STRATEGIE (nach diesem Fix wiederhergestellt):
-   ① install  → index.html cachen + sofort skipWaiting()
+   NORMALE UPDATE-STRATEGIE:
+   ① install  → index.html cachen + skipWaiting() (nur beim Erststart harmlos)
    ② activate → alte Caches löschen, clients.claim()
    ③ Fetch    → Cache-First mit Hintergrund-Update
-   ④ SKIP_WAITING-Message bleibt als Fallback für künftige Updates
+   ④ SKIP_WAITING-Message für künftige Updates via Update-Banner
    ═══════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'tracker-v47-fix';
+const CACHE_NAME = 'tracker-v48';
 
 const ASSETS = [
   './index.html'
