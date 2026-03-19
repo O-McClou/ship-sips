@@ -414,11 +414,15 @@ html.theme-transitioning *{transition:background-color 0.28s ease,border-color 0
    dvh-Bugs oder height%-Ketten. html/body brauchen nur background für den
    Bereich hinter den Safe-Areas (Kamera oben, Home-Indicator unten).
 ──────────────────────────────────────────────────────────────────────────── */
-html{background:var(--bg);height:100%;height:-webkit-fill-available}
+html{background:var(--bg);height:100%}
 html,body{margin:0;padding:0}
-body{height:100%;min-height:-webkit-fill-available;overflow:hidden;background:var(--bg);font-family:Georgia,serif;color:var(--tx0);-webkit-text-size-adjust:100%}
-/* #app: top:0 + bottom:0 → dehnt sich garantiert zum physischen Rand aus */
-#app{position:fixed;top:0;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;background:var(--bg)}
+body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;color:var(--tx0);-webkit-text-size-adjust:100%}
+/* ── iOS PWA Fullscreen ───────────────────────────────────────────────────────
+   position:fixed;bottom:0 stoppt auf iOS an der Safe-Area-Grenze, NICHT am
+   physischen Rand. window.innerHeight liefert die echte Gesamthöhe in CSS-px.
+   --app-h wird per JS gesetzt. 100dvh als CSS-Fallback.
+──────────────────────────────────────────────────────────────────────────────── */
+#app{position:fixed;top:0;left:0;right:0;height:var(--app-h,100dvh);max-width:480px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;background:var(--bg)}
 /* Safe-Area: wird über padding-bottom der Panes gehandhabt */
 /* Header: feste Höhe, kein Scrollen */
 /* Header: safe-area-inset-top hier, damit Dynamic Island / Notch freigehalten wird */
@@ -1266,6 +1270,18 @@ details.hlp-acc summary:active{opacity:.75}
 </style>
 </head>
 <body>
+<script>
+/* iOS PWA: window.innerHeight = echte physische Höhe des Screens in CSS-px.
+   Wird als --app-h CSS-Variable gesetzt, damit #app den gesamten Screen füllt. */
+(function(){
+  function setAppH(){
+    document.documentElement.style.setProperty('--app-h', window.innerHeight + 'px');
+  }
+  setAppH();
+  window.addEventListener('resize', setAppH);
+  window.addEventListener('orientationchange', function(){ setTimeout(setAppH, 300); });
+})();
+</script>
 <div id="app">
 <div class="hdr" id="mainHdr">
   <div class="hdr-collapsible" id="hdrCollapsible">
