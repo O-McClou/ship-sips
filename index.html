@@ -4,8 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <script id="a4StatePreload">/* APP_STATE – wird beim HTML-Export automatisch befüllt */</script>
-<!-- FIX V47+: Manifest als Data-URI eingebettet – kein externes manifest.json mehr nötig -->
-<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Mein%20Tracker%20%E2%80%93%20Meine%20Reise%22%2C%22short_name%22%3A%22Tracker%22%2C%22description%22%3A%22Getr%C3%A4nke-Tracker%20f%C3%BCr%20Kreuzfahrten%20und%20lange%20Reisen%22%2C%22start_url%22%3A%22.%2Findex.html%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%2306101E%22%2C%22theme_color%22%3A%22%2306101E%22%2C%22orientation%22%3A%22portrait%22%2C%22lang%22%3A%22de%22%2C%22categories%22%3A%5B%22lifestyle%22%2C%22travel%22%5D%7D">
+<link rel="manifest" href="./manifest.json">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -7937,7 +7936,7 @@ function renderHelp(){
       <div class="hlp-steps">
         <div class="hlp-step"><div class="hlp-step-num">1</div><span><strong>${h('Getränk erfassen:','Record a drink:')}</strong> ${h('Tab <strong>GETRÄNKE</strong> → <strong>+</strong>-Button tippen. Zähler erhöht sich sofort, Eintrag ins Protokoll. Der grüne Punkt oben rechts bestätigt die automatische Speicherung.','Tab <strong>DRINKS</strong> → tap the <strong>+</strong> button. Counter increments immediately, entry is added to the log. The green dot confirms auto-save.')}</span></div>
         <div class="hlp-step"><div class="hlp-step-num">2</div><span><strong>${h('Sofort rückgängig machen:','Instant undo:')}</strong> ${h('Nach jeder Erfassung erscheint 12 Sekunden lang ein <strong>Rückgängig</strong>-Toast. Antippen → Eintrag sofort gelöscht. Alternativ: Getränke-Button nach <strong>links wischen</strong>.','After each recording a 12-second <strong>Undo</strong> toast appears. Tap it → entry immediately deleted. Alternative: swipe drink button <strong>left</strong>.')}</span></div>
-        <div class="hlp-step"><div class="hlp-step-num">3</div><span><strong>${h('Eintrag nachträglich bearbeiten:','Edit entry later:')}</strong> ${h('Tab <strong>PROTOKOLL</strong> → Eintrag nach <strong>rechts wischen</strong> → Bearbeitungsformular öffnet sich. Für mehrere Einträge gleichzeitig: <strong>☑ Auswählen</strong> nutzen.','Tab <strong>LOG</strong> → swipe entry <strong>right</strong> → edit form opens. To edit multiple entries: use <strong>☑ Select</strong>.')}</span></div>
+        <div class="hlp-step"><div class="hlp-step-num">3</div><span><strong>${h('Eintrag nachträglich bearbeiten:','Edit entry later:')}</strong> ${h('Tab <strong>PROTOKOLL</strong> → Eintrag nach <strong>rechts wischen</strong> → Bearbeitungsformular öffnet sich. Für mehrere Einträge gleichzeitig: <strong>☑ Auswählen</strong> nutzen. Bei sehr langen Reisen werden zunächst nur die letzten 100 Einträge angezeigt – ein <strong>„Weitere laden"</strong>-Button am Ende der Liste lädt jeweils 100 weitere nach.','Tab <strong>LOG</strong> → swipe entry <strong>right</strong> → edit form opens. To edit multiple entries: use <strong>☑ Select</strong>. On very long voyages, initially only the last 100 entries are shown – a <strong>"Load more"</strong> button at the bottom loads the next 100.')}</span></div>
         <div class="hlp-step"><div class="hlp-step-num">4</div><span><strong>${h('Aktiven Nutzer wechseln:','Switch active user:')}</strong> ${h('Die farbige <strong>Nutzerleiste</strong> unter der Kopfzeile antippen → Nutzer aus der Liste wählen → alle neuen Einträge werden dieser Person zugeordnet. <em>Immer zuerst den richtigen Nutzer aktivieren!</em>','Tap the coloured <strong>user bar</strong> below the header → select a user → all new entries are assigned to that person. <em>Always activate the correct user first!</em>')}</span></div>
         <div class="hlp-step"><div class="hlp-step-num">5</div><span><strong>${h('Backup erstellen:','Create backup:')}</strong> ${h('<strong>💾 BKP</strong>-Button (Tab-Leiste oben) antippen <em>oder</em> Tab <strong>VERWALTUNG</strong> → <strong>📤 Backup speichern</strong> (Download) <em>oder</em> <strong>📡 Backup teilen</strong> (iOS-Teilen-Sheet: AirDrop, iCloud Drive, WhatsApp, E-Mail …). <strong>Empfohlen: nach jeder Schicht!</strong>','Tap the <strong>💾 BKP</strong> button (tab bar top) <em>or</em> Tab <strong>MANAGEMENT</strong> → <strong>📤 Save backup</strong> (download) <em>or</em> <strong>📡 Share backup</strong> (iOS share sheet: AirDrop, iCloud Drive, WhatsApp, email …). <strong>Recommended: after every session!</strong>')}</span></div>
         <div class="hlp-step"><div class="hlp-step-num">6</div><span><strong>${h('Statistik abrufen:','View statistics:')}</strong> ${h('Tab <strong>STATISTIK</strong> → Zeitraum wählen (Heute / Woche / Monat / Jahr / Gesamt / Eigener) → optional Nutzer-Filter. Alle Auswertungen aktualisieren sich sofort.','Tab <strong>STATISTICS</strong> → choose period (Today / Week / Month / Year / All / Custom) → optional user filter. All evaluations update instantly.')}</span></div>
@@ -7987,7 +7986,7 @@ function renderHelp(){
     <div class="hlp-card">
       <div class="hlp-card-title">➕ ${h('Getränk erfassen &amp; rückgängig machen','Record drink &amp; undo')}</div>
       <div class="hlp-row"><span class="hlp-badge gold">+</span><span>${h('Großen goldenen <strong>+</strong>-Button antippen → Zähler +1, Eintrag sofort ins Protokoll, Gesamtanzeige aktualisiert sich, grüner Punkt bestätigt Speicherung. Der Eintrag erhält automatisch: <em>aktuelle Uhrzeit in App-Zeitzone</em>, <em>aktiven Nutzer</em>, <em>aktuellen Hafen/Ort</em> (falls gesetzt).','Tap the large gold <strong>+</strong> button → counter +1, entry instantly added to log, totals update, green dot confirms save. The entry automatically receives: <em>current time in app timezone</em>, <em>active user</em>, <em>current port/location</em> (if set).')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">−</span><span>${h('<strong>−</strong>-Button antippen → Zähler −1, der <em>neueste</em> Eintrag dieses Getränks wird gelöscht (nach Sicherheitsabfrage). Wenn kein Eintrag vorhanden: Button hat keine Wirkung.','Tap the <strong>−</strong> button → counter −1, the <em>most recent</em> entry of this drink is deleted (after confirmation). If no entry exists: button has no effect.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">−</span><span>${h('<strong>−</strong>-Button antippen → Zähler −1, der <em>neueste</em> Eintrag dieses Getränks wird gelöscht (nach Sicherheitsabfrage). Wenn kein Eintrag vorhanden oder der aktive Nutzer keinen eigenen Eintrag hat, erscheint eine kurze Warnung – fremde Einträge werden nie gelöscht.','Tap the <strong>−</strong> button → counter −1, the <em>most recent own</em> entry of this drink is deleted. If the active user has no own entry, a brief warning appears – entries of other users are never deleted.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge gold">${h('Undo-Toast','Undo toast')}</span><span>${h('Unmittelbar nach jeder Erfassung erscheint 12 Sekunden lang ein grüner Toast mit <strong>Rückgängig</strong>-Schaltfläche. Antippen → letzter Eintrag dieses Getränks wird sofort gelöscht, Zähler −1. Nach Ablauf der 12 Sekunden verschwindet der Toast automatisch – der Eintrag bleibt dann dauerhaft.','Immediately after each recording a green toast with <strong>Undo</strong> button appears for 12 seconds. Tap → last entry of this drink is instantly deleted, counter −1. After 12 seconds the toast disappears automatically – the entry then remains permanent.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('Undo per Wischen','Undo by swipe')}</span><span>${h('Getränke-Button nach <strong>links wischen</strong> (breite Geste, mindestens halbe Buttonbreite) → letzter Eintrag dieses Getränks wird rückgängig gemacht. Funktioniert auch nach Ablauf des Undo-Toasts, solange der letzte Eintrag nicht manuell bearbeitet wurde. Ein roter Streifen am rechten Rand des Buttons zeigt dauerhaft an, dass Links-Wischen möglich ist.','Swipe drink button <strong>left</strong> (wide gesture, at least half button width) → last entry of this drink is undone. Works even after the Undo toast has expired, as long as the last entry has not been manually edited. A red strip on the right edge of the button permanently shows that left swipe is possible.')}</span></div>
       <div class="hlp-tip">💡 ${h('Tipp: Der goldene <strong>+</strong>-Button ist links angeordnet (Standard für Rechtshänder). Für Linkshänder: Verwaltung → Einstellungen → <strong>Schaltflächen-Seite: rechts</strong>. Dann ist der + rechts und − links.','Tip: The gold <strong>+</strong> button is on the left (default for right-handers). For left-handers: Management → Settings → <strong>Button side: right</strong>. Then + is on the right and − on the left.')}</div>
@@ -8413,7 +8412,7 @@ function renderHelp(){
         <div class="hlp-step"><div class="hlp-step-num">4</div><span>${h('Optional: Nutzer B exportiert und sendet das kombinierte Backup zurück an Nutzer A, damit beide den vollständigen Gesamtüberblick haben.','Optional: User B exports and sends the combined backup back to User A, so both have the complete overview.')}</span></div>
       </div>
       <div class="hlp-row" style="margin-top:10px"><span class="hlp-badge gold">${h('Duplikat-Schutz','Duplicate protection')}</span><span>${h('Beim Ergänzen werden Einträge mit identischer ID <em>oder</em> gleicher Kombination aus Nutzer + Zeit + Getränkename (±2 Sekunden Toleranz) automatisch übersprungen. Dasselbe Backup kann beliebig oft importiert werden – es entstehen <strong>niemals Duplikate</strong>.','When merging, entries with identical ID <em>or</em> the same combination of user + time + drink name (±2 seconds tolerance) are automatically skipped. The same backup can be imported any number of times – <strong>no duplicates are ever created</strong>.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge red">${h('Ersetzen – nur bei Neustart!','Replace – only for fresh start!')}</span><span>${h('<strong>Ersetzen</strong> löscht <em>alle</em> vorhandenen Daten und ersetzt sie vollständig durch das Backup. <strong>Nur verwenden bei:</strong> Gerätewechsel, nach Reset oder wenn alle vorhandenen Daten durch Backup-Stand ersetzt werden sollen.','<strong>Replace</strong> deletes <em>all</em> existing data and fully replaces with the backup. <strong>Only use when:</strong> changing devices, after a reset, or when all existing data should be replaced by the backup state.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge red">${h('Ersetzen – nur bei Neustart!','Replace – only for fresh start!')}</span><span>${h('<strong>Ersetzen</strong> löscht <em>alle</em> vorhandenen Daten und ersetzt sie vollständig durch das Backup. <strong>Sicherheits-Ablauf (2 Schritte):</strong> Zuerst wird automatisch ein Backup-Download gestartet, dann erscheint ein zweiter Bestätigungs-Dialog – erst danach werden Daten ersetzt. <strong>Nur verwenden bei:</strong> Gerätewechsel, nach Reset oder wenn alle vorhandenen Daten durch Backup-Stand ersetzt werden sollen.','<strong>Replace</strong> deletes <em>all</em> existing data and fully replaces with the backup. <strong>Safety flow (2 steps):</strong> First an automatic backup download is triggered, then a second confirmation dialog appears – only then is data replaced. <strong>Only use when:</strong> changing devices, after a reset, or when all existing data should be replaced by the backup state.')}</span></div>
     </div>
 
     <div class="hlp-danger">⚠️ <strong>${h('Datenverlust-Risiken auf iPhone – unbedingt beachten!','Data loss risks on iPhone – important!')}</strong><br><br>
@@ -8459,7 +8458,7 @@ function renderHelp(){
 
     <div class="hlp-card" style="border-color:var(--ac-27)">
       <div class="hlp-card-title" style="color:var(--ac)">🔄 ${h('Schiffszeit für Gruppen – Workflow','Ship\'s time for groups – workflow')}</div>
-      <div class="hlp-row-full"><strong style="color:var(--ac)">${h('Vor der Reise (einmalig):','Before the trip (once):')}</strong><br>${h('1. Nutzerzuordnung festlegen: Jede Person bekommt einen festen Platz (Person 1, 2, 3…). Diese Zuordnung <strong>nie mehr ändern</strong>.<br>2. Eine Person erstellt ein Backup und teilt es per AirDrop. Alle anderen importieren mit „Ergänzen“ → alle starten mit denselben Grundeinstellungen.','1. Fix user assignment: each person gets a permanent slot (Person 1, 2, 3…). <strong>Never change</strong> this assignment.<br>2. One person creates a backup and shares it via AirDrop. Everyone else imports with &quot;Merge&quot; → all start with the same base settings.')}</div>
+      <div class="hlp-row-full"><strong style="color:var(--ac)">${h('Vor der Reise (einmalig):','Before the trip (once):')}</strong><br>${h('1. Nutzerprofile anlegen: Jede Person bekommt einen eigenen Nutzer mit eindeutigem Namen (z. B. „Anna“, „Max“). Der <strong>Name ist entscheidend</strong> – beim Backup-Import werden Nutzer automatisch anhand des Namens erkannt, nicht nach der Reihenfolge im Menü.<br>2. Eine Person erstellt ein Backup und teilt es per AirDrop. Alle anderen importieren mit „Ergänzen“ → alle starten mit denselben Grundeinstellungen.','1. Set up user profiles: each person gets their own user with a unique name (e.g. "Anna", "Max"). The <strong>name is key</strong> – when importing a backup, users are matched automatically by name, not by their order in the menu.<br>2. One person creates a backup and shares it via AirDrop. Everyone else imports with &quot;Merge&quot; → all start with the same base settings.')}</div>
       <div class="hlp-row-full"><strong style="color:var(--ac)">${h('An Bord – Schiffszeit einstellen:','On board – setting ship\'s time:')}</strong><br>${h('Schiffszeit im Header prüfen (✅ = alles korrekt, ⚡ = manuell eingestellt auf hoher See normal, ⚠️ = bitte einstellen). Wenn Kapitän die Zeit ändert: sofort Schiffszeit in der App anpassen und Backup senden.','Check ship\'s time in header (✅ = all correct, ⚡ = manually set, normal at sea, ⚠️ = please set). When captain changes time: immediately update ship\'s time in the app and send backup.')}</div>
       <div class="hlp-row-full"><strong style="color:var(--ac)">${h('Backups austauschen – einfache Regeln:','Exchanging backups – simple rules:')}</strong><br>${h('&#x2022; <strong>Kein fester Rhythmus nötig.</strong> Täglich, alle paar Tage oder nach einem Seetag-Block – alles funktioniert.<br>&#x2022; <strong>Jeder an jeden.</strong> A→B, B→C, A→C gleichzeitig – Reihenfolge egal, kein Koordinator nötig.<br>&#x2022; <strong>Dasselbe Backup mehrfach importieren.</strong> Sicher – keine Duplikate, zweiter Import hat null Wirkung.<br>&#x2022; <strong>Beim Import immer „Ergänzen“ wählen</strong> (nicht „Ersetzen“), um eigene Einträge zu behalten.','&#x2022; <strong>No fixed schedule needed.</strong> Daily, every few days or after a sea-day block – all works.<br>&#x2022; <strong>Everyone to everyone.</strong> A→B, B→C, A→C simultaneously – order irrelevant, no coordinator needed.<br>&#x2022; <strong>Import same backup multiple times.</strong> Safe – no duplicates, second import has zero effect.<br>&#x2022; <strong>Always choose &quot;Merge&quot;</strong> when importing (not &quot;Replace&quot;) to keep your own entries.')}</div>
       <div class="hlp-row-full"><strong style="color:var(--ac)">${h('Nachträgliche Korrekturen:','Retroactive corrections:')}</strong><br>${h('&#x2022; <strong>Einzeln:</strong> Protokoll → Eintrag nach rechts wischen → Bearbeiten → Schiffszeit-Offset korrigieren.<br>&#x2022; <strong>Mehrere gleichzeitig:</strong> Protokoll → Mehrfachauswahl → Einträge markieren → ✏️ Bearbeiten → Schiffszeit für alle ändern.<br>&#x2022; Keine Panik: Der UTC-Zeitstempel ist immer korrekt gespeichert. Nur die Anzeige kann vorübergehend falsch sein.','&#x2022; <strong>Single entry:</strong> Log → swipe entry right → Edit → correct ship\'s time offset.<br>&#x2022; <strong>Multiple entries:</strong> Log → multi-select → mark entries → ✏️ Edit → change ship\'s time for all.<br>&#x2022; No panic: the UTC timestamp is always stored correctly. Only the display can be temporarily wrong.')}</div>
@@ -8628,7 +8627,7 @@ function renderHelp(){
 
     <div class="hlp-card">
       <div class="hlp-card-title">🔄 ${h('Automatische Updates','Automatic Updates')}</div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('Hintergrund-Update','Background update')}</span><span>${h('Wenn die App kurz online ist, prüft sie automatisch ob eine neue Version vorliegt. Der Download passiert still im Hintergrund – kein Unterbruch. Beim nächsten Start ist die neue Version aktiv. Ein dezenter Toast informiert dich.','When the app is briefly online, it automatically checks for a new version. The download happens silently in the background – no interruption. The next launch activates the new version. A subtle toast informs you.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('Hintergrund-Update','Background update')}</span><span>${h('Wenn die App über <strong>GitHub Pages</strong> installiert ist und kurz online geht, prüft sie automatisch ob eine neue Version vorliegt. Der Download passiert still im Hintergrund – kein Unterbruch. Ein dezentes <strong>goldenes Update-Banner</strong> erscheint oben – antippen lädt die neue Version sofort. Die gespeicherten Daten (IndexedDB) bleiben dabei immer vollständig erhalten.','When the app is installed via <strong>GitHub Pages</strong> and briefly goes online, it automatically checks for a new version. The download happens silently in the background – no interruption. A subtle <strong>gold update banner</strong> appears at the top – tap it to load the new version immediately. All stored data (IndexedDB) is always fully preserved.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge gold">${h('Daten bleiben erhalten','Data stays intact')}</span><span>${h('Ein App-Update berührt niemals die gespeicherten Daten (IndexedDB). Selbst wenn der GitHub-Code gelöscht wird, bleiben alle Einträge auf dem Gerät erhalten.','An app update never touches stored data (IndexedDB). Even if the GitHub code is deleted, all entries remain on the device.')}</span></div>
     </div>
 
@@ -8639,7 +8638,7 @@ function renderHelp(){
       </div>
     </div>
 
-    <div class="hlp-info">ℹ️ ${h('Die App funktioniert auch weiterhin direkt aus der Dateien-App (file://-Protokoll in Edge). In diesem Modus ist kein Service Worker aktiv – das ist normal und hat keinen Einfluss auf die Offline-Funktion oder IndexedDB.','The app also continues to work directly from the Files app (file:// protocol in Edge). In this mode no Service Worker is active – this is normal and does not affect offline functionality or IndexedDB.')}</div>
+    <div class="hlp-info">ℹ️ ${h('Die App besteht aus drei Dateien auf GitHub: <strong>index.html</strong> (die App), <strong>sw.js</strong> (Service Worker für Offline-Betrieb) und <strong>manifest.json</strong> (App-Beschreibung). Wird die App über den <strong>GitHub-Link in Safari installiert</strong>, lädt der Browser alle drei Dateien automatisch – offline funktioniert dann alles. Der Browser-Speicher (IndexedDB) speichert alle Daten dauerhaft auf dem Gerät, unabhängig vom Service Worker. <em>Hinweis:</em> Wird nur die index.html als Datei (z. B. per AirDrop oder aus der Dateien-App) geöffnet, steht kein Service Worker zur Verfügung – das hat aber keinen Einfluss auf die IndexedDB oder die Offline-Bedienbarkeit der App selbst.','The app consists of three files on GitHub: <strong>index.html</strong> (the app), <strong>sw.js</strong> (Service Worker for offline use) and <strong>manifest.json</strong> (app description). When the app is <strong>installed via the GitHub link in Safari</strong>, the browser loads all three files automatically – everything then works offline. Browser storage (IndexedDB) saves all data permanently on the device, independent of the Service Worker. <em>Note:</em> If only the index.html file is opened directly (e.g. via AirDrop or from the Files app), no Service Worker is available – but this has no effect on IndexedDB or the offline usability of the app itself.')}</div>
 
   </div>
 </details>
@@ -10928,8 +10927,8 @@ function showOnboarding(){
       '<div style="font-size:52px;text-align:center;margin-bottom:10px">➕</div>'+
       '<div class="cfm-title" style="text-align:center;margin-bottom:10px">'+(L?'Add drinks easily':'Getränke einfach hinzufügen')+'</div>'+
       '<div style="font-size:13px;color:var(--tx1);line-height:1.65;margin-bottom:16px">'+(L
-        ?'Tap <strong>＋</strong> next to any drink to count it. Use the <strong>★ Favourites</strong> to pin your most ordered drinks to the top for quick access.'
-        :'Tippe auf <strong>＋</strong> neben einem Getränk, um es zu zählen. Pinne deine Lieblingsgetränke mit <strong>★ Favoriten</strong> ganz oben an – so hast du sie immer griffbereit.'
+        ?'Tap <strong>＋</strong> next to any drink to count it. Use <strong>★ Favourites</strong> to pin your top drinks. Made a mistake? An <strong>Undo</strong> toast appears for 12 seconds after every entry. With multiple users: always activate the correct user in the coloured bar first – the <strong>−</strong> button only deletes your own entries.'
+        :'Tippe auf <strong>＋</strong> neben einem Getränk, um es zu zählen. Pinne deine Lieblingsgetränke mit <strong>★ Favoriten</strong> ganz oben an. Tippfehler? Der <strong>Rückgängig</strong>-Toast erscheint 12 Sekunden lang direkt nach jeder Erfassung. Bei mehreren Personen: immer zuerst den richtigen Nutzer in der farbigen Leiste aktivieren – der <strong>−</strong>-Button löscht nur eigene Einträge.'
       )+'</div>'+
       '<div style="text-align:right;font-size:11px;color:var(--tx2);margin-bottom:10px">2 / 3</div>'+
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'+
@@ -10942,8 +10941,8 @@ function showOnboarding(){
       '<div style="font-size:52px;text-align:center;margin-bottom:10px">💾</div>'+
       '<div class="cfm-title" style="text-align:center;margin-bottom:10px">'+(L?'Back up your data weekly':'Wöchentlich Backup erstellen')+'</div>'+
       '<div style="font-size:13px;color:var(--tx1);line-height:1.65;margin-bottom:16px">'+(L
-        ?'Your data is stored in a local <strong>database</strong> – no limit, no cloud upload, completely private.<br><br>💡 <strong>Backup tip:</strong> Create a weekly backup in the <strong>Management</strong> tab. The app will remind you automatically.<br><br>🔄 You can share your log with others at any time without touching their settings (<strong>Smart Sync</strong>).'
-        :'Deine Daten werden in einer lokalen <strong>Datenbank</strong> gespeichert – kein Limit, kein Cloud-Upload, vollständig privat.<br><br>💡 <strong>Backup-Empfehlung:</strong> Erstelle wöchentlich ein Backup im Tab <strong>Verwaltung</strong>. Die App erinnert dich automatisch.<br><br>🔄 Du kannst dein Protokoll jederzeit mit anderen teilen, ohne deren Einstellungen zu berühren (<strong>Smart Sync</strong>).'
+        ?'Your data is stored in a local <strong>database</strong> – no limit, no cloud upload, completely private.<br><br>💡 <strong>Backup tip:</strong> Create a backup after every session in the <strong>Management</strong> tab. The app will remind you automatically.<br><br>👥 <strong>Multiple users:</strong> Create profiles with unique <em>names</em>. When importing a backup, users are matched automatically by name – regardless of their order on any device.<br><br>🔄 Merge logs via <strong>Smart Sync</strong> (AirDrop) without overwriting anyone's settings.'
+        :'Deine Daten werden in einer lokalen <strong>Datenbank</strong> gespeichert – kein Limit, kein Cloud-Upload, vollständig privat.<br><br>💡 <strong>Backup-Empfehlung:</strong> Erstelle nach jeder Schicht ein Backup im Tab <strong>Verwaltung</strong>. Die App erinnert dich automatisch.<br><br>👥 <strong>Mehrere Personen:</strong> Nutzerprofile mit eindeutigen <em>Namen</em> anlegen. Beim Backup-Import werden Nutzer automatisch anhand des Namens erkannt – egal auf welchem Gerät.<br><br>🔄 Protokolle per <strong>Smart Sync</strong> (AirDrop) zusammenführen, ohne fremde Einstellungen zu überschreiben.'
       )+'</div>'+
       '<div style="text-align:right;font-size:11px;color:var(--tx2);margin-bottom:10px">3 / 3</div>'+
       '<button class="mbtn-ok" style="width:100%" onclick="_obDone()">'+(L?'✓ Let\'s go!':'✓ Los geht\'s!')+'</button>';
@@ -11082,52 +11081,7 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
   }
 
   try{
-    /* FIX V47+: Service Worker als Blob einbetten – echte Single-File-PWA.
-       Kein externes sw.js mehr nötig. Funktioniert auch per AirDrop / file:// .
-       Icons aus ASSETS entfernt – fehlen beim file://-Betrieb und brechen sonst
-       den gesamten SW-Install-Vorgang ab. */
-    const _SW_CODE=`
-const CACHE_NAME='tracker-v47-blob';
-const ASSETS=['./index.html'];
-self.addEventListener('install',event=>{
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache=>cache.addAll(ASSETS))
-      .catch(err=>console.warn('[SW] Cache-Fehler:',err))
-  );
-});
-self.addEventListener('activate',event=>{
-  event.waitUntil(
-    caches.keys()
-      .then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k))))
-      .then(()=>self.clients.claim())
-  );
-});
-self.addEventListener('fetch',event=>{
-  if(event.request.method!=='GET')return;
-  if(!event.request.url.startsWith('http'))return;
-  event.respondWith(
-    caches.match(event.request).then(cached=>{
-      const networkFetch=fetch(event.request)
-        .then(response=>{
-          if(response&&response.status===200&&response.type==='basic'){
-            const clone=response.clone();
-            caches.open(CACHE_NAME).then(cache=>cache.put(event.request,clone));
-          }
-          return response;
-        })
-        .catch(()=>null);
-      return cached?cached:networkFetch.then(r=>r||new Response('Offline – bitte App neu starten',{status:503,headers:{'Content-Type':'text/plain; charset=utf-8'}}));
-    })
-  );
-});
-self.addEventListener('message',event=>{
-  if(event.data&&event.data.type==='SKIP_WAITING')self.skipWaiting();
-});
-`;
-    const _swBlob=new Blob([_SW_CODE],{type:'application/javascript'});
-    const _swUrl=URL.createObjectURL(_swBlob);
-    navigator.serviceWorker.register(_swUrl, {scope:'./'})
+    navigator.serviceWorker.register('./sw.js', {scope:'./'})
       .then(function(reg){
         _swReg = reg;
 

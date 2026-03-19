@@ -1,8 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════════
-   sw.js – Service Worker für Getränke-Tracker PWA  (V47)
+   sw.js – Service Worker für Getränke-Tracker PWA  (V48)
    ─────────────────────────────────────────────────────────────────
    Update-Strategie (professionell / nutzergesteuert):
-   ① install  → Assets cachen, KEIN skipWaiting()
+   ① install  → Nur index.html cachen, KEIN skipWaiting()
                 → neuer SW bleibt im "waiting"-Zustand
    ② App-Seite erkennt registration.waiting
                 → zeigt persistentes Gold-Banner
@@ -10,18 +10,24 @@
                 → sendet SKIP_WAITING → SW übernimmt
    ④ controllerchange-Event → location.reload()
                 → App startet sauber aus neuem Cache
+
+   FIX V48:
+   - icon-192.png und icon-512.png ENTFERNT aus ASSETS.
+     Diese Dateien fehlen beim AirDrop-/file://-Betrieb und
+     würden sonst den gesamten SW-Install-Vorgang zum Scheitern bringen.
+     Das Apple-Touch-Icon ist direkt als Base64 in index.html eingebettet
+     und braucht den Service Worker nicht.
    ═══════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'tracker-v47';
+const CACHE_NAME = 'tracker-v48';
 const ASSETS = [
-  './index.html',
-  './manifest.json',
-  './sw.js',
-  './icon-192.png',
-  './icon-512.png'
+  './index.html'
+  /* Keine Icons hier – sie fehlen beim file://-Betrieb (AirDrop).
+     manifest.json ist optional: wenn vorhanden wird es gecacht,
+     das Fehlen bricht den Install nicht mehr ab. */
 ];
 
-/* ── Install: alle Assets cachen, dann WARTEN ──────────────────── */
+/* ── Install: index.html cachen, dann WARTEN ──────────────────── */
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -50,7 +56,7 @@ self.addEventListener('fetch', event => {
 
   event.respondWith(
     caches.match(event.request).then(cached => {
-      // Cache aktualisieren (still im Hintergrund, kein Update-Toast!)
+      /* Cache still im Hintergrund aktualisieren (kein Update-Toast) */
       const networkFetch = fetch(event.request)
         .then(response => {
           if (response && response.status === 200 && response.type === 'basic') {
@@ -61,7 +67,7 @@ self.addEventListener('fetch', event => {
         })
         .catch(() => null);
 
-      // Aus Cache bedienen + Netz im Hintergrund
+      /* Aus Cache bedienen + Netz im Hintergrund */
       return cached ? cached : networkFetch.then(r => r || new Response(
         'Offline – bitte App neu starten',
         { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
