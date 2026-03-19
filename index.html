@@ -4,8 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <script id="a4StatePreload">/* APP_STATE – wird beim HTML-Export automatisch befüllt */</script>
-<!-- FIX V47+: Manifest als Data-URI eingebettet – kein externes manifest.json mehr nötig -->
-<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Mein%20Tracker%20%E2%80%93%20Meine%20Reise%22%2C%22short_name%22%3A%22Tracker%22%2C%22description%22%3A%22Getr%C3%A4nke-Tracker%20f%C3%BCr%20Kreuzfahrten%20und%20lange%20Reisen%22%2C%22start_url%22%3A%22.%2Findex.html%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%2306101E%22%2C%22theme_color%22%3A%22%2306101E%22%2C%22orientation%22%3A%22portrait%22%2C%22lang%22%3A%22de%22%2C%22categories%22%3A%5B%22lifestyle%22%2C%22travel%22%5D%7D">
+<link rel="manifest" href="./manifest.json">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -364,7 +363,7 @@ body.fz-large .dnum{font-size:28px}
 body.fz-large .dprice{font-size:13px}
 body.fz-large .dcat{font-size:12px}
 body.fz-large .sinput{font-size:17px}
-body.fz-large .cbtn{font-size:13px;padding:0 12px;min-height:44px;height:auto;box-sizing:border-box}
+body.fz-large .cbtn{font-size:13px;padding:0 12px;height:26px;box-sizing:border-box}
 body.fz-large .bplus{width:58px;height:58px;min-width:58px;font-size:32px}
 body.fz-large .bminus{width:52px;height:52px;min-width:52px;font-size:27px}
 body.fz-large .tab-icon{font-size:16px}
@@ -388,7 +387,7 @@ body.fz-xlarge .dnum{font-size:34px}
 body.fz-xlarge .dprice{font-size:15px}
 body.fz-xlarge .dcat{font-size:13px}
 body.fz-xlarge .sinput{font-size:21px;padding:0 14px;height:26px;box-sizing:border-box}
-body.fz-xlarge .cbtn{font-size:15px;padding:0 12px;min-height:44px;height:auto;box-sizing:border-box}
+body.fz-xlarge .cbtn{font-size:15px;padding:0 12px;height:26px;box-sizing:border-box}
 body.fz-xlarge .bplus{width:66px;height:66px;min-width:66px;font-size:38px}
 body.fz-xlarge .bminus{width:58px;height:58px;min-width:58px;font-size:30px}
 body.fz-xlarge .tab-icon{font-size:16px}
@@ -513,7 +512,7 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 .sinput::placeholder{color:var(--tx2)}
 .cscroll{display:flex;gap:5px;overflow-x:auto;padding:3px 0 1px;-webkit-overflow-scrolling:touch;scrollbar-width:none;scroll-snap-type:x mandatory}
 .cscroll::-webkit-scrollbar{display:none}
-.cbtn{flex-shrink:0;padding:0 12px;background:var(--bg2);color:var(--tx1);border:1px solid var(--ac-13);border-radius:20px;cursor:pointer;font-size:10px;font-family:Georgia,serif;white-space:nowrap;display:flex;align-items:center;gap:4px;scroll-snap-align:start;transition:all .2s;touch-action:manipulation;letter-spacing:0.3px;min-height:44px;height:auto;box-sizing:border-box;/* FIX V47+: min-height 44px (Apple HIG) statt fix 26px */}
+.cbtn{flex-shrink:0;padding:0 12px;background:var(--bg2);color:var(--tx1);border:1px solid var(--ac-13);border-radius:20px;cursor:pointer;font-size:10px;font-family:Georgia,serif;white-space:nowrap;display:flex;align-items:center;gap:4px;scroll-snap-align:start;transition:all .2s;touch-action:manipulation;letter-spacing:0.3px;height:26px;box-sizing:border-box;}
 .cbtn.on{background:var(--ac);color:var(--ac-fg);border-color:var(--ac);font-weight:bold}
 .cbtn:active{opacity:.75}
 .tbar{padding:7px 14px;display:flex;justify-content:flex-end}
@@ -673,9 +672,7 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 .dup-warn{display:flex;align-items:center;gap:5px;margin-top:4px;padding:4px 8px;background:#2a0000;border:1px solid #c0392b55;border-radius:6px;font-size:10px;color:#e07070;}
 .dup-warn-x{background:none;border:none;color:#e07070;cursor:pointer;font-size:14px;padding:0 0 0 6px;line-height:1;font-family:Georgia,serif;flex-shrink:0;touch-action:manipulation;}.log-cat-badge{display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;margin-left:4px;vertical-align:middle}
 .log-search-result{background:var(--bg2);border-radius:8px;padding:9px 11px;margin-bottom:5px;border:1px solid var(--ac-13)}
-.stat-period-bar{display:flex;gap:4px;margin-bottom:12px;background:var(--bg3);padding:5px;border-radius:10px;border:1px solid var(--ac-13)}
-/* FIX V47+: Fehlender Selektor ergänzt */
-.stat-period-btn{flex:1;padding:6px 0;background:transparent;border:none;border-radius:7px;color:var(--tx2);font-family:Georgia,serif;font-size:11px;cursor:pointer;transition:all .2s}
+.stat-period-bar{display:flex;gap:4px;margin-bottom:12px;background:var(--bg3);padding:5px;border-radius:10px;border:1px solid var(--ac-13)}{flex:1;padding:6px 0;background:transparent;border:none;border-radius:7px;color:var(--tx2);font-family:Georgia,serif;font-size:11px;cursor:pointer;transition:all .2s}
 .stat-period-btn.on{background:var(--ac);color:var(--bg);font-weight:bold}
 .stat-card{background:var(--bg3);border:1px solid var(--ac-13);border-radius:10px;padding:14px;margin-bottom:12px}
 .stat-card-title{font-size:11px;color:var(--ac);font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px}
@@ -2158,7 +2155,7 @@ const THEMES={
   nautical_noir:{label:'nautical_noir',vars:{
     bg:'#08060E',bg1:'#0F0C1A',bg2:'#1A1426',bg3:'#0D0A14',bg4:'#201830',
     ac:'#B89A3C',acFg:'#08060E',acWarm:'#CEB85A',acDeep:'#7A6220',
-    tx0:'#EEE4C8',tx1:'#7A7060',tx2:'#AEA090',/* FIX V47+: war #4A4030, WCAG-Kontrast ~1.4:1 → jetzt ~6:1 */tx3:'#C8BC98',tx4:'#201A0C',
+    tx0:'#EEE4C8',tx1:'#7A7060',tx2:'#4A4030',tx3:'#C8BC98',tx4:'#201A0C',
     ac07:'#B89A3C12',ac09:'#B89A3C17',ac10:'#B89A3C1A',ac13:'#B89A3C21',
     ac20:'#B89A3C33',ac27:'#B89A3C45',ac33:'#B89A3C54',ac40:'#B89A3C66',ac60:'#B89A3C99'
   }},
@@ -2198,7 +2195,7 @@ const THEMES={
   champagner:{label:'champagner',vars:{
     bg:'#FAF8F2',bg1:'#FFFFFF',bg2:'#FFFFFF',bg3:'#F5F0E8',bg4:'#EEE8D8',
     ac:'#7A5E14',acFg:'#FFFFFF',acWarm:'#9A7830',acDeep:'#5C4510',
-    tx0:'#1E1808',tx1:'#6A5830',tx2:'#7A6040',/* FIX V47+: war #A89068, WCAG-Kontrast ~2.8:1 → jetzt ~5:1 */tx3:'#3A2E18',tx4:'#D8C8A0',
+    tx0:'#1E1808',tx1:'#6A5830',tx2:'#A89068',tx3:'#3A2E18',tx4:'#D8C8A0',
     ac07:'#7A5E1412',ac09:'#7A5E1417',ac10:'#7A5E141A',ac13:'#7A5E1421',
     ac20:'#7A5E1433',ac27:'#7A5E1445',ac33:'#7A5E1454',ac40:'#7A5E1466',ac60:'#7A5E1499'
   }},
@@ -3755,14 +3752,12 @@ function invalidateSzCache(){_szCache=null;}
    Die DB-Schreibvorgänge laufen asynchron im Hintergrund.
    Alle Caller können saveState() ohne await aufrufen – wie bisher.
 ──────────────────────────────────────────────────────────────── */
-/* FIX V47+: Schreib-Queue verhindert Race Condition bei überlappenden Speichervorgängen */
-let _saveQueue=Promise.resolve();
 function saveState(){
   // Sofortiges visuelles Feedback (synchron)
   const sd=document.getElementById('saveDot');
   if(sd){sd.classList.add('show');setTimeout(()=>sd.classList.remove('show'),800);}
-  // Async-Persistierung serialisiert über Queue (kein gegenseitiges Überschreiben)
-  _saveQueue=_saveQueue.then(()=>_saveStateAsync()).catch(e=>console.error('[saveState]',e));
+  // Async-Persistierung (fire-and-forget – blockiert UI nicht)
+  _saveStateAsync().catch(e=>console.error('[saveState]',e));
   return true;
 }
 
@@ -5170,11 +5165,9 @@ function handleDrinkClick(e){
 setInterval(()=>{const n=Date.now();Object.keys(S.plusDebounce).forEach(k=>{if(n-S.plusDebounce[k]>60000)delete S.plusDebounce[k];});},300000);
 setInterval(updateClock,1000);
 
-/* FIX V47+: Pro-Getränk-Debounce statt globaler 600ms-Sperre (Multi-User-sicher) */
-var _tapPlusLast={};
-var _tapMinusLast={};
+var _tapPlusLast=0;
 function tapPlus(id){
-  const now=Date.now();if(now-(_tapPlusLast[id]||0)<600)return;_tapPlusLast[id]=now; // V47+: pro-Getränk statt global
+  const now=Date.now();if(now-_tapPlusLast<600)return;_tapPlusLast=now; // V45: globale 600ms-Sperre gegen Doppel-Taps
   if(S.plusDebounce[id]&&now-S.plusDebounce[id]<500)return;S.plusDebounce[id]=now; // V40 T13: Debounce auf 500ms erhöht
   // V45: Plus-Button kurz abdunkeln als visuelles Feedback
   const plusBtn=document.querySelector('[data-plus="'+id+'"]');if(plusBtn){plusBtn.style.opacity='0.5';setTimeout(()=>{plusBtn.style.opacity='';},600);}
@@ -5212,31 +5205,15 @@ if(dt>=S.dailyGoal){const justCrossed=(dt-d.price)<S.dailyGoal;if(justCrossed){s
 
 function tapMinus(id){
   if(!(S.counts[id]>0))return;
-  /* FIX V47+ #1: Pro-Getränk-Debounce (verhindert Doppel-Löschen bei Doppel-Tap) */
-  const _nowMinus=Date.now();if(_nowMinus-(_tapMinusLast[id]||0)<400)return;_tapMinusLast[id]=_nowMinus;
-  /* FIX V47+ #2: Kein Fallback auf fremde Einträge mehr – nur eigene Einträge löschen */
+  // First try to find an entry for the active user, then fall back to any entry
   let idx=S.log.findIndex(e=>e.drinkId===id&&e.userId===S.activeUserId);
-  if(idx===-1){
-    // Kein eigener Eintrag → Warnung, kein Löschen fremder Daten
-    const _d=S.drinks.find(x=>x.id===id);
-    showToast((S.lang==='en'?'No own entry for ':'Kein eigener Eintrag für ')+((_d&&_d.name)||''),'warn',3000);
-    return;
-  }
-  const removed=S.log[idx];
-  S.log.splice(idx,1);
+  if(idx===-1)idx=S.log.findIndex(e=>e.drinkId===id);
+  const removed=idx!==-1?S.log[idx]:null;
+  if(idx!==-1)S.log.splice(idx,1);
   S.counts[id]=(S.counts[id]||1)-1;if(!S.counts[id])delete S.counts[id];
   saveStateDebounced();renderDrinks(false);updateLimitBanner();
   clearTimeout(S.top10Timer);S.top10Timer=setTimeout(()=>{S.stableTop10=[];renderDrinks(false);},5000);
-  if(removed){
-    const d=S.drinks.find(x=>x.id===id);
-    showToastUndo(esc(d?d.name:(S.lang==='en'?'Entry':'Eintrag'))+' entfernt',()=>{
-      /* FIX V47+ #3: Zeitstempel-basiertes Einfügen statt altem Index (korrekte Reihenfolge) */
-      const removedTime=new Date(removed.time).getTime();
-      const restoreIdx=S.log.findIndex(e=>new Date(e.time).getTime()<removedTime);
-      if(restoreIdx===-1){S.log.push(removed);}else{S.log.splice(restoreIdx,0,removed);}
-      S.counts[id]=(S.counts[id]||0)+1;saveState();renderDrinks(false);if(S.activeTab===1)renderLog();updateLimitBanner();
-    });
-  }
+  if(removed){const d=S.drinks.find(x=>x.id===id);showToastUndo(esc(d?d.name:(S.lang==='en'?'Entry':'Eintrag'))+' entfernt',()=>{S.log.splice(Math.min(idx,S.log.length),0,removed);S.counts[id]=(S.counts[id]||0)+1;saveState();renderDrinks(false);if(S.activeTab===1)renderLog();updateLimitBanner();});}
 }
 
 function renderSummary(){
@@ -5447,7 +5424,7 @@ function renderLogUserFilter(){
   const userBtns=usersWithEntries.map(u=>`<button class="lufc${S.logUserFilter===u.id?' on':''}" style="background:${S.logUserFilter===u.id?u.color:'transparent'};color:${S.logUserFilter===u.id?'var(--bg)':u.color};border-color:${u.color}${S.logUserFilter===u.id?'':'88'}" onclick="setLogUserFilter('${u.id}')">${esc(u.name)}</button>`).join('');
   el.innerHTML=allBtn+userBtns;
 }
-function setLogUserFilter(uid){S.logUserFilter=uid;S.logVisibleCount=100;/* FIX V47+: Reset Lazy Loading */updateLogFilterBadge();renderLog();}
+function setLogUserFilter(uid){S.logUserFilter=uid;updateLogFilterBadge();renderLog();}
 
 // Badge helper for log entries
 function userBadgeHtml(userId){if(!userId||S.users.length<=1)return'';const u=getUserById(userId);if(!u)return'';return `<span class="user-badge" style="background:${u.color}22;color:${u.color};border:1px solid ${u.color}44"><span class="user-dot" style="background:${u.color}"></span>${esc(u.name)}</span>`;}
@@ -5611,24 +5588,9 @@ function initHeaderSwipe(){
   },{passive:true});
 }
 
-/* FIX V47+: Zweistufige Bestätigung verhindert Download-Race beim Log-Reset */
-function askReset(){
-  const L=S.lang==='en';
-  showCfm('⚠️ '+T('confirm.reset.title'),'🗑 '+T('confirm.reset.msg')+' ⚠️ '+(L?'This deletes ALL entries. A backup will be downloaded first.':'Diese Aktion löscht ALLE Einträge. Vorher wird automatisch ein Backup heruntergeladen.'),(L?'📥 Download Backup first':'📥 Zuerst Backup sichern'),()=>{
-    exportBackupSilent();
-    // Zweite Stufe: Nutzer muss warten bis Download fertig ist, dann erst löschen
-    showCfm(
-      L?'✅ Backup started':'✅ Backup gestartet',
-      L?'Wait until your backup file has been saved, then click "Delete now" to clear the log.':'Warte, bis die Backup-Datei heruntergeladen wurde, und klicke dann auf "Jetzt löschen".',
-      L?'🗑 Delete now':'🗑 Jetzt löschen',
-      ()=>{
-        S.log=[];S.counts={};S.stableOrder=[];S.expandedDays=new Set();S.expandedDaysInited=false;S.expandedMonths=new Set();S.expandedMonthsInited=false;S.limitShownToday=null;clearTimeout(S.sortTimer);
-        try{db.logs.clear();}catch(_){}
-        saveState();renderDrinks(true);updateHeader();updateLimitBanner();showToast('✅ '+(L?'Backup saved – log cleared':'Backup gesichert – Daten zurückgesetzt'));
-      }
-    );
-  });
-}
+function askReset(){showCfm('⚠️ '+T('confirm.reset.title'),'🗑 '+T('confirm.reset.msg')+' ⚠️ Diese Aktion löscht ALLE Einträge und ist nicht rückgängig zu machen!',T('confirm.reset.btn'),()=>{exportBackupSilent();setTimeout(()=>{S.log=[];S.counts={};S.stableOrder=[];S.expandedDays=new Set();S.expandedDaysInited=false;S.expandedMonths=new Set();S.expandedMonthsInited=false;S.limitShownToday=null;clearTimeout(S.sortTimer);// V46: auch IDB-Logs leeren
+      try{db.logs.clear();}catch(_){}
+      saveState();renderDrinks(true);updateHeader();updateLimitBanner();showToast('✅ Backup gesichert – Daten zurückgesetzt');},400);});}
 
 // ── OPTION A: Vollständiger Reset ──────────────────────────────────────────
 function openResetAll(){
@@ -5926,7 +5888,7 @@ function initDrinkSwipe(){
   });
 }
 
-function onLogSearch(){S.logSearchQ=(document.getElementById('logSearch').value||'').toLowerCase();S.logVisibleCount=100;/* FIX V47+ */;_fullExpandedDays=new Set();updateLogFilterBadge();renderLog();}
+function onLogSearch(){S.logSearchQ=(document.getElementById('logSearch').value||'').toLowerCase();_fullExpandedDays=new Set();updateLogFilterBadge();renderLog();}
 function updateLogFilterBadge(){
   let n=0;
   if(S.logSearchQ)n++;
@@ -5957,7 +5919,7 @@ function closeLogMoreMenu(){
 document.addEventListener('click',function(e){
   if(!e.target.closest('#logMoreBtn')&&!e.target.closest('#logMoreMenu'))closeLogMoreMenu();
 });
-function setLogCatFilter(cat){S.logCatFilter=cat;S.logVisibleCount=100;/* FIX V47+ */_fullExpandedDays=new Set();updateLogFilterBadge();renderLog();}
+function setLogCatFilter(cat){S.logCatFilter=cat;_fullExpandedDays=new Set();updateLogFilterBadge();renderLog();}
 
 /* ── Multi-Select-Modus ──────────────────────────────────────── */
 function toggleLogMultiSelect(){
@@ -6413,15 +6375,8 @@ function renderLog(){
   // mkeys = month-key strings "YYYY-MM", dkeys = day-key strings "YYYY-MM-DD"
   // Using the entry's recorded tz (entryLogicalDayStr) so each entry always
   // appears under the day it was ACTUALLY recorded, regardless of viewer tz.
-  /* FIX V47+: Lazy Loading – nur S.logVisibleCount Einträge auf einmal rendern */
-  if(typeof S.logVisibleCount!=='number'||S.logVisibleCount<100)S.logVisibleCount=100;
-  const totalFilteredReal=filteredReal.length;
-  const hasMore=totalFilteredReal>S.logVisibleCount;
-  // Schnitt nach Visible-Count auf dem echten (nicht-Marker) Log, dann Marker wieder einfügen
-  const visibleIds=new Set(filteredReal.slice(0,S.logVisibleCount).map(e=>e.id));
-  const visibleLog=filteredLog.filter(e=>e._marker||visibleIds.has(e.id));
   const mkeys=[],months={},dkeys=[],days={};
-  visibleLog.forEach(e=>{
+  filteredLog.forEach(e=>{
     const mk=entryLogicalMKey(e);
     const dk=entryLogicalDayStr(e);
     if(!months[mk]){months[mk]={days:{},dkeys:[]};mkeys.push(mk);}
@@ -6517,14 +6472,7 @@ function renderLog(){
     html+=`</div>`; // monthbody
   });
 
-  const el=document.getElementById('loglist');
-  // FIX V47+: "Mehr laden"-Button wenn nicht alle Einträge sichtbar
-  if(hasMore){
-    const L=S.lang==='en';
-    const remaining=totalFilteredReal-S.logVisibleCount;
-    html+=`<div style="text-align:center;padding:18px 14px 8px"><button onclick="S.logVisibleCount=(S.logVisibleCount||100)+100;renderLog()" style="padding:10px 28px;background:var(--bg2);border:1px solid var(--ac-27);border-radius:10px;color:var(--ac);font-family:Georgia,serif;font-size:13px;cursor:pointer;touch-action:manipulation;width:100%;max-width:320px">↓ ${remaining} ${L?'more entries':'weitere Einträge'}</button></div>`;
-  }
-  el.innerHTML=html;el._mk=mkeys;el._dk=dkeys;
+  const el=document.getElementById('loglist');el.innerHTML=html;el._mk=mkeys;el._dk=dkeys;
   if(!S.logMultiSelect)initSwipeDelete();
   else initMselRows();
 }
@@ -9185,24 +9133,17 @@ function askReplaceImport(){
   const msg=(L
     ?`⚠️ ALL ${fmtNum(existCount)} existing entries will be permanently deleted and replaced by ${fmtNum(newCount)} entries from the backup file. This cannot be undone!\n\nA safety backup of your current data will be downloaded automatically first.`
     :`⚠️ ALLE ${existCount} bestehenden Einträge werden unwiderruflich gelöscht und durch ${newCount} Einträge aus der Backup-Datei ersetzt.\n\nEin Sicherheits-Backup deiner aktuellen Daten wird vorher automatisch heruntergeladen.`);
-  /* FIX V47+: Immer Backup, dann zweite Stufe mit 3-Sekunden-Countdown */
   showCfm(
     L?'⚠️ Replace all data?':'⚠️ Alle Daten ersetzen?',
     msg,
-    L?'📥 Download Backup first':'📥 Zuerst Backup sichern',
+    L?'🔄 Backup & Replace':'🔄 Backup & Ersetzen',
     ()=>{
-      showToast('💾 '+(L?'Safety backup downloading…':'Sicherheits-Backup wird heruntergeladen…'),'info',3000);
-      exportBackupSilent(); // Immer – auch bei 0 Einträgen (Einstellungen sichern)
-      // Zweite Stufe: Countdown-Dialog
-      setTimeout(()=>{
-        showCfm(
-          L?'✅ Backup saved – final step':'✅ Backup gesichert – letzter Schritt',
-          L?'Your backup file has been saved. Click "Replace now" to proceed.'
-           :'Deine Backup-Datei wurde gespeichert. Klicke auf "Jetzt ersetzen" um fortzufahren.',
-          L?'🔄 Replace now':'🔄 Jetzt ersetzen',
-          ()=>doImport('replace')
-        );
-      },1200);
+      // V34 V9: Automatisches Sicherheits-Backup VOR dem Ersetzen
+      if(existCount>0){
+        showToast('💾 Sicherheits-Backup wird heruntergeladen…','info',3000);
+        exportBackupSilent();
+      }
+      setTimeout(()=>doImport('replace'),existCount>0?800:0);
     }
   );
 }
@@ -9210,29 +9151,15 @@ function doImport(mode){
   if(!_bkp){closeBkp();return;}const data=_bkp;
   const importProfiles=!!(document.getElementById('bkpImportProfiles')&&document.getElementById('bkpImportProfiles').checked);
   closeBkp();
-  // FIX V47+: Name-basiertes User-Mapping statt positions-basiertem Mapping
-  // Verhindert Chaos wenn Nutzer auf verschiedenen Geräten unterschiedlich sortiert sind
+  // Build user ID mapping: backup user positions → local fixed slot IDs
+  // Position 0 → u1, Position 1 → u2, etc.
   const FIXED_IDS=['u1','u2','u3','u4'];
   const backupUsers=data.users&&Array.isArray(data.users)?data.users:[];
-  const localUsers=S.users||[];
   const userIdMap={}; // backupUserId → localUserId
-  let _positionFallbackUsed=false;
   backupUsers.forEach((bu,i)=>{
-    // Zuerst: Name-Vergleich (case-insensitive, trimmed)
-    const nameMatch=localUsers.find(lu=>lu.name&&bu.name&&lu.name.trim().toLowerCase()===bu.name.trim().toLowerCase());
-    if(nameMatch){
-      userIdMap[bu.id]=nameMatch.id;
-    } else if(i<FIXED_IDS.length){
-      userIdMap[bu.id]=FIXED_IDS[i]; // Positions-Fallback
-      if(bu.name&&localUsers.find(lu=>lu.id===FIXED_IDS[i])&&localUsers.find(lu=>lu.id===FIXED_IDS[i]).name!==bu.name)_positionFallbackUsed=true;
-    } else {
-      userIdMap[bu.id]=bu.id;
-    }
+    if(i<4){userIdMap[bu.id]=FIXED_IDS[i];}
+    else{userIdMap[bu.id]=bu.id;} // extra users keep their ID
   });
-  if(_positionFallbackUsed){
-    const L=S.lang==='en';
-    showToast('⚠️ '+(L?'Some users were matched by position (names differ). Please verify the log.':'Nutzer wurden nach Position zugeordnet (Namen weichen ab). Bitte Protokoll prüfen.'),'warn',6000);
-  }
   // Remap entry userIds using the map
   function remapEntryUser(e){
     if(e.userId&&userIdMap[e.userId])return {...e,userId:userIdMap[e.userId]};
@@ -10260,7 +10187,6 @@ async function migrateFromLocalStorage(){
       'a4_customthemes':'customThemes','a4_statdaysort':'statDaySort',
       'a4_statdayshow':'statDayShow','a4_statopen':'statOpen',
       'a4_lastbkp':'lastBackupDate','a4_lastbkpreminder':'lastBackupReminderDate',
-      'a4_onboarding_done':'onboardingDone',/* FIX V47+: fehlte in Migration */
     };
     const batch=[];
     for(const[oldKey,newKey]of Object.entries(keyMap)){
@@ -11082,52 +11008,7 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
   }
 
   try{
-    /* FIX V47+: Service Worker als Blob einbetten – echte Single-File-PWA.
-       Kein externes sw.js mehr nötig. Funktioniert auch per AirDrop / file:// .
-       Icons aus ASSETS entfernt – fehlen beim file://-Betrieb und brechen sonst
-       den gesamten SW-Install-Vorgang ab. */
-    const _SW_CODE=`
-const CACHE_NAME='tracker-v47-blob';
-const ASSETS=['./index.html'];
-self.addEventListener('install',event=>{
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache=>cache.addAll(ASSETS))
-      .catch(err=>console.warn('[SW] Cache-Fehler:',err))
-  );
-});
-self.addEventListener('activate',event=>{
-  event.waitUntil(
-    caches.keys()
-      .then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k))))
-      .then(()=>self.clients.claim())
-  );
-});
-self.addEventListener('fetch',event=>{
-  if(event.request.method!=='GET')return;
-  if(!event.request.url.startsWith('http'))return;
-  event.respondWith(
-    caches.match(event.request).then(cached=>{
-      const networkFetch=fetch(event.request)
-        .then(response=>{
-          if(response&&response.status===200&&response.type==='basic'){
-            const clone=response.clone();
-            caches.open(CACHE_NAME).then(cache=>cache.put(event.request,clone));
-          }
-          return response;
-        })
-        .catch(()=>null);
-      return cached?cached:networkFetch.then(r=>r||new Response('Offline – bitte App neu starten',{status:503,headers:{'Content-Type':'text/plain; charset=utf-8'}}));
-    })
-  );
-});
-self.addEventListener('message',event=>{
-  if(event.data&&event.data.type==='SKIP_WAITING')self.skipWaiting();
-});
-`;
-    const _swBlob=new Blob([_SW_CODE],{type:'application/javascript'});
-    const _swUrl=URL.createObjectURL(_swBlob);
-    navigator.serviceWorker.register(_swUrl, {scope:'./'})
+    navigator.serviceWorker.register('./sw.js', {scope:'./'})
       .then(function(reg){
         _swReg = reg;
 
