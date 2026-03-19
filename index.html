@@ -422,7 +422,7 @@ body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;
    physischen Rand. window.innerHeight liefert die echte Gesamthöhe in CSS-px.
    --app-h wird per JS gesetzt. 100dvh als CSS-Fallback.
 ──────────────────────────────────────────────────────────────────────────────── */
-#app{position:fixed;top:0;left:0;right:0;height:var(--app-h,100dvh);max-width:480px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;background:var(--bg)}
+#app{position:fixed;top:0;left:0;right:0;bottom:0;height:var(--app-h,100dvh);max-width:480px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;background:var(--bg)}
 /* Safe-Area: wird über padding-bottom der Panes gehandhabt */
 /* Header: feste Höhe, kein Scrollen */
 /* Header: safe-area-inset-top hier, damit Dynamic Island / Notch freigehalten wird */
@@ -1271,13 +1271,18 @@ details.hlp-acc summary:active{opacity:.75}
 </head>
 <body>
 <script>
-/* iOS PWA: window.innerHeight = echte physische Höhe des Screens in CSS-px.
-   Wird als --app-h CSS-Variable gesetzt, damit #app den gesamten Screen füllt. */
+/* iOS PWA Fullscreen: window.innerHeight = echte physische Höhe inkl. Safe Areas.
+   Wird sofort UND nach einem kurzen Delay gesetzt, da iOS den Viewport
+   manchmal erst nach dem ersten Paint vollständig settled. */
 (function(){
   function setAppH(){
-    document.documentElement.style.setProperty('--app-h', window.innerHeight + 'px');
+    var h = window.innerHeight;
+    document.documentElement.style.setProperty('--app-h', h + 'px');
   }
-  setAppH();
+  setAppH(); // sofort beim Parsen
+  document.addEventListener('DOMContentLoaded', setAppH); // nach DOM
+  setTimeout(setAppH, 100);  // nach erstem Paint
+  setTimeout(setAppH, 500);  // nach iOS Viewport-Settling
   window.addEventListener('resize', setAppH);
   window.addEventListener('orientationchange', function(){ setTimeout(setAppH, 300); });
 })();
