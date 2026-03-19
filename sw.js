@@ -26,20 +26,35 @@ const ASSETS = [
   './index.html'
 ];
 
-/* ── Install: cachen + SOFORT übernehmen (Notfall-Bypass) ─────── */
+/* ── Install: cachen + SOFORT übernehmen (nur beim Erststart) ─ */
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(ASSETS))
-      .then(() => self.skipWaiting())   /* ← Notfall: sofort übernehmen */
+      .then(() => {
+        /* FIX V48: skipWaiting() nur wenn noch kein Client läuft.
+           Bei laufender App würde ein sofortiges skipWaiting() den
+           iOS-IndexedDB-Zugriff unterbrechen und die App einfrieren.
+           Beim echten Erststart (keine Clients) ist es sicher. */
+        return self.clients.matchAll({type:'window'}).then(clients => {
+          if(clients.length === 0){
+            return self.skipWaiting();
+          }
+          // Sonst wartet der SW auf explizites SKIP_WAITING vom Update-Banner
+        });
+      })
       .catch(err => {
         console.warn('[SW] Cache-Fehler beim Install:', err);
-        self.skipWaiting(); /* auch bei Cache-Fehler übernehmen */
+        // Beim Erststart (kein Client) trotzdem übernehmen
+        return self.clients.matchAll({type:'window'}).then(clients => {
+          if(clients.length === 0) return self.skipWaiting();
+        });
       })
   );
 });
 
-/* ── Activate: alle alten Caches löschen, Clients sofort übernehmen */
+/* ── Activate: alte Caches löschen; claim() verzögert damit
+      iOS-IndexedDB-Initialisierung nicht unterbrochen wird ─────── */
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
@@ -49,6 +64,10 @@ self.addEventListener('activate', event => {
           return caches.delete(k);
         })
       ))
+      /* FIX V48: clients.claim() erst nach kurzem Delay.
+         Sofortiges claim() auf iOS kann einen laufenden IndexedDB-
+         Öffnungs-Request der App abwürgen → App friert ein. */
+      .then(() => new Promise(resolve => setTimeout(resolve, 200)))
       .then(() => self.clients.claim())
   );
 });

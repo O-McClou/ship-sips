@@ -3702,21 +3702,33 @@ const TrackerDB = (function(){
 
   function _open(){
     if(_db) return Promise.resolve(_db);
-    return new Promise((resolve, reject)=>{
-      const req = indexedDB.open(DB_NAME, DB_VERSION);
-      req.onupgradeneeded = e=>{
-        const db = e.target.result;
-        if(!db.objectStoreNames.contains('logs')){
-          // V46: Logs benutzen 'id' als KeyPath (wird beim Speichern als uid gesetzt)
-          const ls=db.createObjectStore('logs', {keyPath:'id'});
-          ls.createIndex('ts','ts',{unique:false});
-        }
-        if(!db.objectStoreNames.contains('config'))
-          db.createObjectStore('config', {keyPath:'key'});
-      };
-      req.onsuccess = e=>{ _db=e.target.result; resolve(_db); };
-      req.onerror  = e=>reject(e.target.error);
+    /* FIX V48: iOS PWA-Freeze-Schutz.
+       WebKit blockiert IndexedDB-Zugriffe lautlos wenn der Service Worker
+       beim Start die Kontrolle übernimmt (skipWaiting). Das await db.open()
+       resolved dann nie → App friert ein ohne Fehler.
+       Lösung: Race gegen einen 4-Sekunden-Timeout.
+       Bei Timeout → reject → initApp()-catch → Fallback auf localStorage. */
+    const idbPromise = new Promise((resolve, reject)=>{
+      try {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = e=>{
+          const db = e.target.result;
+          if(!db.objectStoreNames.contains('logs')){
+            const ls=db.createObjectStore('logs', {keyPath:'id'});
+            ls.createIndex('ts','ts',{unique:false});
+          }
+          if(!db.objectStoreNames.contains('config'))
+            db.createObjectStore('config', {keyPath:'key'});
+        };
+        req.onsuccess = e=>{ _db=e.target.result; resolve(_db); };
+        req.onerror  = e=>reject(e.target.error);
+        req.onblocked = ()=>reject(new Error('IDB blocked'));
+      } catch(e) { reject(e); }
     });
+    const timeoutPromise = new Promise((_,reject)=>
+      setTimeout(()=>reject(new Error('IDB timeout – iOS PWA fallback')), 4000)
+    );
+    return Promise.race([idbPromise, timeoutPromise]);
   }
 
   function _tx(stores, mode, fn){
@@ -4463,18 +4475,26 @@ const InternalBackupDB = (function(){
   let _useLS=false;
 
   function _openDB(){
-    return new Promise((resolve,reject)=>{
+    /* FIX V48: Timeout-Schutz – identisch zu TrackerDB */
+    const idbPromise = new Promise((resolve,reject)=>{
       if(!window.indexedDB){_useLS=true;resolve(null);return;}
-      const req=indexedDB.open(DB_NAME,1);
-      req.onupgradeneeded=function(e){
-        const db=e.target.result;
-        if(!db.objectStoreNames.contains(STORE)){
-          db.createObjectStore(STORE,{keyPath:'id',autoIncrement:false});
-        }
-      };
-      req.onsuccess=function(e){_db=e.target.result;resolve(_db);};
-      req.onerror=function(){_useLS=true;resolve(null);};
+      try {
+        const req=indexedDB.open(DB_NAME,1);
+        req.onupgradeneeded=function(e){
+          const db=e.target.result;
+          if(!db.objectStoreNames.contains(STORE)){
+            db.createObjectStore(STORE,{keyPath:'id',autoIncrement:false});
+          }
+        };
+        req.onsuccess=function(e){_db=e.target.result;resolve(_db);};
+        req.onerror=function(){_useLS=true;resolve(null);};
+        req.onblocked=function(){_useLS=true;resolve(null);};
+      } catch(e){ _useLS=true; resolve(null); }
     });
+    const timeoutPromise = new Promise(resolve=>
+      setTimeout(()=>{ _useLS=true; resolve(null); }, 4000)
+    );
+    return Promise.race([idbPromise, timeoutPromise]);
   }
 
   /* ── localStorage fallback helpers ── */
@@ -10452,6 +10472,18 @@ async function loadStateFromDB(){
 
 /* initApp() – asynchrone Startlogik (ersetzt synchrones Inline-Init) */
 async function initApp(){
+  /* FIX V48: Globaler Notfall-Timeout.
+     Falls irgendetwas im async Start-Pfad lautlos hängt (iOS PWA + SW),
+     startet die App nach 6s trotzdem via localStorage-Fallback. */
+  let _initDone = false;
+  const _emergencyTimer = setTimeout(function(){
+    if(!_initDone){
+      console.warn('[initApp] Notfall-Timeout: starte mit localStorage-Fallback');
+      try{ loadState(); }catch(e){}
+      try{ _initUI(); }catch(e){}
+    }
+  }, 6000);
+
   try{
     await db.open();
     // Persistenten Speicher anfordern (schützt vor iOS-Löschung)
@@ -10466,6 +10498,8 @@ async function initApp(){
     // Zustand laden
     await loadStateFromDB();
     // UI initialisieren (analog zum bisherigen synchronen Init)
+    _initDone = true;
+    clearTimeout(_emergencyTimer);
     _initUI();
     // Tägliches Auto-Backup (Gutachten §04 / §10 Punkt 6) – stille Version
     // Wenn kein internes Backup seit >24h → automatisch und lautlos anlegen
@@ -10501,6 +10535,8 @@ async function initApp(){
     },4000);
   }catch(e){
     console.error('[initApp] Fehler:',e);
+    _initDone = true;
+    clearTimeout(_emergencyTimer);
     // Fallback: synchrones Init über localStorage
     loadState();
     _initUI();
