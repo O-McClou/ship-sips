@@ -19,7 +19,7 @@
      und braucht den Service Worker nicht.
    ═══════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'tracker-v48';
+const CACHE_NAME = 'tracker-v51';
 const ASSETS = [
   './index.html'
   /* Keine Icons hier – sie fehlen beim file://-Betrieb (AirDrop).
