@@ -1918,38 +1918,31 @@ details.hlp-acc summary:active{opacity:.75}
 </div>
 
 <script>
-/* ── Globaler Fehler-Handler (Gutachten §05) ────────────────────── */
-var _errGuard = false;
+/* ═══════════════════════════════════════════════════════════════
+   GLOBALER FEHLER-HANDLER – fängt unerwartete JS-Fehler ab
+   (Gutachten §05 – Kritisch: kein stiller Absturz auf Reise)
+═══════════════════════════════════════════════════════════════ */
 window.onerror = function(msg, src, line, col, err) {
   console.error('[App Error]', msg, src, line, col, err);
-  if (_errGuard) return false;
-  _errGuard = true;
-  setTimeout(function() {
-    try {
-      var L = (typeof S !== 'undefined' && S.lang === 'en');
-      showToast('\u26A0\uFE0F ' + (L ? 'App error – please create a backup!' : 'App-Fehler – bitte Backup erstellen!'), 'error', 8000);
-    } catch(_) {}
-    _errGuard = false;
-  }, 2000);
+  // showToast ist ggf. noch nicht definiert – daher try/catch
+  try {
+    const L = (typeof S !== 'undefined' && S.lang === 'en');
+    showToast('⚠️ ' + (L ? 'App error – please create a backup!' : 'App-Fehler – bitte Backup erstellen!'), 'error', 8000);
+  } catch(_) {}
   return false;
 };
 window.addEventListener('unhandledrejection', function(e) {
   console.error('[Unhandled Promise]', e.reason);
-  if (_errGuard) return;
-  _errGuard = true;
-  setTimeout(function() {
-    try {
-      var L = (typeof S !== 'undefined' && S.lang === 'en');
-      showToast('\u26A0\uFE0F ' + (L ? 'Storage error – please restart' : 'Speicherfehler – bitte neu starten'), 'error', 8000);
-    } catch(_) {}
-    _errGuard = false;
-  }, 2000);
+  try {
+    const L = (typeof S !== 'undefined' && S.lang === 'en');
+    showToast('⚠️ ' + (L ? 'Storage error – please restart' : 'Speicherfehler – bitte neu starten'), 'error', 8000);
+  } catch(_) {}
 });
 
 /* ═══════════════════════════════════════════════════════════════
    TRANSLATIONS – Complete DE / EN
 ═══════════════════════════════════════════════════════════════ */
-const APP_VERSION = 'V55';
+const APP_VERSION = 'V47';
 const I18N = {
   de:{
     'tab.drinks':'Getränke','tab.log':'Protokoll','tab.stats':'Statistik','tab.manage':'Verwaltung','tab.help':'Hilfe',
@@ -5289,7 +5282,8 @@ function tapMinus(id){
   S.log.splice(idx,1);
   S.counts[id]=(S.counts[id]||1)-1;if(!S.counts[id])delete S.counts[id];
   saveStateDebounced();renderDrinks(false);updateLimitBanner();
-  try{if(typeof navigator.vibrate==='function')navigator.vibrate([30,20,30]);}catch(_){} /* Haptic §07 */
+  // Haptic Feedback beim Löschen – warnendes Vibrationsmuster (Gutachten §07)
+  try{if(typeof navigator.vibrate==='function')navigator.vibrate([30,20,30]);}catch(_){}
   clearTimeout(S.top10Timer);S.top10Timer=setTimeout(()=>{S.stableTop10=[];renderDrinks(false);},5000);
   if(removed){
     const d=S.drinks.find(x=>x.id===id);
@@ -7040,6 +7034,7 @@ function renderVerwaltung(){
   }
 
   /* ── Speicher-Monitor: navigator.storage.estimate() (Gutachten §04) ── */
+  // Placeholder – wird asynchron befüllt nach DOM-Render
   const storageHtml=`<div class="adm-storage-bar" id="admStorageBar">
     <div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--tx2)">
       <span>🗄️ IndexedDB</span>
@@ -7047,7 +7042,8 @@ function renderVerwaltung(){
     </div>
     <div style="font-size:9px;color:var(--tx2);margin-top:3px" id="admStorageDetail">${L?'Calculating storage usage…':'Speichernutzung wird berechnet…'}</div>
     <div style="height:3px;background:var(--ac-13);border-radius:2px;margin-top:5px;overflow:hidden"><div id="admStorageFill" style="height:100%;width:0%;background:var(--col-ok);border-radius:2px;transition:width .4s"></div></div>
-  </div>`;
+  </div>\`;
+  // Asynchrone Befüllung nach Render-Zyklus (Gutachten §04)
   setTimeout(async()=>{
     try{
       if(!navigator.storage||!navigator.storage.estimate)return;
@@ -7059,7 +7055,7 @@ function renderVerwaltung(){
       const detail=document.getElementById('admStorageDetail');
       const fill=document.getElementById('admStorageFill');
       const status=document.getElementById('admStorageStatus');
-      if(detail)detail.textContent=L?`Used: ${usedMB} MB of approx. ${totalMB} MB (${pct}%)`:`Verwendet: ${usedMB} MB von ca. ${totalMB} MB (${pct}%)`;
+      if(detail)detail.textContent=(L?`Used: ${usedMB} MB of approx. ${totalMB} MB (${pct}%)`:(`Verwendet: ${usedMB} MB von ca. ${totalMB} MB (${pct}%)`));
       if(fill){fill.style.width=pct+'%';fill.style.background=col;}
       if(status)status.style.color=col;
     }catch(_){}
@@ -7244,7 +7240,7 @@ function renderVerwaltung(){
       <span class="adm-card-hdr-ico">📊</span>
       <div class="adm-card-hdr-body">
         <div class="adm-card-hdr-title">${L?'Database overview':'Datenbankübersicht'}</div>
-        <div class="adm-card-hdr-sub">${S.log.length} ${L?'active entries':'aktive Einträge'} · ${szMB} MB</div>
+        <div class="adm-card-hdr-sub" id="admDataSub">${S.log.length} ${L?'active entries':'aktive Einträge'}</div>
       </div>
       <span class="adm-card-hdr-arr${S.vwOpen&&S.vwOpen.dbstatus?' open':''}">►</span>
     </div>
@@ -8289,14 +8285,6 @@ function renderHelp(){
 
     <div class="hlp-info">ℹ️ ${h('Die Verwaltung ist als <strong>Akkordeon</strong> aufgebaut. Der <strong>Backup &amp; Daten</strong>-Bereich ist immer sichtbar. Alle anderen Abschnitte (Einstellungen, Nutzer, Schiffszeit, Design, Getränke, <strong>Reiseroute</strong>) klappen durch Antippen des Titels auf und zu. Abschnitte im Verwaltungs-Tab sind durch Scrollen oder Antippen der Abschnittstitel erreichbar. Unter <strong>⚙️ Erweitert</strong> findest du Zeitzonen, Reiseroute, Backup-Export und Reset.','Management is organised as an <strong>accordion</strong>. The <strong>Backup &amp; Data</strong> section is always visible. All other sections (Settings, Users, Ship\'s time, Design, Drinks, <strong>Voyage Route</strong>) expand and collapse by tapping the title. Sections in the Settings tab accessible by scrolling or tapping the section headers. Under <strong>⚙️ Advanced</strong> you find timezones, voyage route, backup export and reset.')}</div>
 
-    <div class="hlp-card" style="border-color:var(--col-err);background:rgba(208,85,85,0.07)">
-      <div class="hlp-card-title" style="color:var(--col-err)">☁️ ${h('Wichtig: Deine Daten sind NICHT in iCloud gesichert!','Important: Your data is NOT backed up in iCloud!')}</div>
-      <div class="hlp-row">
-        <span class="hlp-badge red">☁️ iCloud</span>
-        <span>${h('PWA-Daten (IndexedDB) werden von iOS <strong>nicht automatisch in iCloud gesichert</strong> – auch dann nicht, wenn iCloud-Backup auf dem iPhone aktiv ist. Wenn das Gerät gewechselt oder neu aufgesetzt wird, <strong>sind alle Daten unwiederbringlich verloren</strong> – sofern kein JSON-Backup vorhanden ist. <strong>Regelmäßige JSON-Exports sind deshalb essenziell.</strong>','PWA data (IndexedDB) is <strong>not automatically backed up to iCloud</strong> by iOS – even if iCloud Backup is enabled on the iPhone. If you change devices or reset the phone, <strong>all data is permanently lost</strong> unless a JSON backup exists. <strong>Regular JSON exports are therefore essential.</strong>')}</span>
-      </div>
-    </div>
-
     <div class="hlp-card" style="margin-top:10px">
       <div class="hlp-card-title">💾 ${h('Backup &amp; Daten (immer sichtbar)','Backup &amp; Data (always visible)')}</div>
       <div class="hlp-row"><span class="hlp-badge blue">💽 ${h('Speicher','Storage')}</span><span>${h('Die App nutzt IndexedDB – kein festes Speicherlimit. Einträge werden zuverlässig gespeichert, egal wie lang die Reise dauert. Regelmäßige Backups trotzdem empfohlen.','The app uses IndexedDB – no fixed storage limit. Entries are saved reliably no matter how long the voyage. Regular backups are still recommended.')}</span></div>
@@ -8504,6 +8492,14 @@ function renderHelp(){
     <div class="hlp-danger">⚠️ <strong>${h('Datenverlust-Risiken auf iPhone – unbedingt beachten!','Data loss risks on iPhone – important!')}</strong><br><br>
     ${h('Alle Daten liegen im lokalen Browser-Speicher (<strong>localStorage</strong>). iOS kann diesen <strong>ohne Vorwarnung löschen</strong>, wenn der Gerätespeicher knapp wird.<br><br><strong>Situationen mit Datenverlust-Risiko:</strong><br>• iOS → Einstellungen → Safari → Verlauf und Websitedaten löschen<br>• Microsoft Edge wird deinstalliert und neu installiert<br>• Das iPhone wird auf Werkseinstellungen zurückgesetzt<br>• Das Gerät wird gewechselt<br>• iOS-Systemupdate (sehr selten, aber möglich)<br>• Edge-Update (sehr selten)<br><br>→ <strong>Einziger Schutz: regelmäßige JSON-Backups in iCloud Drive oder lokal auf dem iPhone sichern!</strong>',
     'All data is stored in the browser\'s local storage (<strong>localStorage</strong>). iOS may <strong>delete this without warning</strong> when device storage is low.<br><br><strong>Situations with data loss risk:</strong><br>• iOS → Settings → Safari → Clear History and Website Data<br>• Microsoft Edge is uninstalled and reinstalled<br>• The iPhone is reset to factory settings<br>• The device is changed<br>• iOS system update (very rare but possible)<br>• Edge update (very rare)<br><br>→ <strong>Only protection: save regular JSON backups to iCloud Drive or locally on the iPhone!</strong>')}</div>
+
+    <div class="hlp-card" style="border-color:var(--col-err);background:rgba(208,85,85,0.07)">
+      <div class="hlp-card-title" style="color:var(--col-err)">☁️ ${h('Wichtig: Deine Daten sind NICHT in iCloud gesichert!','Important: Your data is NOT backed up in iCloud!')}</div>
+      <div class="hlp-row">
+        <span class="hlp-badge red">☁️ iCloud</span>
+        <span>${h('PWA-Daten (IndexedDB) werden von iOS <strong>nicht automatisch in iCloud gesichert</strong> – auch dann nicht, wenn iCloud-Backup auf dem iPhone aktiv ist. Wenn das Gerät gewechselt oder neu aufgesetzt wird, <strong>sind alle Daten unwiederbringlich verloren</strong> – sofern kein JSON-Backup vorhanden ist. <strong>Regelmäßige JSON-Exports sind deshalb essenziell.</strong>','PWA data (IndexedDB) is <strong>not automatically backed up to iCloud</strong> by iOS – even if iCloud Backup is enabled on the iPhone. If you change devices or reset the phone, <strong>all data is permanently lost</strong> unless a JSON backup exists. <strong>Regular JSON exports are therefore essential.</strong>')}</span>
+      </div>
+    </div>
 
     <div class="hlp-card">
       <div class="hlp-card-title">🌍 ${h('Weltreise – Besondere Hinweise','World Voyage – Special Notes')}</div>
@@ -10439,13 +10435,6 @@ async function loadStateFromDB(){
   }
 }
 
-/* MANIFEST.JSON – file_handlers ergänzen (außerhalb dieser Datei):
-   "file_handlers": [{
-     "action": "/",
-     "accept": { "application/json": [".json"] }
-   }]
-   Voraussetzung: PWA installiert (Home-Bildschirm), iOS 16.4+
-*/
 /* initApp() – asynchrone Startlogik (ersetzt synchrones Inline-Init) */
 async function initApp(){
   try{
@@ -10461,36 +10450,22 @@ async function initApp(){
     }
     // Zustand laden
     await loadStateFromDB();
-    // UI initialisieren
+    // UI initialisieren (analog zum bisherigen synchronen Init)
     _initUI();
-    // Tägliches Auto-Backup (Gutachten §10) – still, kein Toast
+    // Tägliches Auto-Backup (Gutachten §04 / §10 Punkt 6)
+    // Wenn kein internes Backup seit >24h → automatisch anlegen
     setTimeout(async()=>{
       try{
         const all=await InternalBackupDB.getAll();
+        const now=Date.now();
         const lastTs=all.length>0?new Date(all[0].date).getTime():0;
-        if((Date.now()-lastTs)/3600000>24){
-          const nm=typeof appNameClean==='function'?appNameClean():'Tracker';
-          const nowD=new Date();
-          const data={version:11,exportDate:nowD.toISOString(),
-            appTitle1:S.appTitle1||'🍹 Mein Tracker',appTitle2:S.appTitle2||'Meine Reise',titleIcon:S.titleIcon||'',
-            tzMode:S.tzMode||'auto',tzOffset:S.tzOffset||0,tzChangeLog:S.tzChangeLog||[],
-            drinks:S.drinks,log:S.log,favorites:[...S.favorites],favOrder:S.favOrder||[],
-            lang:S.lang,fontSize:S.fontSize,dailyGoal:S.dailyGoal,currency:S.currency,
-            catColorMap:S.ccm,dayEndHour:S.dayEndHour||0,dayEndMinute:S.dayEndMinute||0,
-            users:S.users||[],activeUserId:S.activeUserId||'',userBudgets:S.userBudgets||{},
-            voyageRoute:S.voyageRoute||[],currentLocation:S.currentLocation||'',
-            serviceCharge:S.serviceCharge||0,customThemes:S.customThemes||[],
-            btnLayout:S.btnLayout||'plus-left',
-            conceptFavorites:S.conceptFavorites||['kapitaensbuch','atelier','sonnendeck'],
-            conceptTheme:S.conceptTheme||'kapitaensbuch'};
-          const jsonStr=JSON.stringify(data);
-          const sizeKb=Math.round(jsonStr.length/1024*10)/10;
-          await InternalBackupDB.saveBackup({id:Date.now(),date:nowD.toISOString(),
-            label:nm+' Auto '+nowD.toLocaleDateString('de-DE'),size_kb:sizeKb,data:jsonStr});
-          console.log('[AutoBackup] Tägliches Backup erstellt ('+sizeKb+' KB).');
+        const hoursSince=(now-lastTs)/3600000;
+        if(hoursSince>24){
+          await saveBackupInternal();
+          console.log('[AutoBackup] Tägliches internes Backup erstellt.');
         }
       }catch(e2){console.warn('[AutoBackup]',e2);}
-    },4000);
+    },3000);
   }catch(e){
     console.error('[initApp] Fehler:',e);
     // Fallback: synchrones Init über localStorage
