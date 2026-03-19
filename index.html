@@ -1919,6 +1919,27 @@ details.hlp-acc summary:active{opacity:.75}
 
 <script>
 /* ═══════════════════════════════════════════════════════════════
+   GLOBALER FEHLER-HANDLER – fängt unerwartete JS-Fehler ab
+   (Gutachten §05 – Kritisch: kein stiller Absturz auf Reise)
+═══════════════════════════════════════════════════════════════ */
+window.onerror = function(msg, src, line, col, err) {
+  console.error('[App Error]', msg, src, line, col, err);
+  // showToast ist ggf. noch nicht definiert – daher try/catch
+  try {
+    const L = (typeof S !== 'undefined' && S.lang === 'en');
+    showToast('⚠️ ' + (L ? 'App error – please create a backup!' : 'App-Fehler – bitte Backup erstellen!'), 'error', 8000);
+  } catch(_) {}
+  return false;
+};
+window.addEventListener('unhandledrejection', function(e) {
+  console.error('[Unhandled Promise]', e.reason);
+  try {
+    const L = (typeof S !== 'undefined' && S.lang === 'en');
+    showToast('⚠️ ' + (L ? 'Storage error – please restart' : 'Speicherfehler – bitte neu starten'), 'error', 8000);
+  } catch(_) {}
+});
+
+/* ═══════════════════════════════════════════════════════════════
    TRANSLATIONS – Complete DE / EN
 ═══════════════════════════════════════════════════════════════ */
 const APP_VERSION = 'V47';
@@ -5261,6 +5282,8 @@ function tapMinus(id){
   S.log.splice(idx,1);
   S.counts[id]=(S.counts[id]||1)-1;if(!S.counts[id])delete S.counts[id];
   saveStateDebounced();renderDrinks(false);updateLimitBanner();
+  // Haptic Feedback beim Löschen – warnendes Vibrationsmuster (Gutachten §07)
+  try{if(typeof navigator.vibrate==='function')navigator.vibrate([30,20,30]);}catch(_){}
   clearTimeout(S.top10Timer);S.top10Timer=setTimeout(()=>{S.stableTop10=[];renderDrinks(false);},5000);
   if(removed){
     const d=S.drinks.find(x=>x.id===id);
@@ -7010,18 +7033,33 @@ function renderVerwaltung(){
     bkpStatusHtml=`<div class="vw-last-bkp never" style="margin-bottom:0">⚠️ ${T('manage.bkp.never')}</div>`;
   }
 
-  /* ── V46: IndexedDB-Status (kein festes Limit mehr) ────────── */
-  const szBytes=0; // storageSz() entfällt – IndexedDB hat kein festes Limit
-  const szMB='∞'; // kein Byte-Limit
-  const szPct=0;
-  const szCol='var(--col-ok)';
-  const storageHtml=`<div class="adm-storage-bar">
+  /* ── Speicher-Monitor: navigator.storage.estimate() (Gutachten §04) ── */
+  // Placeholder – wird asynchron befüllt nach DOM-Render
+  const storageHtml=`<div class="adm-storage-bar" id="admStorageBar">
     <div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--tx2)">
       <span>🗄️ IndexedDB</span>
-      <span style="color:var(--col-ok);font-weight:bold;font-size:11px">● ${L?'Active & persistent':'Aktiv & persistent'}</span>
+      <span style="color:var(--col-ok);font-weight:bold;font-size:11px" id="admStorageStatus">● ${L?'Active & persistent':'Aktiv & persistent'}</span>
     </div>
-    <div style="font-size:9px;color:var(--tx2);margin-top:3px">${L?'No storage limit · iOS will not delete this data':'Kein Speicherlimit · iOS löscht diese Daten nicht'}</div>
-  </div>`;
+    <div style="font-size:9px;color:var(--tx2);margin-top:3px" id="admStorageDetail">${L?'Calculating storage usage…':'Speichernutzung wird berechnet…'}</div>
+    <div style="height:3px;background:var(--ac-13);border-radius:2px;margin-top:5px;overflow:hidden"><div id="admStorageFill" style="height:100%;width:0%;background:var(--col-ok);border-radius:2px;transition:width .4s"></div></div>
+  </div>\`;
+  // Asynchrone Befüllung nach Render-Zyklus (Gutachten §04)
+  setTimeout(async()=>{
+    try{
+      if(!navigator.storage||!navigator.storage.estimate)return;
+      const {usage,quota}=await navigator.storage.estimate();
+      const usedMB=Math.round(usage/1024/1024*10)/10;
+      const totalMB=Math.round(quota/1024/1024);
+      const pct=quota>0?Math.min(100,Math.round(usage/quota*100)):0;
+      const col=pct>80?'var(--col-err)':pct>50?'var(--col-warn)':'var(--col-ok)';
+      const detail=document.getElementById('admStorageDetail');
+      const fill=document.getElementById('admStorageFill');
+      const status=document.getElementById('admStorageStatus');
+      if(detail)detail.textContent=(L?`Used: ${usedMB} MB of approx. ${totalMB} MB (${pct}%)`:(`Verwendet: ${usedMB} MB von ca. ${totalMB} MB (${pct}%)`));
+      if(fill){fill.style.width=pct+'%';fill.style.background=col;}
+      if(status)status.style.color=col;
+    }catch(_){}
+  },400);
 
   /* ── Kategorien ─────────────────────────────────── */
   let catHtml='';
@@ -7202,7 +7240,7 @@ function renderVerwaltung(){
       <span class="adm-card-hdr-ico">📊</span>
       <div class="adm-card-hdr-body">
         <div class="adm-card-hdr-title">${L?'Database overview':'Datenbankübersicht'}</div>
-        <div class="adm-card-hdr-sub">${S.log.length} ${L?'active entries':'aktive Einträge'} · ${szMB} MB</div>
+        <div class="adm-card-hdr-sub" id="admDataSub">${S.log.length} ${L?'active entries':'aktive Einträge'}</div>
       </div>
       <span class="adm-card-hdr-arr${S.vwOpen&&S.vwOpen.dbstatus?' open':''}">►</span>
     </div>
@@ -8454,6 +8492,14 @@ function renderHelp(){
     <div class="hlp-danger">⚠️ <strong>${h('Datenverlust-Risiken auf iPhone – unbedingt beachten!','Data loss risks on iPhone – important!')}</strong><br><br>
     ${h('Alle Daten liegen im lokalen Browser-Speicher (<strong>localStorage</strong>). iOS kann diesen <strong>ohne Vorwarnung löschen</strong>, wenn der Gerätespeicher knapp wird.<br><br><strong>Situationen mit Datenverlust-Risiko:</strong><br>• iOS → Einstellungen → Safari → Verlauf und Websitedaten löschen<br>• Microsoft Edge wird deinstalliert und neu installiert<br>• Das iPhone wird auf Werkseinstellungen zurückgesetzt<br>• Das Gerät wird gewechselt<br>• iOS-Systemupdate (sehr selten, aber möglich)<br>• Edge-Update (sehr selten)<br><br>→ <strong>Einziger Schutz: regelmäßige JSON-Backups in iCloud Drive oder lokal auf dem iPhone sichern!</strong>',
     'All data is stored in the browser\'s local storage (<strong>localStorage</strong>). iOS may <strong>delete this without warning</strong> when device storage is low.<br><br><strong>Situations with data loss risk:</strong><br>• iOS → Settings → Safari → Clear History and Website Data<br>• Microsoft Edge is uninstalled and reinstalled<br>• The iPhone is reset to factory settings<br>• The device is changed<br>• iOS system update (very rare but possible)<br>• Edge update (very rare)<br><br>→ <strong>Only protection: save regular JSON backups to iCloud Drive or locally on the iPhone!</strong>')}</div>
+
+    <div class="hlp-card" style="border-color:var(--col-err);background:rgba(208,85,85,0.07)">
+      <div class="hlp-card-title" style="color:var(--col-err)">☁️ ${h('Wichtig: Deine Daten sind NICHT in iCloud gesichert!','Important: Your data is NOT backed up in iCloud!')}</div>
+      <div class="hlp-row">
+        <span class="hlp-badge red">☁️ iCloud</span>
+        <span>${h('PWA-Daten (IndexedDB) werden von iOS <strong>nicht automatisch in iCloud gesichert</strong> – auch dann nicht, wenn iCloud-Backup auf dem iPhone aktiv ist. Wenn das Gerät gewechselt oder neu aufgesetzt wird, <strong>sind alle Daten unwiederbringlich verloren</strong> – sofern kein JSON-Backup vorhanden ist. <strong>Regelmäßige JSON-Exports sind deshalb essenziell.</strong>','PWA data (IndexedDB) is <strong>not automatically backed up to iCloud</strong> by iOS – even if iCloud Backup is enabled on the iPhone. If you change devices or reset the phone, <strong>all data is permanently lost</strong> unless a JSON backup exists. <strong>Regular JSON exports are therefore essential.</strong>')}</span>
+      </div>
+    </div>
 
     <div class="hlp-card">
       <div class="hlp-card-title">🌍 ${h('Weltreise – Besondere Hinweise','World Voyage – Special Notes')}</div>
@@ -10389,13 +10435,6 @@ async function loadStateFromDB(){
   }
 }
 
-/* MANIFEST.JSON – file_handlers ergänzen (außerhalb dieser Datei):
-   "file_handlers": [{
-     "action": "/",
-     "accept": { "application/json": [".json"] }
-   }]
-   Voraussetzung: PWA installiert (Home-Bildschirm), iOS 16.4+
-*/
 /* initApp() – asynchrone Startlogik (ersetzt synchrones Inline-Init) */
 async function initApp(){
   try{
@@ -10413,6 +10452,20 @@ async function initApp(){
     await loadStateFromDB();
     // UI initialisieren (analog zum bisherigen synchronen Init)
     _initUI();
+    // Tägliches Auto-Backup (Gutachten §04 / §10 Punkt 6)
+    // Wenn kein internes Backup seit >24h → automatisch anlegen
+    setTimeout(async()=>{
+      try{
+        const all=await InternalBackupDB.getAll();
+        const now=Date.now();
+        const lastTs=all.length>0?new Date(all[0].date).getTime():0;
+        const hoursSince=(now-lastTs)/3600000;
+        if(hoursSince>24){
+          await saveBackupInternal();
+          console.log('[AutoBackup] Tägliches internes Backup erstellt.');
+        }
+      }catch(e2){console.warn('[AutoBackup]',e2);}
+    },3000);
   }catch(e){
     console.error('[initApp] Fehler:',e);
     // Fallback: synchrones Init über localStorage
