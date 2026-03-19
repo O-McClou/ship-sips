@@ -1,60 +1,52 @@
 /* ═══════════════════════════════════════════════════════════════════
-   sw.js – Service Worker für Getränke-Tracker PWA  (V48)
+   sw.js – Service Worker für Getränke-Tracker PWA  (V49)
    ─────────────────────────────────────────────────────────────────
-   FIX V48:
+   WURZELPROBLEM (rückwirkend analysiert):
    V47 hatte eine Endlos-Reload-Schleife:
-     Install → skipWaiting() → controllerchange → location.reload()
-     → Install → skipWaiting() → controllerchange → reload → …
-   Das ließ die App im PWA-Modus sofort einfrieren.
+     Install → skipWaiting() → controllerchange → location.reload() → …
 
-   LÖSUNG:
-   ① skipWaiting() beim Install bleibt für den Erststart (Cache-Aufbau).
-   ② In index.html reagiert controllerchange nur noch auf Reload wenn
-      window._swUpdateRequested === true (gesetzt nur durch swUpdateApply()).
-   ③ So startet ein normaler App-Start KEINE Reload-Schleife mehr.
+   V48-FIX WAR FALSCH:
+   skipWaiting() nur wenn clients.length === 0 → auf einem iPhone läuft
+   IMMER ein Client → skipWaiting() feuerte NIE → alter kaputter SW blieb
+   für immer in Kontrolle → alte kaputte index.html wurde ewig serviert.
 
-   NORMALE UPDATE-STRATEGIE:
-   ① install  → index.html cachen + skipWaiting() (nur beim Erststart harmlos)
-   ② activate → alte Caches löschen, clients.claim()
-   ③ Fetch    → Cache-First mit Hintergrund-Update
+   RICHTIGER FIX V49:
+   ① skipWaiting() IMMER in install (wie V47) – damit der neue SW die
+      Kontrolle übernimmt und seine frische, korrekte index.html serviert.
+   ② Der einmalige Reload durch controllerchange (aus alter index.html)
+      ist gewollt – er lädt die neue index.html.
+   ③ Die neue index.html (V49) hat den Guard:
+        if(window._swUpdateRequested) window.location.reload();
+      → controllerchange in der neuen index.html löst KEINEN Reload aus.
+      → Schleife ist dauerhaft gebrochen.
+
+   UPDATE-STRATEGIE (stabil ab V49):
+   ① install  → index.html cachen + skipWaiting() sofort
+   ② activate → alte Caches löschen, clients.claim() (mit 200ms Delay)
+   ③ fetch    → Cache-First mit Netz-Hintergrund-Update
    ④ SKIP_WAITING-Message für künftige Updates via Update-Banner
    ═══════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'tracker-v48';
+const CACHE_NAME = 'tracker-v49';
 
 const ASSETS = [
   './index.html'
 ];
 
-/* ── Install: cachen + SOFORT übernehmen (nur beim Erststart) ─ */
+/* ── Install: cachen + sofort übernehmen ───────────────────────── */
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(ASSETS))
-      .then(() => {
-        /* FIX V48: skipWaiting() nur wenn noch kein Client läuft.
-           Bei laufender App würde ein sofortiges skipWaiting() den
-           iOS-IndexedDB-Zugriff unterbrechen und die App einfrieren.
-           Beim echten Erststart (keine Clients) ist es sicher. */
-        return self.clients.matchAll({type:'window'}).then(clients => {
-          if(clients.length === 0){
-            return self.skipWaiting();
-          }
-          // Sonst wartet der SW auf explizites SKIP_WAITING vom Update-Banner
-        });
-      })
+      .then(() => self.skipWaiting())
       .catch(err => {
         console.warn('[SW] Cache-Fehler beim Install:', err);
-        // Beim Erststart (kein Client) trotzdem übernehmen
-        return self.clients.matchAll({type:'window'}).then(clients => {
-          if(clients.length === 0) return self.skipWaiting();
-        });
+        return self.skipWaiting();
       })
   );
 });
 
-/* ── Activate: alte Caches löschen; claim() verzögert damit
-      iOS-IndexedDB-Initialisierung nicht unterbrochen wird ─────── */
+/* ── Activate: alte Caches löschen, dann claim() ──────────────── */
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
@@ -64,9 +56,8 @@ self.addEventListener('activate', event => {
           return caches.delete(k);
         })
       ))
-      /* FIX V48: clients.claim() erst nach kurzem Delay.
-         Sofortiges claim() auf iOS kann einen laufenden IndexedDB-
-         Öffnungs-Request der App abwürgen → App friert ein. */
+      /* 200ms Delay vor claim(): gibt iOS Zeit, IndexedDB-Verbindungen
+         zu stabilisieren bevor der SW die Kontrolle übernimmt. */
       .then(() => new Promise(resolve => setTimeout(resolve, 200)))
       .then(() => self.clients.claim())
   );
