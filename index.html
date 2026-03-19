@@ -407,16 +407,26 @@ body.fz-xlarge #hdrUserDotMini{font-size:15px!important}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
 /* ── Theme Crossfade Transition ── */
 html.theme-transitioning *{transition:background-color 0.28s ease,border-color 0.28s ease,color 0.18s ease,box-shadow 0.28s ease !important;}
-html{background:var(--bg);height:100%;width:100%}
-html,body{overflow:hidden;position:fixed;width:100%}
-body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0);overscroll-behavior:contain;overscroll-behavior-y:none;-webkit-text-size-adjust:100%;padding-top:env(safe-area-inset-top,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-/* #app: flex-Spalte, kein eigenes Scrollen — Panes scrollen intern */
-#app{max-width:480px;margin:0 auto;height:100%;height:100dvh;display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;background:var(--bg)}
+/* ── Vollbild-Layout für iOS PWA ───────────────────────────────────────────
+   Strategie: #app wird per position:fixed exakt auf den physischen Bildschirm
+   geklebt (top:0, bottom:0). Das ist der einzige Weg, der auf iOS Safari /
+   Standalone-Modus garantiert bis zum Bildschirmrand reicht – unabhängig von
+   dvh-Bugs oder height%-Ketten. html/body brauchen nur background für den
+   Bereich hinter den Safe-Areas (Kamera oben, Home-Indicator unten).
+──────────────────────────────────────────────────────────────────────────── */
+html{background:var(--bg);height:100%}
+html,body{margin:0;padding:0}
+body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;color:var(--tx0);-webkit-text-size-adjust:100%}
+/* #app: position:fixed + top/bottom:0 → reicht garantiert zum physischen Rand */
+#app{position:fixed;top:0;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;background:var(--bg)}
 /* Safe-Area: wird über padding-bottom der Panes gehandhabt */
 /* Header: feste Höhe, kein Scrollen */
-.hdr{background:linear-gradient(180deg,var(--bg1) 0%,var(--bg) 100%);border-bottom:1px solid var(--ac-20);position:relative;z-index:100;box-shadow:0 4px 24px rgba(0,0,0,0.5);flex-shrink:0}
-/* Panes: füllen den gesamten verbleibenden Raum und scrollen intern */
-#p0,#p1,#p2,#p3,#p4{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:var(--bg);padding-bottom:env(safe-area-inset-bottom,20px)}
+/* Header: safe-area-inset-top hier, damit Dynamic Island / Notch freigehalten wird */
+.hdr{background:linear-gradient(180deg,var(--bg1) 0%,var(--bg) 100%);border-bottom:1px solid var(--ac-20);position:relative;z-index:100;box-shadow:0 4px 24px rgba(0,0,0,0.5);flex-shrink:0;padding-top:env(safe-area-inset-top,0px)}
+/* Panes: flex:1 füllt den verbleibenden Platz bis zum physischen Rand.
+   padding-bottom = home-indicator-Höhe → Inhalt endet darüber,
+   background füllt nahtlos bis zum Rand (wie native App). */
+#p0,#p1,#p2,#p3,#p4{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;overscroll-behavior-y:none;background:var(--bg);padding-bottom:env(safe-area-inset-bottom,0px)}
 /* p0: flex-Spalte, damit der Spacer am Ende die volle Höhe ausfüllt */
 #p0{display:flex;flex-direction:column}
 .hdr-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:0}
@@ -440,7 +450,8 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 .goal-bar-meta{display:flex;justify-content:space-between;font-size:8px;color:var(--tx2);margin-bottom:4px;letter-spacing:0.5px}
 .goal-bar-track{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
 .goal-bar-fill{height:100%;border-radius:2px;transition:width .5s ease,background .5s ease;background:linear-gradient(to right,var(--ac-deep),var(--ac))}
-.tabs{display:flex;margin:0 -16px;border-top:1px solid var(--ac-13)}
+/* Tabs: Navigation oben im Header – kein safe-area-bottom hier (tabs sind oben, nicht unten) */
+.tabs{display:flex;margin:0 -16px;border-top:1px solid var(--ac-13);background:var(--bg)}
 .tab{flex:1;padding:8px 0 9px;background:transparent;color:var(--tx2);border:none;cursor:pointer;font-family:Georgia,serif;font-size:9px;letter-spacing:0.5px;transition:color .2s,background .2s;display:flex;flex-direction:column;align-items:center;gap:3px;-webkit-user-select:none;touch-action:manipulation;position:relative}
 .tab.on{background:var(--ac-07);color:var(--ac);font-weight:bold}
 .tab.on::after{content:'';position:absolute;top:0;left:25%;right:25%;height:2px;background:var(--ac);border-radius:0 0 2px 2px}
@@ -582,8 +593,8 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 .srow{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;color:var(--tx3)}
 .srow span:last-child{color:var(--ac)}
 .stot{border-top:1px solid var(--ac-20);margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;font-weight:bold;font-size:14px}
-.logpane{padding:14px 14px max(28px,calc(env(safe-area-inset-bottom,0px) + 14px)) 14px;min-height:100%;box-sizing:border-box}
-.statpane{padding:14px 14px max(28px,calc(env(safe-area-inset-bottom,0px) + 14px)) 14px;min-height:100%;box-sizing:border-box}
+.logpane{padding:14px 14px 14px 14px;min-height:100%;box-sizing:border-box}
+.statpane{padding:14px 14px 14px 14px;min-height:100%;box-sizing:border-box}
 .loghdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:6px;flex-wrap:wrap}
 .logtitle{font-size:16px;color:var(--ac);font-weight:bold;letter-spacing:0.5px}
 .log-hdr-btns{display:flex;gap:6px}
@@ -704,7 +715,7 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 .stat-empty{text-align:center;color:var(--tx2);padding:60px 0;font-size:13px}
 .stat-period-lbl{font-size:10px;color:var(--tx1);text-align:center;margin-bottom:10px;font-style:italic}
 .cat-avg{font-size:10px;color:#4a5a70;text-align:right;padding:0 0 3px}
-.vwpane{padding:14px 14px max(28px,calc(env(safe-area-inset-bottom,0px) + 14px)) 14px;min-height:100%;box-sizing:border-box}
+.vwpane{padding:14px 14px 14px 14px;min-height:100%;box-sizing:border-box}
 .vw-section{background:var(--bg3);border:1px solid var(--ac-13);border-radius:10px;padding:14px;margin-bottom:12px}
 .vw-sec-title{font-size:11px;color:var(--ac);font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
 .vw-btn{display:block;width:100%;padding:10px;background:var(--bg2);color:var(--tx0);border:1px solid var(--ac-27);border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:13px;text-align:left;margin-bottom:8px}
@@ -782,7 +793,7 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 .adm-danger{background:#1a0808;border-color:#c0392b88;border-left:4px solid #e05555;border-radius:12px;padding:14px;margin-bottom:10px}
 .adm-danger-title{font-size:11px;color:#e05555;font-weight:bold;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px}
 
-.hlppane{padding:14px 14px max(28px,calc(env(safe-area-inset-bottom,0px) + 14px)) 14px;min-height:100%;box-sizing:border-box}
+.hlppane{padding:14px 14px 14px 14px;min-height:100%;box-sizing:border-box}
 .hlp-hero{text-align:center;padding:28px 16px 24px;background:linear-gradient(135deg,var(--bg2),var(--bg1));border-radius:16px;border:1px solid var(--ac-27);margin-bottom:16px;box-shadow:var(--shadow-card)}{font-size:38px;margin-bottom:6px}
 .hlp-hero-title{font-size:18px;font-weight:bold;color:var(--ac);letter-spacing:1.5px}
 .hlp-hero-sub{font-size:10px;color:var(--tx1);letter-spacing:3px;text-transform:uppercase;margin-top:5px}
