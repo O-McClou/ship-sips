@@ -363,7 +363,7 @@ body.fz-large .dnum{font-size:28px}
 body.fz-large .dprice{font-size:13px}
 body.fz-large .dcat{font-size:12px}
 body.fz-large .sinput{font-size:17px}
-body.fz-large .cbtn{font-size:13px;padding:0 12px;height:26px;box-sizing:border-box}
+body.fz-large .cbtn{font-size:13px;padding:0 12px;min-height:44px;height:auto;box-sizing:border-box}
 body.fz-large .bplus{width:58px;height:58px;min-width:58px;font-size:32px}
 body.fz-large .bminus{width:52px;height:52px;min-width:52px;font-size:27px}
 body.fz-large .tab-icon{font-size:16px}
@@ -387,7 +387,7 @@ body.fz-xlarge .dnum{font-size:34px}
 body.fz-xlarge .dprice{font-size:15px}
 body.fz-xlarge .dcat{font-size:13px}
 body.fz-xlarge .sinput{font-size:21px;padding:0 14px;height:26px;box-sizing:border-box}
-body.fz-xlarge .cbtn{font-size:15px;padding:0 12px;height:26px;box-sizing:border-box}
+body.fz-xlarge .cbtn{font-size:15px;padding:0 12px;min-height:44px;height:auto;box-sizing:border-box}
 body.fz-xlarge .bplus{width:66px;height:66px;min-width:66px;font-size:38px}
 body.fz-xlarge .bminus{width:58px;height:58px;min-width:58px;font-size:30px}
 body.fz-xlarge .tab-icon{font-size:16px}
@@ -407,16 +407,31 @@ body.fz-xlarge #hdrUserDotMini{font-size:15px!important}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
 /* ── Theme Crossfade Transition ── */
 html.theme-transitioning *{transition:background-color 0.28s ease,border-color 0.28s ease,color 0.18s ease,box-shadow 0.28s ease !important;}
-html{background:var(--bg);height:100%;width:100%}
-html,body{overflow:hidden;position:fixed;width:100%}
-body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0);overscroll-behavior:contain;overscroll-behavior-y:none;-webkit-text-size-adjust:100%;padding-top:env(safe-area-inset-top,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-/* #app: flex-Spalte, kein eigenes Scrollen — Panes scrollen intern */
-#app{max-width:480px;margin:0 auto;height:100%;height:100dvh;display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;background:var(--bg)}
+/* ── Vollbild-Layout für iOS PWA ───────────────────────────────────────────
+   Strategie: #app wird per position:fixed exakt auf den physischen Bildschirm
+   geklebt (top:0, bottom:0). Das ist der einzige Weg, der auf iOS Safari /
+   Standalone-Modus garantiert bis zum Bildschirmrand reicht – unabhängig von
+   dvh-Bugs oder height%-Ketten. html/body brauchen nur background für den
+   Bereich hinter den Safe-Areas (Kamera oben, Home-Indicator unten).
+──────────────────────────────────────────────────────────────────────────── */
+html{background:var(--bg);height:100%}
+html,body{margin:0;padding:0}
+body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;color:var(--tx0);-webkit-text-size-adjust:100%}
+/* ── iOS PWA Fullscreen ───────────────────────────────────────────────────────
+   position:fixed;bottom:0 stoppt auf iOS an der Safe-Area-Grenze, NICHT am
+   physischen Rand. window.innerHeight liefert die echte Gesamthöhe in CSS-px.
+   position:fixed top/left/right/bottom:0 füllt mit viewport-fit=cover den gesamten Screen.
+   Kein height nötig – bottom:0 übernimmt das zuverlässig ohne JS-Abhängigkeit.
+──────────────────────────────────────────────────────────────────────────────── */
+#app{position:fixed;top:0;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;background:var(--bg)}
 /* Safe-Area: wird über padding-bottom der Panes gehandhabt */
 /* Header: feste Höhe, kein Scrollen */
-.hdr{background:linear-gradient(180deg,var(--bg1) 0%,var(--bg) 100%);border-bottom:1px solid var(--ac-20);position:relative;z-index:100;box-shadow:0 4px 24px rgba(0,0,0,0.5);flex-shrink:0}
-/* Panes: füllen den gesamten verbleibenden Raum und scrollen intern */
-#p0,#p1,#p2,#p3,#p4{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:var(--bg);padding-bottom:env(safe-area-inset-bottom,20px)}
+/* Header: safe-area-inset-top hier, damit Dynamic Island / Notch freigehalten wird */
+.hdr{background:linear-gradient(180deg,var(--bg1) 0%,var(--bg) 100%);border-bottom:1px solid var(--ac-20);position:relative;z-index:100;box-shadow:0 4px 24px rgba(0,0,0,0.5);flex-shrink:0;padding-top:env(safe-area-inset-top,0px)}
+/* Panes: flex:1 füllt den verbleibenden Platz bis zum physischen Rand.
+   padding-bottom = home-indicator-Höhe → Inhalt endet darüber,
+   background füllt nahtlos bis zum Rand (wie native App). */
+#p0,#p1,#p2,#p3,#p4{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;overscroll-behavior-y:none;background:var(--bg);padding-bottom:0}
 /* p0: flex-Spalte, damit der Spacer am Ende die volle Höhe ausfüllt */
 #p0{display:flex;flex-direction:column}
 .hdr-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:0}
@@ -440,7 +455,8 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 .goal-bar-meta{display:flex;justify-content:space-between;font-size:8px;color:var(--tx2);margin-bottom:4px;letter-spacing:0.5px}
 .goal-bar-track{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
 .goal-bar-fill{height:100%;border-radius:2px;transition:width .5s ease,background .5s ease;background:linear-gradient(to right,var(--ac-deep),var(--ac))}
-.tabs{display:flex;margin:0 -16px;border-top:1px solid var(--ac-13)}
+/* Tabs: Navigation oben im Header – kein safe-area-bottom hier (tabs sind oben, nicht unten) */
+.tabs{display:flex;margin:0 -16px;border-top:1px solid var(--ac-13);background:var(--bg)}
 .tab{flex:1;padding:8px 0 9px;background:transparent;color:var(--tx2);border:none;cursor:pointer;font-family:Georgia,serif;font-size:9px;letter-spacing:0.5px;transition:color .2s,background .2s;display:flex;flex-direction:column;align-items:center;gap:3px;-webkit-user-select:none;touch-action:manipulation;position:relative}
 .tab.on{background:var(--ac-07);color:var(--ac);font-weight:bold}
 .tab.on::after{content:'';position:absolute;top:0;left:25%;right:25%;height:2px;background:var(--ac);border-radius:0 0 2px 2px}
@@ -512,7 +528,7 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 .sinput::placeholder{color:var(--tx2)}
 .cscroll{display:flex;gap:5px;overflow-x:auto;padding:3px 0 1px;-webkit-overflow-scrolling:touch;scrollbar-width:none;scroll-snap-type:x mandatory}
 .cscroll::-webkit-scrollbar{display:none}
-.cbtn{flex-shrink:0;padding:0 12px;background:var(--bg2);color:var(--tx1);border:1px solid var(--ac-13);border-radius:20px;cursor:pointer;font-size:10px;font-family:Georgia,serif;white-space:nowrap;display:flex;align-items:center;gap:4px;scroll-snap-align:start;transition:all .2s;touch-action:manipulation;letter-spacing:0.3px;height:26px;box-sizing:border-box;}
+.cbtn{flex-shrink:0;padding:0 12px;background:var(--bg2);color:var(--tx1);border:1px solid var(--ac-13);border-radius:20px;cursor:pointer;font-size:10px;font-family:Georgia,serif;white-space:nowrap;display:flex;align-items:center;gap:4px;scroll-snap-align:start;transition:all .2s;touch-action:manipulation;letter-spacing:0.3px;min-height:44px;height:auto;box-sizing:border-box;/* FIX V47+: min-height 44px (Apple HIG) statt fix 26px */}
 .cbtn.on{background:var(--ac);color:var(--ac-fg);border-color:var(--ac);font-weight:bold}
 .cbtn:active{opacity:.75}
 .tbar{padding:7px 14px;display:flex;justify-content:flex-end}
@@ -582,8 +598,8 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 .srow{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;color:var(--tx3)}
 .srow span:last-child{color:var(--ac)}
 .stot{border-top:1px solid var(--ac-20);margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;font-weight:bold;font-size:14px}
-.logpane{padding:14px 14px max(28px,calc(env(safe-area-inset-bottom,0px) + 14px)) 14px;min-height:100%;box-sizing:border-box}
-.statpane{padding:14px 14px max(28px,calc(env(safe-area-inset-bottom,0px) + 14px)) 14px;min-height:100%;box-sizing:border-box}
+.logpane{padding:14px 14px max(14px,env(safe-area-inset-bottom,14px)) 14px;min-height:100%;box-sizing:border-box}
+.statpane{padding:14px 14px max(14px,env(safe-area-inset-bottom,14px)) 14px;min-height:100%;box-sizing:border-box}
 .loghdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:6px;flex-wrap:wrap}
 .logtitle{font-size:16px;color:var(--ac);font-weight:bold;letter-spacing:0.5px}
 .log-hdr-btns{display:flex;gap:6px}
@@ -672,7 +688,9 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 .dup-warn{display:flex;align-items:center;gap:5px;margin-top:4px;padding:4px 8px;background:#2a0000;border:1px solid #c0392b55;border-radius:6px;font-size:10px;color:#e07070;}
 .dup-warn-x{background:none;border:none;color:#e07070;cursor:pointer;font-size:14px;padding:0 0 0 6px;line-height:1;font-family:Georgia,serif;flex-shrink:0;touch-action:manipulation;}.log-cat-badge{display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;margin-left:4px;vertical-align:middle}
 .log-search-result{background:var(--bg2);border-radius:8px;padding:9px 11px;margin-bottom:5px;border:1px solid var(--ac-13)}
-.stat-period-bar{display:flex;gap:4px;margin-bottom:12px;background:var(--bg3);padding:5px;border-radius:10px;border:1px solid var(--ac-13)}{flex:1;padding:6px 0;background:transparent;border:none;border-radius:7px;color:var(--tx2);font-family:Georgia,serif;font-size:11px;cursor:pointer;transition:all .2s}
+.stat-period-bar{display:flex;gap:4px;margin-bottom:12px;background:var(--bg3);padding:5px;border-radius:10px;border:1px solid var(--ac-13)}
+/* FIX V47+: Fehlender Selektor ergänzt */
+.stat-period-btn{flex:1;padding:6px 0;background:transparent;border:none;border-radius:7px;color:var(--tx2);font-family:Georgia,serif;font-size:11px;cursor:pointer;transition:all .2s}
 .stat-period-btn.on{background:var(--ac);color:var(--bg);font-weight:bold}
 .stat-card{background:var(--bg3);border:1px solid var(--ac-13);border-radius:10px;padding:14px;margin-bottom:12px}
 .stat-card-title{font-size:11px;color:var(--ac);font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px}
@@ -702,7 +720,7 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 .stat-empty{text-align:center;color:var(--tx2);padding:60px 0;font-size:13px}
 .stat-period-lbl{font-size:10px;color:var(--tx1);text-align:center;margin-bottom:10px;font-style:italic}
 .cat-avg{font-size:10px;color:#4a5a70;text-align:right;padding:0 0 3px}
-.vwpane{padding:14px 14px max(28px,calc(env(safe-area-inset-bottom,0px) + 14px)) 14px;min-height:100%;box-sizing:border-box}
+.vwpane{padding:14px 14px max(14px,env(safe-area-inset-bottom,14px)) 14px;min-height:100%;box-sizing:border-box}
 .vw-section{background:var(--bg3);border:1px solid var(--ac-13);border-radius:10px;padding:14px;margin-bottom:12px}
 .vw-sec-title{font-size:11px;color:var(--ac);font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
 .vw-btn{display:block;width:100%;padding:10px;background:var(--bg2);color:var(--tx0);border:1px solid var(--ac-27);border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:13px;text-align:left;margin-bottom:8px}
@@ -780,7 +798,7 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 .adm-danger{background:#1a0808;border-color:#c0392b88;border-left:4px solid #e05555;border-radius:12px;padding:14px;margin-bottom:10px}
 .adm-danger-title{font-size:11px;color:#e05555;font-weight:bold;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px}
 
-.hlppane{padding:14px 14px max(28px,calc(env(safe-area-inset-bottom,0px) + 14px)) 14px;min-height:100%;box-sizing:border-box}
+.hlppane{padding:14px 14px max(14px,env(safe-area-inset-bottom,14px)) 14px;min-height:100%;box-sizing:border-box}
 .hlp-hero{text-align:center;padding:28px 16px 24px;background:linear-gradient(135deg,var(--bg2),var(--bg1));border-radius:16px;border:1px solid var(--ac-27);margin-bottom:16px;box-shadow:var(--shadow-card)}{font-size:38px;margin-bottom:6px}
 .hlp-hero-title{font-size:18px;font-weight:bold;color:var(--ac);letter-spacing:1.5px}
 .hlp-hero-sub{font-size:10px;color:var(--tx1);letter-spacing:3px;text-transform:uppercase;margin-top:5px}
@@ -1064,9 +1082,9 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 #logCtxOverlay{position:fixed;inset:0;z-index:9998;background:transparent}
 
 /* ── V34: Undo-Stack (schwebendes Panel) ─────────────────── */
-#undoPanel{position:fixed;bottom:max(16px, env(safe-area-inset-bottom, 16px));left:50%;transform:translateX(-50%);z-index:9990;display:flex;flex-direction:column;gap:5px;pointer-events:none;align-items:center;width:min(94vw,400px)}
+#undoPanel{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9990;display:flex;flex-direction:column;gap:5px;pointer-events:none;align-items:center;width:min(94vw,400px)}
 /* FIX V42 #6: Undo-Panel nach oben verschieben wenn Multi-Select-Bar aktiv */
-body.msel-active #undoPanel{bottom:calc(70px + max(16px, env(safe-area-inset-bottom, 16px)));}
+body.msel-active #undoPanel{bottom:calc(70px + 16px);}
 .undo-card{background:#1a3020;border:1px solid #4aaa4a66;border-radius:10px;padding:8px 12px;font-size:12px;font-family:Georgia,serif;display:flex;align-items:center;gap:9px;pointer-events:auto;animation:ucIn .2s ease;box-shadow:0 4px 16px #00000077;width:100%;box-sizing:border-box}
 .undo-card.out{animation:ucOut .2s ease forwards}
 @keyframes ucIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
@@ -1253,6 +1271,26 @@ details.hlp-acc summary:active{opacity:.75}
 </style>
 </head>
 <body>
+<script>
+/* iOS PWA Fullscreen:
+   Primär: position:fixed top/left/right/bottom:0 mit viewport-fit=cover → kein JS nötig.
+   --app-h wird nur noch als CSS-Variable für etwaige andere Nutzungen gesetzt,
+   steuert aber NICHT mehr die Höhe von #app (kein height-Property mehr dort).
+   Fix: height:Xpx + bottom:0 führt zu Over-Constraint; bottom wird ignoriert → #app endet zu früh. */
+(function(){
+  function setAppH(){
+    // window.innerHeight kann auf iOS beim Start falsch sein; Screen-Höhe als Referenz
+    var h = window.screen ? Math.max(window.innerHeight, window.screen.height / (window.devicePixelRatio || 1)) : window.innerHeight;
+    document.documentElement.style.setProperty('--app-h', h + 'px');
+  }
+  setAppH();
+  document.addEventListener('DOMContentLoaded', setAppH);
+  setTimeout(setAppH, 100);
+  setTimeout(setAppH, 500);
+  window.addEventListener('resize', setAppH);
+  window.addEventListener('orientationchange', function(){ setTimeout(setAppH, 300); });
+})();
+</script>
 <div id="app">
 <div class="hdr" id="mainHdr">
   <div class="hdr-collapsible" id="hdrCollapsible">
@@ -1392,7 +1430,7 @@ details.hlp-acc summary:active{opacity:.75}
   <div id="catGroupsView" style="display:none"></div>
   <div class="dlist" id="dlist"></div>
   <div id="sumbox"></div>
-  <div style="flex:1;min-height:14px"></div>
+  <div style="flex:1;min-height:max(14px,env(safe-area-inset-bottom,14px))"></div>
 </div>
 
 <!-- PANE 1 -->
@@ -2155,7 +2193,7 @@ const THEMES={
   nautical_noir:{label:'nautical_noir',vars:{
     bg:'#08060E',bg1:'#0F0C1A',bg2:'#1A1426',bg3:'#0D0A14',bg4:'#201830',
     ac:'#B89A3C',acFg:'#08060E',acWarm:'#CEB85A',acDeep:'#7A6220',
-    tx0:'#EEE4C8',tx1:'#7A7060',tx2:'#4A4030',tx3:'#C8BC98',tx4:'#201A0C',
+    tx0:'#EEE4C8',tx1:'#7A7060',tx2:'#AEA090',/* FIX V47+: war #4A4030, WCAG-Kontrast ~1.4:1 → jetzt ~6:1 */tx3:'#C8BC98',tx4:'#201A0C',
     ac07:'#B89A3C12',ac09:'#B89A3C17',ac10:'#B89A3C1A',ac13:'#B89A3C21',
     ac20:'#B89A3C33',ac27:'#B89A3C45',ac33:'#B89A3C54',ac40:'#B89A3C66',ac60:'#B89A3C99'
   }},
@@ -2195,7 +2233,7 @@ const THEMES={
   champagner:{label:'champagner',vars:{
     bg:'#FAF8F2',bg1:'#FFFFFF',bg2:'#FFFFFF',bg3:'#F5F0E8',bg4:'#EEE8D8',
     ac:'#7A5E14',acFg:'#FFFFFF',acWarm:'#9A7830',acDeep:'#5C4510',
-    tx0:'#1E1808',tx1:'#6A5830',tx2:'#A89068',tx3:'#3A2E18',tx4:'#D8C8A0',
+    tx0:'#1E1808',tx1:'#6A5830',tx2:'#7A6040',/* FIX V47+: war #A89068, WCAG-Kontrast ~2.8:1 → jetzt ~5:1 */tx3:'#3A2E18',tx4:'#D8C8A0',
     ac07:'#7A5E1412',ac09:'#7A5E1417',ac10:'#7A5E141A',ac13:'#7A5E1421',
     ac20:'#7A5E1433',ac27:'#7A5E1445',ac33:'#7A5E1454',ac40:'#7A5E1466',ac60:'#7A5E1499'
   }},
@@ -3752,12 +3790,14 @@ function invalidateSzCache(){_szCache=null;}
    Die DB-Schreibvorgänge laufen asynchron im Hintergrund.
    Alle Caller können saveState() ohne await aufrufen – wie bisher.
 ──────────────────────────────────────────────────────────────── */
+/* FIX V47+: Schreib-Queue verhindert Race Condition bei überlappenden Speichervorgängen */
+let _saveQueue=Promise.resolve();
 function saveState(){
   // Sofortiges visuelles Feedback (synchron)
   const sd=document.getElementById('saveDot');
   if(sd){sd.classList.add('show');setTimeout(()=>sd.classList.remove('show'),800);}
-  // Async-Persistierung (fire-and-forget – blockiert UI nicht)
-  _saveStateAsync().catch(e=>console.error('[saveState]',e));
+  // Async-Persistierung serialisiert über Queue (kein gegenseitiges Überschreiben)
+  _saveQueue=_saveQueue.then(()=>_saveStateAsync()).catch(e=>console.error('[saveState]',e));
   return true;
 }
 
@@ -5165,9 +5205,11 @@ function handleDrinkClick(e){
 setInterval(()=>{const n=Date.now();Object.keys(S.plusDebounce).forEach(k=>{if(n-S.plusDebounce[k]>60000)delete S.plusDebounce[k];});},300000);
 setInterval(updateClock,1000);
 
-var _tapPlusLast=0;
+/* FIX V47+: Pro-Getränk-Debounce statt globaler 600ms-Sperre (Multi-User-sicher) */
+var _tapPlusLast={};
+var _tapMinusLast={};
 function tapPlus(id){
-  const now=Date.now();if(now-_tapPlusLast<600)return;_tapPlusLast=now; // V45: globale 600ms-Sperre gegen Doppel-Taps
+  const now=Date.now();if(now-(_tapPlusLast[id]||0)<600)return;_tapPlusLast[id]=now; // V47+: pro-Getränk statt global
   if(S.plusDebounce[id]&&now-S.plusDebounce[id]<500)return;S.plusDebounce[id]=now; // V40 T13: Debounce auf 500ms erhöht
   // V45: Plus-Button kurz abdunkeln als visuelles Feedback
   const plusBtn=document.querySelector('[data-plus="'+id+'"]');if(plusBtn){plusBtn.style.opacity='0.5';setTimeout(()=>{plusBtn.style.opacity='';},600);}
@@ -5205,15 +5247,31 @@ if(dt>=S.dailyGoal){const justCrossed=(dt-d.price)<S.dailyGoal;if(justCrossed){s
 
 function tapMinus(id){
   if(!(S.counts[id]>0))return;
-  // First try to find an entry for the active user, then fall back to any entry
+  /* FIX V47+ #1: Pro-Getränk-Debounce (verhindert Doppel-Löschen bei Doppel-Tap) */
+  const _nowMinus=Date.now();if(_nowMinus-(_tapMinusLast[id]||0)<400)return;_tapMinusLast[id]=_nowMinus;
+  /* FIX V47+ #2: Kein Fallback auf fremde Einträge mehr – nur eigene Einträge löschen */
   let idx=S.log.findIndex(e=>e.drinkId===id&&e.userId===S.activeUserId);
-  if(idx===-1)idx=S.log.findIndex(e=>e.drinkId===id);
-  const removed=idx!==-1?S.log[idx]:null;
-  if(idx!==-1)S.log.splice(idx,1);
+  if(idx===-1){
+    // Kein eigener Eintrag → Warnung, kein Löschen fremder Daten
+    const _d=S.drinks.find(x=>x.id===id);
+    showToast((S.lang==='en'?'No own entry for ':'Kein eigener Eintrag für ')+((_d&&_d.name)||''),'warn',3000);
+    return;
+  }
+  const removed=S.log[idx];
+  S.log.splice(idx,1);
   S.counts[id]=(S.counts[id]||1)-1;if(!S.counts[id])delete S.counts[id];
   saveStateDebounced();renderDrinks(false);updateLimitBanner();
   clearTimeout(S.top10Timer);S.top10Timer=setTimeout(()=>{S.stableTop10=[];renderDrinks(false);},5000);
-  if(removed){const d=S.drinks.find(x=>x.id===id);showToastUndo(esc(d?d.name:(S.lang==='en'?'Entry':'Eintrag'))+' entfernt',()=>{S.log.splice(Math.min(idx,S.log.length),0,removed);S.counts[id]=(S.counts[id]||0)+1;saveState();renderDrinks(false);if(S.activeTab===1)renderLog();updateLimitBanner();});}
+  if(removed){
+    const d=S.drinks.find(x=>x.id===id);
+    showToastUndo(esc(d?d.name:(S.lang==='en'?'Entry':'Eintrag'))+' entfernt',()=>{
+      /* FIX V47+ #3: Zeitstempel-basiertes Einfügen statt altem Index (korrekte Reihenfolge) */
+      const removedTime=new Date(removed.time).getTime();
+      const restoreIdx=S.log.findIndex(e=>new Date(e.time).getTime()<removedTime);
+      if(restoreIdx===-1){S.log.push(removed);}else{S.log.splice(restoreIdx,0,removed);}
+      S.counts[id]=(S.counts[id]||0)+1;saveState();renderDrinks(false);if(S.activeTab===1)renderLog();updateLimitBanner();
+    });
+  }
 }
 
 function renderSummary(){
@@ -5424,7 +5482,7 @@ function renderLogUserFilter(){
   const userBtns=usersWithEntries.map(u=>`<button class="lufc${S.logUserFilter===u.id?' on':''}" style="background:${S.logUserFilter===u.id?u.color:'transparent'};color:${S.logUserFilter===u.id?'var(--bg)':u.color};border-color:${u.color}${S.logUserFilter===u.id?'':'88'}" onclick="setLogUserFilter('${u.id}')">${esc(u.name)}</button>`).join('');
   el.innerHTML=allBtn+userBtns;
 }
-function setLogUserFilter(uid){S.logUserFilter=uid;updateLogFilterBadge();renderLog();}
+function setLogUserFilter(uid){S.logUserFilter=uid;S.logVisibleCount=100;/* FIX V47+: Reset Lazy Loading */updateLogFilterBadge();renderLog();}
 
 // Badge helper for log entries
 function userBadgeHtml(userId){if(!userId||S.users.length<=1)return'';const u=getUserById(userId);if(!u)return'';return `<span class="user-badge" style="background:${u.color}22;color:${u.color};border:1px solid ${u.color}44"><span class="user-dot" style="background:${u.color}"></span>${esc(u.name)}</span>`;}
@@ -5588,9 +5646,24 @@ function initHeaderSwipe(){
   },{passive:true});
 }
 
-function askReset(){showCfm('⚠️ '+T('confirm.reset.title'),'🗑 '+T('confirm.reset.msg')+' ⚠️ Diese Aktion löscht ALLE Einträge und ist nicht rückgängig zu machen!',T('confirm.reset.btn'),()=>{exportBackupSilent();setTimeout(()=>{S.log=[];S.counts={};S.stableOrder=[];S.expandedDays=new Set();S.expandedDaysInited=false;S.expandedMonths=new Set();S.expandedMonthsInited=false;S.limitShownToday=null;clearTimeout(S.sortTimer);// V46: auch IDB-Logs leeren
-      try{db.logs.clear();}catch(_){}
-      saveState();renderDrinks(true);updateHeader();updateLimitBanner();showToast('✅ Backup gesichert – Daten zurückgesetzt');},400);});}
+/* FIX V47+: Zweistufige Bestätigung verhindert Download-Race beim Log-Reset */
+function askReset(){
+  const L=S.lang==='en';
+  showCfm('⚠️ '+T('confirm.reset.title'),'🗑 '+T('confirm.reset.msg')+' ⚠️ '+(L?'This deletes ALL entries. A backup will be downloaded first.':'Diese Aktion löscht ALLE Einträge. Vorher wird automatisch ein Backup heruntergeladen.'),(L?'📥 Download Backup first':'📥 Zuerst Backup sichern'),()=>{
+    exportBackupSilent();
+    // Zweite Stufe: Nutzer muss warten bis Download fertig ist, dann erst löschen
+    showCfm(
+      L?'✅ Backup started':'✅ Backup gestartet',
+      L?'Wait until your backup file has been saved, then click "Delete now" to clear the log.':'Warte, bis die Backup-Datei heruntergeladen wurde, und klicke dann auf "Jetzt löschen".',
+      L?'🗑 Delete now':'🗑 Jetzt löschen',
+      ()=>{
+        S.log=[];S.counts={};S.stableOrder=[];S.expandedDays=new Set();S.expandedDaysInited=false;S.expandedMonths=new Set();S.expandedMonthsInited=false;S.limitShownToday=null;clearTimeout(S.sortTimer);
+        try{db.logs.clear();}catch(_){}
+        saveState();renderDrinks(true);updateHeader();updateLimitBanner();showToast('✅ '+(L?'Backup saved – log cleared':'Backup gesichert – Daten zurückgesetzt'));
+      }
+    );
+  });
+}
 
 // ── OPTION A: Vollständiger Reset ──────────────────────────────────────────
 function openResetAll(){
@@ -5888,7 +5961,7 @@ function initDrinkSwipe(){
   });
 }
 
-function onLogSearch(){S.logSearchQ=(document.getElementById('logSearch').value||'').toLowerCase();_fullExpandedDays=new Set();updateLogFilterBadge();renderLog();}
+function onLogSearch(){S.logSearchQ=(document.getElementById('logSearch').value||'').toLowerCase();S.logVisibleCount=100;/* FIX V47+ */;_fullExpandedDays=new Set();updateLogFilterBadge();renderLog();}
 function updateLogFilterBadge(){
   let n=0;
   if(S.logSearchQ)n++;
@@ -5919,7 +5992,7 @@ function closeLogMoreMenu(){
 document.addEventListener('click',function(e){
   if(!e.target.closest('#logMoreBtn')&&!e.target.closest('#logMoreMenu'))closeLogMoreMenu();
 });
-function setLogCatFilter(cat){S.logCatFilter=cat;_fullExpandedDays=new Set();updateLogFilterBadge();renderLog();}
+function setLogCatFilter(cat){S.logCatFilter=cat;S.logVisibleCount=100;/* FIX V47+ */_fullExpandedDays=new Set();updateLogFilterBadge();renderLog();}
 
 /* ── Multi-Select-Modus ──────────────────────────────────────── */
 function toggleLogMultiSelect(){
@@ -6375,8 +6448,15 @@ function renderLog(){
   // mkeys = month-key strings "YYYY-MM", dkeys = day-key strings "YYYY-MM-DD"
   // Using the entry's recorded tz (entryLogicalDayStr) so each entry always
   // appears under the day it was ACTUALLY recorded, regardless of viewer tz.
+  /* FIX V47+: Lazy Loading – nur S.logVisibleCount Einträge auf einmal rendern */
+  if(typeof S.logVisibleCount!=='number'||S.logVisibleCount<100)S.logVisibleCount=100;
+  const totalFilteredReal=filteredReal.length;
+  const hasMore=totalFilteredReal>S.logVisibleCount;
+  // Schnitt nach Visible-Count auf dem echten (nicht-Marker) Log, dann Marker wieder einfügen
+  const visibleIds=new Set(filteredReal.slice(0,S.logVisibleCount).map(e=>e.id));
+  const visibleLog=filteredLog.filter(e=>e._marker||visibleIds.has(e.id));
   const mkeys=[],months={},dkeys=[],days={};
-  filteredLog.forEach(e=>{
+  visibleLog.forEach(e=>{
     const mk=entryLogicalMKey(e);
     const dk=entryLogicalDayStr(e);
     if(!months[mk]){months[mk]={days:{},dkeys:[]};mkeys.push(mk);}
@@ -6472,7 +6552,14 @@ function renderLog(){
     html+=`</div>`; // monthbody
   });
 
-  const el=document.getElementById('loglist');el.innerHTML=html;el._mk=mkeys;el._dk=dkeys;
+  const el=document.getElementById('loglist');
+  // FIX V47+: "Mehr laden"-Button wenn nicht alle Einträge sichtbar
+  if(hasMore){
+    const L=S.lang==='en';
+    const remaining=totalFilteredReal-S.logVisibleCount;
+    html+=`<div style="text-align:center;padding:18px 14px 8px"><button onclick="S.logVisibleCount=(S.logVisibleCount||100)+100;renderLog()" style="padding:10px 28px;background:var(--bg2);border:1px solid var(--ac-27);border-radius:10px;color:var(--ac);font-family:Georgia,serif;font-size:13px;cursor:pointer;touch-action:manipulation;width:100%;max-width:320px">↓ ${remaining} ${L?'more entries':'weitere Einträge'}</button></div>`;
+  }
+  el.innerHTML=html;el._mk=mkeys;el._dk=dkeys;
   if(!S.logMultiSelect)initSwipeDelete();
   else initMselRows();
 }
@@ -7885,7 +7972,7 @@ function renderHelp(){
       <div class="hlp-steps">
         <div class="hlp-step"><div class="hlp-step-num">1</div><span><strong>${h('Getränk erfassen:','Record a drink:')}</strong> ${h('Tab <strong>GETRÄNKE</strong> → <strong>+</strong>-Button tippen. Zähler erhöht sich sofort, Eintrag ins Protokoll. Der grüne Punkt oben rechts bestätigt die automatische Speicherung.','Tab <strong>DRINKS</strong> → tap the <strong>+</strong> button. Counter increments immediately, entry is added to the log. The green dot confirms auto-save.')}</span></div>
         <div class="hlp-step"><div class="hlp-step-num">2</div><span><strong>${h('Sofort rückgängig machen:','Instant undo:')}</strong> ${h('Nach jeder Erfassung erscheint 12 Sekunden lang ein <strong>Rückgängig</strong>-Toast. Antippen → Eintrag sofort gelöscht. Alternativ: Getränke-Button nach <strong>links wischen</strong>.','After each recording a 12-second <strong>Undo</strong> toast appears. Tap it → entry immediately deleted. Alternative: swipe drink button <strong>left</strong>.')}</span></div>
-        <div class="hlp-step"><div class="hlp-step-num">3</div><span><strong>${h('Eintrag nachträglich bearbeiten:','Edit entry later:')}</strong> ${h('Tab <strong>PROTOKOLL</strong> → Eintrag nach <strong>rechts wischen</strong> → Bearbeitungsformular öffnet sich. Für mehrere Einträge gleichzeitig: <strong>☑ Auswählen</strong> nutzen.','Tab <strong>LOG</strong> → swipe entry <strong>right</strong> → edit form opens. To edit multiple entries: use <strong>☑ Select</strong>.')}</span></div>
+        <div class="hlp-step"><div class="hlp-step-num">3</div><span><strong>${h('Eintrag nachträglich bearbeiten:','Edit entry later:')}</strong> ${h('Tab <strong>PROTOKOLL</strong> → Eintrag nach <strong>rechts wischen</strong> → Bearbeitungsformular öffnet sich. Für mehrere Einträge gleichzeitig: <strong>☑ Auswählen</strong> nutzen. Bei sehr langen Reisen werden zunächst nur die letzten 100 Einträge angezeigt – ein <strong>„Weitere laden"</strong>-Button am Ende der Liste lädt jeweils 100 weitere nach.','Tab <strong>LOG</strong> → swipe entry <strong>right</strong> → edit form opens. To edit multiple entries: use <strong>☑ Select</strong>. On very long voyages, initially only the last 100 entries are shown – a <strong>"Load more"</strong> button at the bottom loads the next 100.')}</span></div>
         <div class="hlp-step"><div class="hlp-step-num">4</div><span><strong>${h('Aktiven Nutzer wechseln:','Switch active user:')}</strong> ${h('Die farbige <strong>Nutzerleiste</strong> unter der Kopfzeile antippen → Nutzer aus der Liste wählen → alle neuen Einträge werden dieser Person zugeordnet. <em>Immer zuerst den richtigen Nutzer aktivieren!</em>','Tap the coloured <strong>user bar</strong> below the header → select a user → all new entries are assigned to that person. <em>Always activate the correct user first!</em>')}</span></div>
         <div class="hlp-step"><div class="hlp-step-num">5</div><span><strong>${h('Backup erstellen:','Create backup:')}</strong> ${h('<strong>💾 BKP</strong>-Button (Tab-Leiste oben) antippen <em>oder</em> Tab <strong>VERWALTUNG</strong> → <strong>📤 Backup speichern</strong> (Download) <em>oder</em> <strong>📡 Backup teilen</strong> (iOS-Teilen-Sheet: AirDrop, iCloud Drive, WhatsApp, E-Mail …). <strong>Empfohlen: nach jeder Schicht!</strong>','Tap the <strong>💾 BKP</strong> button (tab bar top) <em>or</em> Tab <strong>MANAGEMENT</strong> → <strong>📤 Save backup</strong> (download) <em>or</em> <strong>📡 Share backup</strong> (iOS share sheet: AirDrop, iCloud Drive, WhatsApp, email …). <strong>Recommended: after every session!</strong>')}</span></div>
         <div class="hlp-step"><div class="hlp-step-num">6</div><span><strong>${h('Statistik abrufen:','View statistics:')}</strong> ${h('Tab <strong>STATISTIK</strong> → Zeitraum wählen (Heute / Woche / Monat / Jahr / Gesamt / Eigener) → optional Nutzer-Filter. Alle Auswertungen aktualisieren sich sofort.','Tab <strong>STATISTICS</strong> → choose period (Today / Week / Month / Year / All / Custom) → optional user filter. All evaluations update instantly.')}</span></div>
@@ -7935,7 +8022,7 @@ function renderHelp(){
     <div class="hlp-card">
       <div class="hlp-card-title">➕ ${h('Getränk erfassen &amp; rückgängig machen','Record drink &amp; undo')}</div>
       <div class="hlp-row"><span class="hlp-badge gold">+</span><span>${h('Großen goldenen <strong>+</strong>-Button antippen → Zähler +1, Eintrag sofort ins Protokoll, Gesamtanzeige aktualisiert sich, grüner Punkt bestätigt Speicherung. Der Eintrag erhält automatisch: <em>aktuelle Uhrzeit in App-Zeitzone</em>, <em>aktiven Nutzer</em>, <em>aktuellen Hafen/Ort</em> (falls gesetzt).','Tap the large gold <strong>+</strong> button → counter +1, entry instantly added to log, totals update, green dot confirms save. The entry automatically receives: <em>current time in app timezone</em>, <em>active user</em>, <em>current port/location</em> (if set).')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">−</span><span>${h('<strong>−</strong>-Button antippen → Zähler −1, der <em>neueste</em> Eintrag dieses Getränks wird gelöscht (nach Sicherheitsabfrage). Wenn kein Eintrag vorhanden: Button hat keine Wirkung.','Tap the <strong>−</strong> button → counter −1, the <em>most recent</em> entry of this drink is deleted (after confirmation). If no entry exists: button has no effect.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">−</span><span>${h('<strong>−</strong>-Button antippen → Zähler −1, der <em>neueste</em> Eintrag dieses Getränks wird gelöscht (nach Sicherheitsabfrage). Wenn kein Eintrag vorhanden oder der aktive Nutzer keinen eigenen Eintrag hat, erscheint eine kurze Warnung – fremde Einträge werden nie gelöscht.','Tap the <strong>−</strong> button → counter −1, the <em>most recent own</em> entry of this drink is deleted. If the active user has no own entry, a brief warning appears – entries of other users are never deleted.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge gold">${h('Undo-Toast','Undo toast')}</span><span>${h('Unmittelbar nach jeder Erfassung erscheint 12 Sekunden lang ein grüner Toast mit <strong>Rückgängig</strong>-Schaltfläche. Antippen → letzter Eintrag dieses Getränks wird sofort gelöscht, Zähler −1. Nach Ablauf der 12 Sekunden verschwindet der Toast automatisch – der Eintrag bleibt dann dauerhaft.','Immediately after each recording a green toast with <strong>Undo</strong> button appears for 12 seconds. Tap → last entry of this drink is instantly deleted, counter −1. After 12 seconds the toast disappears automatically – the entry then remains permanent.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('Undo per Wischen','Undo by swipe')}</span><span>${h('Getränke-Button nach <strong>links wischen</strong> (breite Geste, mindestens halbe Buttonbreite) → letzter Eintrag dieses Getränks wird rückgängig gemacht. Funktioniert auch nach Ablauf des Undo-Toasts, solange der letzte Eintrag nicht manuell bearbeitet wurde. Ein roter Streifen am rechten Rand des Buttons zeigt dauerhaft an, dass Links-Wischen möglich ist.','Swipe drink button <strong>left</strong> (wide gesture, at least half button width) → last entry of this drink is undone. Works even after the Undo toast has expired, as long as the last entry has not been manually edited. A red strip on the right edge of the button permanently shows that left swipe is possible.')}</span></div>
       <div class="hlp-tip">💡 ${h('Tipp: Der goldene <strong>+</strong>-Button ist links angeordnet (Standard für Rechtshänder). Für Linkshänder: Verwaltung → Einstellungen → <strong>Schaltflächen-Seite: rechts</strong>. Dann ist der + rechts und − links.','Tip: The gold <strong>+</strong> button is on the left (default for right-handers). For left-handers: Management → Settings → <strong>Button side: right</strong>. Then + is on the right and − on the left.')}</div>
@@ -8361,7 +8448,7 @@ function renderHelp(){
         <div class="hlp-step"><div class="hlp-step-num">4</div><span>${h('Optional: Nutzer B exportiert und sendet das kombinierte Backup zurück an Nutzer A, damit beide den vollständigen Gesamtüberblick haben.','Optional: User B exports and sends the combined backup back to User A, so both have the complete overview.')}</span></div>
       </div>
       <div class="hlp-row" style="margin-top:10px"><span class="hlp-badge gold">${h('Duplikat-Schutz','Duplicate protection')}</span><span>${h('Beim Ergänzen werden Einträge mit identischer ID <em>oder</em> gleicher Kombination aus Nutzer + Zeit + Getränkename (±2 Sekunden Toleranz) automatisch übersprungen. Dasselbe Backup kann beliebig oft importiert werden – es entstehen <strong>niemals Duplikate</strong>.','When merging, entries with identical ID <em>or</em> the same combination of user + time + drink name (±2 seconds tolerance) are automatically skipped. The same backup can be imported any number of times – <strong>no duplicates are ever created</strong>.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge red">${h('Ersetzen – nur bei Neustart!','Replace – only for fresh start!')}</span><span>${h('<strong>Ersetzen</strong> löscht <em>alle</em> vorhandenen Daten und ersetzt sie vollständig durch das Backup. <strong>Nur verwenden bei:</strong> Gerätewechsel, nach Reset oder wenn alle vorhandenen Daten durch Backup-Stand ersetzt werden sollen.','<strong>Replace</strong> deletes <em>all</em> existing data and fully replaces with the backup. <strong>Only use when:</strong> changing devices, after a reset, or when all existing data should be replaced by the backup state.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge red">${h('Ersetzen – nur bei Neustart!','Replace – only for fresh start!')}</span><span>${h('<strong>Ersetzen</strong> löscht <em>alle</em> vorhandenen Daten und ersetzt sie vollständig durch das Backup. <strong>Sicherheits-Ablauf (2 Schritte):</strong> Zuerst wird automatisch ein Backup-Download gestartet, dann erscheint ein zweiter Bestätigungs-Dialog – erst danach werden Daten ersetzt. <strong>Nur verwenden bei:</strong> Gerätewechsel, nach Reset oder wenn alle vorhandenen Daten durch Backup-Stand ersetzt werden sollen.','<strong>Replace</strong> deletes <em>all</em> existing data and fully replaces with the backup. <strong>Safety flow (2 steps):</strong> First an automatic backup download is triggered, then a second confirmation dialog appears – only then is data replaced. <strong>Only use when:</strong> changing devices, after a reset, or when all existing data should be replaced by the backup state.')}</span></div>
     </div>
 
     <div class="hlp-danger">⚠️ <strong>${h('Datenverlust-Risiken auf iPhone – unbedingt beachten!','Data loss risks on iPhone – important!')}</strong><br><br>
@@ -8407,7 +8494,7 @@ function renderHelp(){
 
     <div class="hlp-card" style="border-color:var(--ac-27)">
       <div class="hlp-card-title" style="color:var(--ac)">🔄 ${h('Schiffszeit für Gruppen – Workflow','Ship\'s time for groups – workflow')}</div>
-      <div class="hlp-row-full"><strong style="color:var(--ac)">${h('Vor der Reise (einmalig):','Before the trip (once):')}</strong><br>${h('1. Nutzerzuordnung festlegen: Jede Person bekommt einen festen Platz (Person 1, 2, 3…). Diese Zuordnung <strong>nie mehr ändern</strong>.<br>2. Eine Person erstellt ein Backup und teilt es per AirDrop. Alle anderen importieren mit „Ergänzen“ → alle starten mit denselben Grundeinstellungen.','1. Fix user assignment: each person gets a permanent slot (Person 1, 2, 3…). <strong>Never change</strong> this assignment.<br>2. One person creates a backup and shares it via AirDrop. Everyone else imports with &quot;Merge&quot; → all start with the same base settings.')}</div>
+      <div class="hlp-row-full"><strong style="color:var(--ac)">${h('Vor der Reise (einmalig):','Before the trip (once):')}</strong><br>${h('1. Nutzerprofile anlegen: Jede Person bekommt einen eigenen Nutzer mit eindeutigem Namen (z. B. „Anna“, „Max“). Der <strong>Name ist entscheidend</strong> – beim Backup-Import werden Nutzer automatisch anhand des Namens erkannt, nicht nach der Reihenfolge im Menü.<br>2. Eine Person erstellt ein Backup und teilt es per AirDrop. Alle anderen importieren mit „Ergänzen“ → alle starten mit denselben Grundeinstellungen.','1. Set up user profiles: each person gets their own user with a unique name (e.g. "Anna", "Max"). The <strong>name is key</strong> – when importing a backup, users are matched automatically by name, not by their order in the menu.<br>2. One person creates a backup and shares it via AirDrop. Everyone else imports with &quot;Merge&quot; → all start with the same base settings.')}</div>
       <div class="hlp-row-full"><strong style="color:var(--ac)">${h('An Bord – Schiffszeit einstellen:','On board – setting ship\'s time:')}</strong><br>${h('Schiffszeit im Header prüfen (✅ = alles korrekt, ⚡ = manuell eingestellt auf hoher See normal, ⚠️ = bitte einstellen). Wenn Kapitän die Zeit ändert: sofort Schiffszeit in der App anpassen und Backup senden.','Check ship\'s time in header (✅ = all correct, ⚡ = manually set, normal at sea, ⚠️ = please set). When captain changes time: immediately update ship\'s time in the app and send backup.')}</div>
       <div class="hlp-row-full"><strong style="color:var(--ac)">${h('Backups austauschen – einfache Regeln:','Exchanging backups – simple rules:')}</strong><br>${h('&#x2022; <strong>Kein fester Rhythmus nötig.</strong> Täglich, alle paar Tage oder nach einem Seetag-Block – alles funktioniert.<br>&#x2022; <strong>Jeder an jeden.</strong> A→B, B→C, A→C gleichzeitig – Reihenfolge egal, kein Koordinator nötig.<br>&#x2022; <strong>Dasselbe Backup mehrfach importieren.</strong> Sicher – keine Duplikate, zweiter Import hat null Wirkung.<br>&#x2022; <strong>Beim Import immer „Ergänzen“ wählen</strong> (nicht „Ersetzen“), um eigene Einträge zu behalten.','&#x2022; <strong>No fixed schedule needed.</strong> Daily, every few days or after a sea-day block – all works.<br>&#x2022; <strong>Everyone to everyone.</strong> A→B, B→C, A→C simultaneously – order irrelevant, no coordinator needed.<br>&#x2022; <strong>Import same backup multiple times.</strong> Safe – no duplicates, second import has zero effect.<br>&#x2022; <strong>Always choose &quot;Merge&quot;</strong> when importing (not &quot;Replace&quot;) to keep your own entries.')}</div>
       <div class="hlp-row-full"><strong style="color:var(--ac)">${h('Nachträgliche Korrekturen:','Retroactive corrections:')}</strong><br>${h('&#x2022; <strong>Einzeln:</strong> Protokoll → Eintrag nach rechts wischen → Bearbeiten → Schiffszeit-Offset korrigieren.<br>&#x2022; <strong>Mehrere gleichzeitig:</strong> Protokoll → Mehrfachauswahl → Einträge markieren → ✏️ Bearbeiten → Schiffszeit für alle ändern.<br>&#x2022; Keine Panik: Der UTC-Zeitstempel ist immer korrekt gespeichert. Nur die Anzeige kann vorübergehend falsch sein.','&#x2022; <strong>Single entry:</strong> Log → swipe entry right → Edit → correct ship\'s time offset.<br>&#x2022; <strong>Multiple entries:</strong> Log → multi-select → mark entries → ✏️ Edit → change ship\'s time for all.<br>&#x2022; No panic: the UTC timestamp is always stored correctly. Only the display can be temporarily wrong.')}</div>
@@ -8576,7 +8663,7 @@ function renderHelp(){
 
     <div class="hlp-card">
       <div class="hlp-card-title">🔄 ${h('Automatische Updates','Automatic Updates')}</div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('Hintergrund-Update','Background update')}</span><span>${h('Wenn die App kurz online ist, prüft sie automatisch ob eine neue Version vorliegt. Der Download passiert still im Hintergrund – kein Unterbruch. Beim nächsten Start ist die neue Version aktiv. Ein dezenter Toast informiert dich.','When the app is briefly online, it automatically checks for a new version. The download happens silently in the background – no interruption. The next launch activates the new version. A subtle toast informs you.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('Hintergrund-Update','Background update')}</span><span>${h('Wenn die App über <strong>GitHub Pages</strong> installiert ist und kurz online geht, prüft sie automatisch ob eine neue Version vorliegt. Der Download passiert still im Hintergrund – kein Unterbruch. Ein dezentes <strong>goldenes Update-Banner</strong> erscheint oben – antippen lädt die neue Version sofort. Die gespeicherten Daten (IndexedDB) bleiben dabei immer vollständig erhalten.','When the app is installed via <strong>GitHub Pages</strong> and briefly goes online, it automatically checks for a new version. The download happens silently in the background – no interruption. A subtle <strong>gold update banner</strong> appears at the top – tap it to load the new version immediately. All stored data (IndexedDB) is always fully preserved.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge gold">${h('Daten bleiben erhalten','Data stays intact')}</span><span>${h('Ein App-Update berührt niemals die gespeicherten Daten (IndexedDB). Selbst wenn der GitHub-Code gelöscht wird, bleiben alle Einträge auf dem Gerät erhalten.','An app update never touches stored data (IndexedDB). Even if the GitHub code is deleted, all entries remain on the device.')}</span></div>
     </div>
 
@@ -8587,7 +8674,7 @@ function renderHelp(){
       </div>
     </div>
 
-    <div class="hlp-info">ℹ️ ${h('Die App funktioniert auch weiterhin direkt aus der Dateien-App (file://-Protokoll in Edge). In diesem Modus ist kein Service Worker aktiv – das ist normal und hat keinen Einfluss auf die Offline-Funktion oder IndexedDB.','The app also continues to work directly from the Files app (file:// protocol in Edge). In this mode no Service Worker is active – this is normal and does not affect offline functionality or IndexedDB.')}</div>
+    <div class="hlp-info">ℹ️ ${h('Die App besteht aus drei Dateien auf GitHub: <strong>index.html</strong> (die App), <strong>sw.js</strong> (Service Worker für Offline-Betrieb) und <strong>manifest.json</strong> (App-Beschreibung). Wird die App über den <strong>GitHub-Link in Safari installiert</strong>, lädt der Browser alle drei Dateien automatisch – offline funktioniert dann alles. Der Browser-Speicher (IndexedDB) speichert alle Daten dauerhaft auf dem Gerät, unabhängig vom Service Worker. <em>Hinweis:</em> Wird nur die index.html als Datei (z. B. per AirDrop oder aus der Dateien-App) geöffnet, steht kein Service Worker zur Verfügung – das hat aber keinen Einfluss auf die IndexedDB oder die Offline-Bedienbarkeit der App selbst.','The app consists of three files on GitHub: <strong>index.html</strong> (the app), <strong>sw.js</strong> (Service Worker for offline use) and <strong>manifest.json</strong> (app description). When the app is <strong>installed via the GitHub link in Safari</strong>, the browser loads all three files automatically – everything then works offline. Browser storage (IndexedDB) saves all data permanently on the device, independent of the Service Worker. <em>Note:</em> If only the index.html file is opened directly (e.g. via AirDrop or from the Files app), no Service Worker is available – but this has no effect on IndexedDB or the offline usability of the app itself.')}</div>
 
   </div>
 </details>
@@ -9133,17 +9220,24 @@ function askReplaceImport(){
   const msg=(L
     ?`⚠️ ALL ${fmtNum(existCount)} existing entries will be permanently deleted and replaced by ${fmtNum(newCount)} entries from the backup file. This cannot be undone!\n\nA safety backup of your current data will be downloaded automatically first.`
     :`⚠️ ALLE ${existCount} bestehenden Einträge werden unwiderruflich gelöscht und durch ${newCount} Einträge aus der Backup-Datei ersetzt.\n\nEin Sicherheits-Backup deiner aktuellen Daten wird vorher automatisch heruntergeladen.`);
+  /* FIX V47+: Immer Backup, dann zweite Stufe mit 3-Sekunden-Countdown */
   showCfm(
     L?'⚠️ Replace all data?':'⚠️ Alle Daten ersetzen?',
     msg,
-    L?'🔄 Backup & Replace':'🔄 Backup & Ersetzen',
+    L?'📥 Download Backup first':'📥 Zuerst Backup sichern',
     ()=>{
-      // V34 V9: Automatisches Sicherheits-Backup VOR dem Ersetzen
-      if(existCount>0){
-        showToast('💾 Sicherheits-Backup wird heruntergeladen…','info',3000);
-        exportBackupSilent();
-      }
-      setTimeout(()=>doImport('replace'),existCount>0?800:0);
+      showToast('💾 '+(L?'Safety backup downloading…':'Sicherheits-Backup wird heruntergeladen…'),'info',3000);
+      exportBackupSilent(); // Immer – auch bei 0 Einträgen (Einstellungen sichern)
+      // Zweite Stufe: Countdown-Dialog
+      setTimeout(()=>{
+        showCfm(
+          L?'✅ Backup saved – final step':'✅ Backup gesichert – letzter Schritt',
+          L?'Your backup file has been saved. Click "Replace now" to proceed.'
+           :'Deine Backup-Datei wurde gespeichert. Klicke auf "Jetzt ersetzen" um fortzufahren.',
+          L?'🔄 Replace now':'🔄 Jetzt ersetzen',
+          ()=>doImport('replace')
+        );
+      },1200);
     }
   );
 }
@@ -9151,15 +9245,29 @@ function doImport(mode){
   if(!_bkp){closeBkp();return;}const data=_bkp;
   const importProfiles=!!(document.getElementById('bkpImportProfiles')&&document.getElementById('bkpImportProfiles').checked);
   closeBkp();
-  // Build user ID mapping: backup user positions → local fixed slot IDs
-  // Position 0 → u1, Position 1 → u2, etc.
+  // FIX V47+: Name-basiertes User-Mapping statt positions-basiertem Mapping
+  // Verhindert Chaos wenn Nutzer auf verschiedenen Geräten unterschiedlich sortiert sind
   const FIXED_IDS=['u1','u2','u3','u4'];
   const backupUsers=data.users&&Array.isArray(data.users)?data.users:[];
+  const localUsers=S.users||[];
   const userIdMap={}; // backupUserId → localUserId
+  let _positionFallbackUsed=false;
   backupUsers.forEach((bu,i)=>{
-    if(i<4){userIdMap[bu.id]=FIXED_IDS[i];}
-    else{userIdMap[bu.id]=bu.id;} // extra users keep their ID
+    // Zuerst: Name-Vergleich (case-insensitive, trimmed)
+    const nameMatch=localUsers.find(lu=>lu.name&&bu.name&&lu.name.trim().toLowerCase()===bu.name.trim().toLowerCase());
+    if(nameMatch){
+      userIdMap[bu.id]=nameMatch.id;
+    } else if(i<FIXED_IDS.length){
+      userIdMap[bu.id]=FIXED_IDS[i]; // Positions-Fallback
+      if(bu.name&&localUsers.find(lu=>lu.id===FIXED_IDS[i])&&localUsers.find(lu=>lu.id===FIXED_IDS[i]).name!==bu.name)_positionFallbackUsed=true;
+    } else {
+      userIdMap[bu.id]=bu.id;
+    }
   });
+  if(_positionFallbackUsed){
+    const L=S.lang==='en';
+    showToast('⚠️ '+(L?'Some users were matched by position (names differ). Please verify the log.':'Nutzer wurden nach Position zugeordnet (Namen weichen ab). Bitte Protokoll prüfen.'),'warn',6000);
+  }
   // Remap entry userIds using the map
   function remapEntryUser(e){
     if(e.userId&&userIdMap[e.userId])return {...e,userId:userIdMap[e.userId]};
@@ -10187,6 +10295,7 @@ async function migrateFromLocalStorage(){
       'a4_customthemes':'customThemes','a4_statdaysort':'statDaySort',
       'a4_statdayshow':'statDayShow','a4_statopen':'statOpen',
       'a4_lastbkp':'lastBackupDate','a4_lastbkpreminder':'lastBackupReminderDate',
+      'a4_onboarding_done':'onboardingDone',/* FIX V47+: fehlte in Migration */
     };
     const batch=[];
     for(const[oldKey,newKey]of Object.entries(keyMap)){
@@ -10854,8 +10963,8 @@ function showOnboarding(){
       '<div style="font-size:52px;text-align:center;margin-bottom:10px">➕</div>'+
       '<div class="cfm-title" style="text-align:center;margin-bottom:10px">'+(L?'Add drinks easily':'Getränke einfach hinzufügen')+'</div>'+
       '<div style="font-size:13px;color:var(--tx1);line-height:1.65;margin-bottom:16px">'+(L
-        ?'Tap <strong>＋</strong> next to any drink to count it. Use the <strong>★ Favourites</strong> to pin your most ordered drinks to the top for quick access.'
-        :'Tippe auf <strong>＋</strong> neben einem Getränk, um es zu zählen. Pinne deine Lieblingsgetränke mit <strong>★ Favoriten</strong> ganz oben an – so hast du sie immer griffbereit.'
+        ?'Tap <strong>＋</strong> next to any drink to count it. Use <strong>★ Favourites</strong> to pin your top drinks. Made a mistake? An <strong>Undo</strong> toast appears for 12 seconds after every entry. With multiple users: always activate the correct user in the coloured bar first – the <strong>−</strong> button only deletes your own entries.'
+        :'Tippe auf <strong>＋</strong> neben einem Getränk, um es zu zählen. Pinne deine Lieblingsgetränke mit <strong>★ Favoriten</strong> ganz oben an. Tippfehler? Der <strong>Rückgängig</strong>-Toast erscheint 12 Sekunden lang direkt nach jeder Erfassung. Bei mehreren Personen: immer zuerst den richtigen Nutzer in der farbigen Leiste aktivieren – der <strong>−</strong>-Button löscht nur eigene Einträge.'
       )+'</div>'+
       '<div style="text-align:right;font-size:11px;color:var(--tx2);margin-bottom:10px">2 / 3</div>'+
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'+
@@ -10868,8 +10977,8 @@ function showOnboarding(){
       '<div style="font-size:52px;text-align:center;margin-bottom:10px">💾</div>'+
       '<div class="cfm-title" style="text-align:center;margin-bottom:10px">'+(L?'Back up your data weekly':'Wöchentlich Backup erstellen')+'</div>'+
       '<div style="font-size:13px;color:var(--tx1);line-height:1.65;margin-bottom:16px">'+(L
-        ?'Your data is stored in a local <strong>database</strong> – no limit, no cloud upload, completely private.<br><br>💡 <strong>Backup tip:</strong> Create a weekly backup in the <strong>Management</strong> tab. The app will remind you automatically.<br><br>🔄 You can share your log with others at any time without touching their settings (<strong>Smart Sync</strong>).'
-        :'Deine Daten werden in einer lokalen <strong>Datenbank</strong> gespeichert – kein Limit, kein Cloud-Upload, vollständig privat.<br><br>💡 <strong>Backup-Empfehlung:</strong> Erstelle wöchentlich ein Backup im Tab <strong>Verwaltung</strong>. Die App erinnert dich automatisch.<br><br>🔄 Du kannst dein Protokoll jederzeit mit anderen teilen, ohne deren Einstellungen zu berühren (<strong>Smart Sync</strong>).'
+        ?'Your data is stored in a local <strong>database</strong> – no limit, no cloud upload, completely private.<br><br>💡 <strong>Backup tip:</strong> Create a backup after every session in the <strong>Management</strong> tab. The app will remind you automatically.<br><br>👥 <strong>Multiple users:</strong> Create profiles with unique <em>names</em>. When importing a backup, users are matched automatically by name – regardless of their order on any device.<br><br>🔄 Merge logs via <strong>Smart Sync</strong> (AirDrop) without overwriting anyone&#39;s settings.'
+        :'Deine Daten werden in einer lokalen <strong>Datenbank</strong> gespeichert – kein Limit, kein Cloud-Upload, vollständig privat.<br><br>💡 <strong>Backup-Empfehlung:</strong> Erstelle nach jeder Schicht ein Backup im Tab <strong>Verwaltung</strong>. Die App erinnert dich automatisch.<br><br>👥 <strong>Mehrere Personen:</strong> Nutzerprofile mit eindeutigen <em>Namen</em> anlegen. Beim Backup-Import werden Nutzer automatisch anhand des Namens erkannt – egal auf welchem Gerät.<br><br>🔄 Protokolle per <strong>Smart Sync</strong> (AirDrop) zusammenführen, ohne fremde Einstellungen zu überschreiben.'
       )+'</div>'+
       '<div style="text-align:right;font-size:11px;color:var(--tx2);margin-bottom:10px">3 / 3</div>'+
       '<button class="mbtn-ok" style="width:100%" onclick="_obDone()">'+(L?'✓ Let\'s go!':'✓ Los geht\'s!')+'</button>';
@@ -11150,8 +11259,7 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
 })();
 </script>
 
-<!-- Safe-Area-Füllung: verhindert den ungestylten Streifen am iPhone-Bildschirmrand -->
-
+<!-- Safe-Area: nur oben (Notch/Dynamic Island) via .hdr padding-top -->
 
 </body>
 </html>
