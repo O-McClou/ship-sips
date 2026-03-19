@@ -27,9 +27,10 @@
    ④ SKIP_WAITING-Message für künftige Updates via Update-Banner
    ═══════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'tracker-v49';
+const CACHE_NAME = 'tracker-v50';
 
 const ASSETS = [
+  './',
   './index.html'
 ];
 
@@ -68,13 +69,21 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   if (!event.request.url.startsWith('http')) return;
 
+  /* FIX V50: URL normalisieren – iOS PWA startet mit "/" (Verzeichnis),
+     nicht mit "/index.html". Ohne diese Normalisierung findet caches.match()
+     keinen Eintrag → networkFetch → bei Offline friert die App ein. */
+  let requestUrl = event.request.url;
+  if (requestUrl.endsWith('/')) {
+    requestUrl += 'index.html';
+  }
+
   event.respondWith(
-    caches.match(event.request).then(cached => {
+    caches.match(requestUrl).then(cached => {
       const networkFetch = fetch(event.request)
         .then(response => {
           if (response && response.status === 200 && response.type === 'basic') {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+            caches.open(CACHE_NAME).then(cache => cache.put(requestUrl, clone));
           }
           return response;
         })

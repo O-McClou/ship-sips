@@ -799,7 +799,7 @@ body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;
 .adm-danger-title{font-size:11px;color:#e05555;font-weight:bold;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px}
 
 .hlppane{padding:14px 14px max(14px,env(safe-area-inset-bottom,14px)) 14px;min-height:100%;box-sizing:border-box}
-.hlp-hero{text-align:center;padding:28px 16px 24px;background:linear-gradient(135deg,var(--bg2),var(--bg1));border-radius:16px;border:1px solid var(--ac-27);margin-bottom:16px;box-shadow:var(--shadow-card)}{font-size:38px;margin-bottom:6px}
+.hlp-hero{text-align:center;padding:28px 16px 24px;background:linear-gradient(135deg,var(--bg2),var(--bg1));border-radius:16px;border:1px solid var(--ac-27);margin-bottom:16px;box-shadow:var(--shadow-card);font-size:38px;margin-bottom:6px}
 .hlp-hero-title{font-size:18px;font-weight:bold;color:var(--ac);letter-spacing:1.5px}
 .hlp-hero-sub{font-size:10px;color:var(--tx1);letter-spacing:3px;text-transform:uppercase;margin-top:5px}
 .hlp-section{margin-bottom:16px}
@@ -1956,7 +1956,7 @@ window.addEventListener('unhandledrejection', function(e) {
 /* ═══════════════════════════════════════════════════════════════
    TRANSLATIONS – Complete DE / EN
 ═══════════════════════════════════════════════════════════════ */
-const APP_VERSION = 'V49';
+const APP_VERSION = 'V50';
 const I18N = {
   de:{
     'tab.drinks':'Getränke','tab.log':'Protokoll','tab.stats':'Statistik','tab.manage':'Verwaltung','tab.help':'Hilfe',
@@ -3734,9 +3734,27 @@ const TrackerDB = (function(){
   function _tx(stores, mode, fn){
     return _open().then(db=>{
       return new Promise((resolve,reject)=>{
-        const tx = db.transaction(stores, mode);
-        tx.onerror = e=>reject(e.target.error);
-        resolve(fn(tx));
+        /* FIX V50: iOS WebKit-Bug – Transaktionen hängen sich lautlos auf:
+           onsuccess/onerror feuern nie, await hängt ewig → App eingefroren.
+           Lösung: 2s-Timeout → reject → localStorage-Fallback greift sofort. */
+        let _done = false;
+        const _tid = setTimeout(()=>{
+          if(!_done){ _done=true; reject(new Error('IDB Transaction Timeout')); }
+        }, 2000);
+
+        try {
+          const tx = db.transaction(stores, mode);
+          tx.onerror = e=>{
+            if(!_done){ _done=true; clearTimeout(_tid); reject(e.target.error); }
+          };
+          Promise.resolve(fn(tx)).then(res=>{
+            if(!_done){ _done=true; clearTimeout(_tid); resolve(res); }
+          }).catch(err=>{
+            if(!_done){ _done=true; clearTimeout(_tid); reject(err); }
+          });
+        } catch(e){
+          if(!_done){ _done=true; clearTimeout(_tid); reject(e); }
+        }
       });
     });
   }
