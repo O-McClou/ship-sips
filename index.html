@@ -426,7 +426,7 @@ body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;
 /* Panes: flex:1 füllt den verbleibenden Platz bis zum physischen Rand.
    padding-bottom = home-indicator-Höhe → Inhalt endet darüber,
    background füllt nahtlos bis zum Rand (wie native App). */
-#p0,#p1,#p2,#p3,#p4{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;overscroll-behavior-y:none;background:var(--bg);padding-bottom:0}
+#p0,#p1,#p2,#p3,#p4{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;overscroll-behavior-y:none;background:var(--bg);padding-bottom:env(safe-area-inset-bottom,0px)}
 /* p0: flex-Spalte, damit der Spacer am Ende die volle Höhe ausfüllt */
 #p0{display:flex;flex-direction:column}
 .hdr-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:0}
@@ -1077,9 +1077,9 @@ body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;
 #logCtxOverlay{position:fixed;inset:0;z-index:9998;background:transparent}
 
 /* ── V34: Undo-Stack (schwebendes Panel) ─────────────────── */
-#undoPanel{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9990;display:flex;flex-direction:column;gap:5px;pointer-events:none;align-items:center;width:min(94vw,400px)}
+#undoPanel{position:fixed;bottom:max(16px, env(safe-area-inset-bottom, 16px));left:50%;transform:translateX(-50%);z-index:9990;display:flex;flex-direction:column;gap:5px;pointer-events:none;align-items:center;width:min(94vw,400px)}
 /* FIX V42 #6: Undo-Panel nach oben verschieben wenn Multi-Select-Bar aktiv */
-body.msel-active #undoPanel{bottom:calc(70px + 16px);}
+body.msel-active #undoPanel{bottom:calc(70px + max(16px, env(safe-area-inset-bottom, 16px)));}
 .undo-card{background:#1a3020;border:1px solid #4aaa4a66;border-radius:10px;padding:8px 12px;font-size:12px;font-family:Georgia,serif;display:flex;align-items:center;gap:9px;pointer-events:auto;animation:ucIn .2s ease;box-shadow:0 4px 16px #00000077;width:100%;box-sizing:border-box}
 .undo-card.out{animation:ucOut .2s ease forwards}
 @keyframes ucIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
@@ -11234,7 +11234,8 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
 })();
 </script>
 
-<!-- Safe-Area: nur oben (Notch/Dynamic Island) via .hdr padding-top -->
+<!-- Safe-Area-Füllung: verhindert den ungestylten Streifen am iPhone-Bildschirmrand -->
+
 
 </body>
 </html>
