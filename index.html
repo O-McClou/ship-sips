@@ -1956,7 +1956,7 @@ window.addEventListener('unhandledrejection', function(e) {
 /* ═══════════════════════════════════════════════════════════════
    TRANSLATIONS – Complete DE / EN
 ═══════════════════════════════════════════════════════════════ */
-const APP_VERSION = 'V50';
+const APP_VERSION = 'V51';
 const I18N = {
   de:{
     'tab.drinks':'Getränke','tab.log':'Protokoll','tab.stats':'Statistik','tab.manage':'Verwaltung','tab.help':'Hilfe',
@@ -11272,6 +11272,22 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
         reg.addEventListener('updatefound', function(){
           _trackInstalling(reg.installing);
         });
+
+        /* FIX V51: Cache-Wiederherstellung nach iOS-Eviction.
+           iOS löscht den SW-Cache aggressiv (Speicherdruck, 7-Tage-Regel).
+           Wenn der SW aktiv ist aber kein Cache mehr hat, friert die App
+           beim nächsten Kaltstart ein. Hier: Cache prüfen und ggf. sofort
+           neu befüllen, solange Netz verfügbar ist. */
+        if(reg.active && navigator.onLine){
+          caches.open('tracker-v51').then(function(cache){
+            cache.match('./index.html').then(function(cached){
+              if(!cached){
+                console.log('[App] SW-Cache leer – wird neu befüllt');
+                cache.add('./index.html').catch(function(){});
+              }
+            });
+          }).catch(function(){});
+        }
       })
       .catch(function(){}); // privates Fenster, CSP etc. – ignorieren
 
