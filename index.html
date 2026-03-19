@@ -799,7 +799,7 @@ body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;
 .adm-danger-title{font-size:11px;color:#e05555;font-weight:bold;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px}
 
 .hlppane{padding:14px 14px max(14px,env(safe-area-inset-bottom,14px)) 14px;min-height:100%;box-sizing:border-box}
-.hlp-hero{text-align:center;padding:28px 16px 24px;background:linear-gradient(135deg,var(--bg2),var(--bg1));border-radius:16px;border:1px solid var(--ac-27);margin-bottom:16px;box-shadow:var(--shadow-card);font-size:38px;margin-bottom:6px}
+.hlp-hero{text-align:center;padding:28px 16px 24px;background:linear-gradient(135deg,var(--bg2),var(--bg1));border-radius:16px;border:1px solid var(--ac-27);margin-bottom:16px;box-shadow:var(--shadow-card)}{font-size:38px;margin-bottom:6px}
 .hlp-hero-title{font-size:18px;font-weight:bold;color:var(--ac);letter-spacing:1.5px}
 .hlp-hero-sub{font-size:10px;color:var(--tx1);letter-spacing:3px;text-transform:uppercase;margin-top:5px}
 .hlp-section{margin-bottom:16px}
@@ -1921,42 +1921,28 @@ details.hlp-acc summary:active{opacity:.75}
 /* ═══════════════════════════════════════════════════════════════
    GLOBALER FEHLER-HANDLER – fängt unerwartete JS-Fehler ab
    (Gutachten §05 – Kritisch: kein stiller Absturz auf Reise)
-   FIX: _errGuard verhindert Endlosrekursion falls showToast()
-        selbst einen Fehler wirft (z.B. DOM noch nicht bereit).
 ═══════════════════════════════════════════════════════════════ */
-var _errGuard = false;
 window.onerror = function(msg, src, line, col, err) {
   console.error('[App Error]', msg, src, line, col, err);
-  if (_errGuard) return false;
-  _errGuard = true;
-  // showToast erst nach 2s aufrufen – App-UI ist dann sicher fertig initialisiert.
-  // _errGuard bleibt true bis nach dem Toast, verhindert Re-Eintritt.
-  setTimeout(function() {
-    try {
-      var L = (typeof S !== 'undefined' && S.lang === 'en');
-      showToast('\u26A0\uFE0F ' + (L ? 'App error – please create a backup!' : 'App-Fehler – bitte Backup erstellen!'), 'error', 8000);
-    } catch(_) {}
-    _errGuard = false;
-  }, 2000);
+  // showToast ist ggf. noch nicht definiert – daher try/catch
+  try {
+    const L = (typeof S !== 'undefined' && S.lang === 'en');
+    showToast('⚠️ ' + (L ? 'App error – please create a backup!' : 'App-Fehler – bitte Backup erstellen!'), 'error', 8000);
+  } catch(_) {}
   return false;
 };
 window.addEventListener('unhandledrejection', function(e) {
   console.error('[Unhandled Promise]', e.reason);
-  if (_errGuard) return;
-  _errGuard = true;
-  setTimeout(function() {
-    try {
-      var L = (typeof S !== 'undefined' && S.lang === 'en');
-      showToast('\u26A0\uFE0F ' + (L ? 'Storage error – please restart' : 'Speicherfehler – bitte neu starten'), 'error', 8000);
-    } catch(_) {}
-    _errGuard = false;
-  }, 2000);
+  try {
+    const L = (typeof S !== 'undefined' && S.lang === 'en');
+    showToast('⚠️ ' + (L ? 'Storage error – please restart' : 'Speicherfehler – bitte neu starten'), 'error', 8000);
+  } catch(_) {}
 });
 
 /* ═══════════════════════════════════════════════════════════════
    TRANSLATIONS – Complete DE / EN
 ═══════════════════════════════════════════════════════════════ */
-const APP_VERSION = 'V52';
+const APP_VERSION = 'V47';
 const I18N = {
   de:{
     'tab.drinks':'Getränke','tab.log':'Protokoll','tab.stats':'Statistik','tab.manage':'Verwaltung','tab.help':'Hilfe',
@@ -3702,59 +3688,29 @@ const TrackerDB = (function(){
 
   function _open(){
     if(_db) return Promise.resolve(_db);
-    /* FIX V48: iOS PWA-Freeze-Schutz.
-       WebKit blockiert IndexedDB-Zugriffe lautlos wenn der Service Worker
-       beim Start die Kontrolle übernimmt (skipWaiting). Das await db.open()
-       resolved dann nie → App friert ein ohne Fehler.
-       Lösung: Race gegen einen 4-Sekunden-Timeout.
-       Bei Timeout → reject → initApp()-catch → Fallback auf localStorage. */
-    const idbPromise = new Promise((resolve, reject)=>{
-      try {
-        const req = indexedDB.open(DB_NAME, DB_VERSION);
-        req.onupgradeneeded = e=>{
-          const db = e.target.result;
-          if(!db.objectStoreNames.contains('logs')){
-            const ls=db.createObjectStore('logs', {keyPath:'id'});
-            ls.createIndex('ts','ts',{unique:false});
-          }
-          if(!db.objectStoreNames.contains('config'))
-            db.createObjectStore('config', {keyPath:'key'});
-        };
-        req.onsuccess = e=>{ _db=e.target.result; resolve(_db); };
-        req.onerror  = e=>reject(e.target.error);
-        req.onblocked = ()=>reject(new Error('IDB blocked'));
-      } catch(e) { reject(e); }
+    return new Promise((resolve, reject)=>{
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = e=>{
+        const db = e.target.result;
+        if(!db.objectStoreNames.contains('logs')){
+          // V46: Logs benutzen 'id' als KeyPath (wird beim Speichern als uid gesetzt)
+          const ls=db.createObjectStore('logs', {keyPath:'id'});
+          ls.createIndex('ts','ts',{unique:false});
+        }
+        if(!db.objectStoreNames.contains('config'))
+          db.createObjectStore('config', {keyPath:'key'});
+      };
+      req.onsuccess = e=>{ _db=e.target.result; resolve(_db); };
+      req.onerror  = e=>reject(e.target.error);
     });
-    const timeoutPromise = new Promise((_,reject)=>
-      setTimeout(()=>reject(new Error('IDB timeout – iOS PWA fallback')), 4000)
-    );
-    return Promise.race([idbPromise, timeoutPromise]);
   }
 
   function _tx(stores, mode, fn){
     return _open().then(db=>{
       return new Promise((resolve,reject)=>{
-        /* FIX V50: iOS WebKit-Bug – Transaktionen hängen sich lautlos auf:
-           onsuccess/onerror feuern nie, await hängt ewig → App eingefroren.
-           Lösung: 2s-Timeout → reject → localStorage-Fallback greift sofort. */
-        let _done = false;
-        const _tid = setTimeout(()=>{
-          if(!_done){ _done=true; reject(new Error('IDB Transaction Timeout')); }
-        }, 2000);
-
-        try {
-          const tx = db.transaction(stores, mode);
-          tx.onerror = e=>{
-            if(!_done){ _done=true; clearTimeout(_tid); reject(e.target.error); }
-          };
-          Promise.resolve(fn(tx)).then(res=>{
-            if(!_done){ _done=true; clearTimeout(_tid); resolve(res); }
-          }).catch(err=>{
-            if(!_done){ _done=true; clearTimeout(_tid); reject(err); }
-          });
-        } catch(e){
-          if(!_done){ _done=true; clearTimeout(_tid); reject(e); }
-        }
+        const tx = db.transaction(stores, mode);
+        tx.onerror = e=>reject(e.target.error);
+        resolve(fn(tx));
       });
     });
   }
@@ -4493,26 +4449,18 @@ const InternalBackupDB = (function(){
   let _useLS=false;
 
   function _openDB(){
-    /* FIX V48: Timeout-Schutz – identisch zu TrackerDB */
-    const idbPromise = new Promise((resolve,reject)=>{
+    return new Promise((resolve,reject)=>{
       if(!window.indexedDB){_useLS=true;resolve(null);return;}
-      try {
-        const req=indexedDB.open(DB_NAME,1);
-        req.onupgradeneeded=function(e){
-          const db=e.target.result;
-          if(!db.objectStoreNames.contains(STORE)){
-            db.createObjectStore(STORE,{keyPath:'id',autoIncrement:false});
-          }
-        };
-        req.onsuccess=function(e){_db=e.target.result;resolve(_db);};
-        req.onerror=function(){_useLS=true;resolve(null);};
-        req.onblocked=function(){_useLS=true;resolve(null);};
-      } catch(e){ _useLS=true; resolve(null); }
+      const req=indexedDB.open(DB_NAME,1);
+      req.onupgradeneeded=function(e){
+        const db=e.target.result;
+        if(!db.objectStoreNames.contains(STORE)){
+          db.createObjectStore(STORE,{keyPath:'id',autoIncrement:false});
+        }
+      };
+      req.onsuccess=function(e){_db=e.target.result;resolve(_db);};
+      req.onerror=function(){_useLS=true;resolve(null);};
     });
-    const timeoutPromise = new Promise(resolve=>
-      setTimeout(()=>{ _useLS=true; resolve(null); }, 4000)
-    );
-    return Promise.race([idbPromise, timeoutPromise]);
   }
 
   /* ── localStorage fallback helpers ── */
@@ -5276,8 +5224,7 @@ function handleDrinkClick(e){
   },{passive:false});
 });
 setInterval(()=>{const n=Date.now();Object.keys(S.plusDebounce).forEach(k=>{if(n-S.plusDebounce[k]>60000)delete S.plusDebounce[k];});},300000);
-/* FIX V47: setInterval(updateClock,1000) wurde hierher verschoben → jetzt in _initUI() gestartet,
-   damit es erst nach vollständiger App-Initialisierung läuft und keine Fehler vor DB-Load erzeugt. */
+setInterval(updateClock,1000);
 
 /* FIX V47+: Pro-Getränk-Debounce statt globaler 600ms-Sperre (Multi-User-sicher) */
 var _tapPlusLast={};
@@ -10490,18 +10437,6 @@ async function loadStateFromDB(){
 
 /* initApp() – asynchrone Startlogik (ersetzt synchrones Inline-Init) */
 async function initApp(){
-  /* FIX V48: Globaler Notfall-Timeout.
-     Falls irgendetwas im async Start-Pfad lautlos hängt (iOS PWA + SW),
-     startet die App nach 6s trotzdem via localStorage-Fallback. */
-  let _initDone = false;
-  const _emergencyTimer = setTimeout(function(){
-    if(!_initDone){
-      console.warn('[initApp] Notfall-Timeout: starte mit localStorage-Fallback');
-      try{ loadState(); }catch(e){}
-      try{ _initUI(); }catch(e){}
-    }
-  }, 6000);
-
   try{
     await db.open();
     // Persistenten Speicher anfordern (schützt vor iOS-Löschung)
@@ -10516,11 +10451,9 @@ async function initApp(){
     // Zustand laden
     await loadStateFromDB();
     // UI initialisieren (analog zum bisherigen synchronen Init)
-    _initDone = true;
-    clearTimeout(_emergencyTimer);
     _initUI();
-    // Tägliches Auto-Backup (Gutachten §04 / §10 Punkt 6) – stille Version
-    // Wenn kein internes Backup seit >24h → automatisch und lautlos anlegen
+    // Tägliches Auto-Backup (Gutachten §04 / §10 Punkt 6)
+    // Wenn kein internes Backup seit >24h → automatisch anlegen
     setTimeout(async()=>{
       try{
         const all=await InternalBackupDB.getAll();
@@ -10528,33 +10461,13 @@ async function initApp(){
         const lastTs=all.length>0?new Date(all[0].date).getTime():0;
         const hoursSince=(now-lastTs)/3600000;
         if(hoursSince>24){
-          // Stilles Backup: kein Toast, kein renderVerwaltung() – nur DB-Schreiben
-          const nm=typeof appNameClean==='function'?appNameClean():'Tracker';
-          const data={version:11,exportDate:new Date().toISOString(),
-            appTitle1:S.appTitle1||'🍹 Mein Tracker',appTitle2:S.appTitle2||'Meine Reise',titleIcon:S.titleIcon||'',
-            tzMode:S.tzMode||'auto',tzOffset:S.tzOffset||0,tzChangeLog:S.tzChangeLog||[],
-            drinks:S.drinks,log:S.log,favorites:[...S.favorites],favOrder:S.favOrder||[],
-            lang:S.lang,fontSize:S.fontSize,dailyGoal:S.dailyGoal,currency:S.currency,
-            catColorMap:S.ccm,dayEndHour:S.dayEndHour||0,dayEndMinute:S.dayEndMinute||0,
-            users:S.users||[],activeUserId:S.activeUserId||'',userBudgets:S.userBudgets||{},
-            voyageRoute:S.voyageRoute||[],currentLocation:S.currentLocation||'',
-            serviceCharge:S.serviceCharge||0,customThemes:S.customThemes||[],
-            btnLayout:S.btnLayout||'plus-left',
-            conceptFavorites:S.conceptFavorites||['kapitaensbuch','atelier','sonnendeck'],
-            conceptTheme:S.conceptTheme||'kapitaensbuch'};
-          const jsonStr=JSON.stringify(data);
-          const sizeKb=Math.round(jsonStr.length/1024*10)/10;
-          const nowD=new Date();
-          await InternalBackupDB.saveBackup({id:Date.now(),date:nowD.toISOString(),
-            label:nm+' Auto '+nowD.toLocaleDateString('de-DE'),size_kb:sizeKb,data:jsonStr});
-          console.log('[AutoBackup] Tägliches internes Backup erstellt ('+sizeKb+' KB).');
+          await saveBackupInternal();
+          console.log('[AutoBackup] Tägliches internes Backup erstellt.');
         }
       }catch(e2){console.warn('[AutoBackup]',e2);}
-    },4000);
+    },3000);
   }catch(e){
     console.error('[initApp] Fehler:',e);
-    _initDone = true;
-    clearTimeout(_emergencyTimer);
     // Fallback: synchrones Init über localStorage
     loadState();
     _initUI();
@@ -10578,7 +10491,6 @@ function _initUI(){
   switchTab(0);
   setTimeout(function(){try{maybeShowSwipeHint();}catch(e){}},1200);
   updateClock();
-  setInterval(updateClock, 1000); /* FIX V47: Clock-Interval erst nach App-Init starten */
   setTimeout(()=>{checkBackupReminder();updateAdmBadge();checkInternalBackupReminder();},1800);
   setTimeout(()=>checkFutureEntries(),2000);
   setTimeout(()=>checkShipTimeWarning(),500);
@@ -11272,31 +11184,10 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
         reg.addEventListener('updatefound', function(){
           _trackInstalling(reg.installing);
         });
-
-        /* FIX V51: Cache-Wiederherstellung nach iOS-Eviction.
-           iOS löscht den SW-Cache aggressiv (Speicherdruck, 7-Tage-Regel).
-           Wenn der SW aktiv ist aber kein Cache mehr hat, friert die App
-           beim nächsten Kaltstart ein. Hier: Cache prüfen und ggf. sofort
-           neu befüllen, solange Netz verfügbar ist. */
-        if(reg.active && navigator.onLine){
-          caches.open('tracker-v52').then(function(cache){
-            cache.match('./index.html').then(function(cached){
-              if(!cached){
-                console.log('[App] SW-Cache leer – wird neu befüllt');
-                cache.add('./index.html').catch(function(){});
-              }
-            });
-          }).catch(function(){});
-        }
       })
       .catch(function(){}); // privates Fenster, CSP etc. – ignorieren
 
-    /* Nach SKIP_WAITING: Seite neu laden.
-       V52: Guard (_swUpdateRequested) entfernt.
-       Ein Reload-Loop entsteht nicht, weil gleiche sw.js-Bytes kein
-       neues Install-Event auslösen → kein erneutes skipWaiting → kein
-       erneutes controllerchange. Der Reload passiert genau einmal
-       nach einem echten SW-Update und lädt dann die frische index.html. */
+    /* Nach SKIP_WAITING: Seite neu laden */
     navigator.serviceWorker.addEventListener('controllerchange', function(){
       window.location.reload();
     });
@@ -11309,7 +11200,6 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
     if(b) b.classList.remove('visible');
     var reg = _swReg;
     if(reg && reg.waiting){
-      window._swUpdateRequested = true; // legacy, nicht mehr nötig aber harmlos
       reg.waiting.postMessage({type:'SKIP_WAITING'});
     }
   };

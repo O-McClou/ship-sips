@@ -1,175 +1,84 @@
 /* ═══════════════════════════════════════════════════════════════════
-   sw.js – Service Worker für Getränke-Tracker PWA  (V52)
+   sw.js – Service Worker für Getränke-Tracker PWA  (V48)
    ─────────────────────────────────────────────────────────────────
-   ENDGÜLTIGE ROOT-CAUSE-ANALYSE:
+   Update-Strategie (professionell / nutzergesteuert):
+   ① install  → Nur index.html cachen, KEIN skipWaiting()
+                → neuer SW bleibt im "waiting"-Zustand
+   ② App-Seite erkennt registration.waiting
+                → zeigt persistentes Gold-Banner
+   ③ Nutzer klickt "Jetzt laden"
+                → sendet SKIP_WAITING → SW übernimmt
+   ④ controllerchange-Event → location.reload()
+                → App startet sauber aus neuem Cache
 
-   Problem A – Der _swUpdateRequested-Guard war falsch:
-   ─────────────────────────────────────────────────────
-   Wir hatten in index.html:
-     controllerchange → if(_swUpdateRequested) reload()
-   Das sollte eine Reload-Schleife verhindern. ABER:
-   - Neuer SW aktiviert sich (skipWaiting) → controllerchange
-   - _swUpdateRequested ist false → KEIN Reload
-   - Alte kaputte index.html bleibt geladen
-   - Neuer SW läuft, aber mit alter Seite → app bleibt eingefroren
-   - Nächstes Öffnen: alter SW cached HTML wird serviert → Banner wieder da
-
-   Eine Reload-Schleife entsteht gar nicht, weil:
-   Gleiche sw.js-Bytes → kein neues Install-Event → kein skipWaiting
-   → kein controllerchange → kein erneuter Reload. ✓
-   Der Guard war also unnötig UND schädlich.
-
-   Problem B – cache.addAll() cached ggf. stale HTML von GitHub CDN:
-   ──────────────────────────────────────────────────────────────────
-   Wenn GitHub Pages noch alte index.html ausliefert, landet diese
-   im SW-Cache. Auch nach Reload serviert der SW dann alte HTML.
-
-   LÖSUNG V52:
-   ① index.html wird NICHT in install gecacht (kein cache.addAll)
-   ② Fetch-Handler: Network-First für HTML mit 8s-Timeout
-      → immer aktuell, Fallback auf Cache wenn offline
-   ③ controllerchange in index.html: KEIN Guard mehr
-      → Reload passiert genau einmal nach SW-Update, dann nie wieder
-   ④ Alle anderen Assets: Cache-First (wie bisher)
+   FIX V48:
+   - icon-192.png und icon-512.png ENTFERNT aus ASSETS.
+     Diese Dateien fehlen beim AirDrop-/file://-Betrieb und
+     würden sonst den gesamten SW-Install-Vorgang zum Scheitern bringen.
+     Das Apple-Touch-Icon ist direkt als Base64 in index.html eingebettet
+     und braucht den Service Worker nicht.
    ═══════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'tracker-v52';
+const CACHE_NAME = 'tracker-v47'; /* ← stets = APP_VERSION in index.html */
+const ASSETS = [
+  './index.html'
+  /* Keine Icons hier – sie fehlen beim file://-Betrieb (AirDrop).
+     manifest.json ist optional: wenn vorhanden wird es gecacht,
+     das Fehlen bricht den Install nicht mehr ab. */
+];
 
-/* ── Install: nur SW registrieren, KEIN HTML-Cachen ─────────────── */
-/* index.html wird beim ersten Fetch gecacht (Network-First),        */
-/* damit immer die aktuelle Version von GitHub geladen wird.         */
+/* ── Install: index.html cachen, dann WARTEN ──────────────────── */
 self.addEventListener('install', event => {
-  event.waitUntil(self.skipWaiting());
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(ASSETS))
+      /* ↓ KEIN self.skipWaiting() hier!
+           Der neue SW wartet, bis der Nutzer das Banner bestätigt.  */
+      .catch(err => console.warn('[SW] Cache-Fehler beim Install:', err))
+  );
 });
 
-/* ── Activate: alte Caches löschen ──────────────────────────────── */
+/* ── Activate: alte Caches löschen, Clients übernehmen ─────────── */
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => {
-          console.log('[SW] Lösche alten Cache:', k);
-          return caches.delete(k);
-        })
+        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
       ))
       .then(() => self.clients.claim())
   );
 });
 
-/* ── Hilfsfunktionen ─────────────────────────────────────────────── */
-function isHtmlRequest(request) {
-  const url = request.url;
-  return url.endsWith('/') || url.endsWith('.html') ||
-         url.endsWith('/index.html') ||
-         (!url.includes('.') && !url.includes('?'));
-}
-
-function fetchWithTimeout(request, ms) {
-  return Promise.race([
-    fetch(request.clone ? request.clone() : request),
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('SW fetch timeout')), ms)
-    )
-  ]);
-}
-
-function offlinePage() {
-  return new Response(`<!DOCTYPE html>
-<html lang="de">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>Tracker – Offline</title>
-<style>
-  body{font-family:Georgia,serif;background:#06101E;color:#EDE4CC;
-       display:flex;flex-direction:column;align-items:center;
-       justify-content:center;min-height:100vh;margin:0;text-align:center;
-       padding:20px;box-sizing:border-box}
-  h1{color:#C9A84C;font-size:22px;margin-bottom:10px}
-  p{color:#8DAFC8;font-size:14px;line-height:1.6;margin-bottom:24px}
-  button{background:#C9A84C;color:#06101E;border:none;padding:14px 28px;
-         border-radius:10px;font-family:Georgia,serif;font-size:16px;
-         font-weight:bold;cursor:pointer;touch-action:manipulation}
-</style>
-</head>
-<body>
-  <h1>⚓ Keine Verbindung</h1>
-  <p>Der Tracker konnte nicht geladen werden.<br>
-  Bitte stelle eine Internetverbindung her<br>und tippe auf Neu laden.</p>
-  <button onclick="location.reload()">↺ Neu laden</button>
-</body>
-</html>`, {
-    status: 503,
-    headers: { 'Content-Type': 'text/html; charset=utf-8' }
-  });
-}
-
-/* ── Fetch ────────────────────────────────────────────────────────── */
+/* ── Fetch: Cache-First, Netz im Hintergrund aktualisieren ─────── */
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   if (!event.request.url.startsWith('http')) return;
 
-  event.respondWith((async () => {
-    try {
-      /* ── HTML: Network-First ──────────────────────────────────────
-         Immer aktuellste index.html von GitHub holen.
-         Nur bei Netz-Fehler/Timeout → Cache-Fallback. */
-      if (isHtmlRequest(event.request)) {
-        try {
-          const networkResponse = await fetchWithTimeout(event.request, 8000);
-          if (networkResponse && networkResponse.status === 200) {
-            const clone = networkResponse.clone();
-            const cache = await caches.open(CACHE_NAME);
-            await cache.put(event.request, clone);
+  event.respondWith(
+    caches.match(event.request).then(cached => {
+      /* Cache still im Hintergrund aktualisieren (kein Update-Toast) */
+      const networkFetch = fetch(event.request)
+        .then(response => {
+          if (response && response.status === 200 && response.type === 'basic') {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
           }
-          return networkResponse;
-        } catch (_) {
-          /* Netz-Timeout oder offline → Cache-Fallback */
-          const cached = await caches.match(event.request);
-          if (cached) return cached;
-          return offlinePage();
-        }
-      }
+          return response;
+        })
+        .catch(() => null);
 
-      /* ── Alles andere: Cache-First ────────────────────────────── */
-      const cached = await caches.match(event.request);
-      if (cached) {
-        /* Hintergrund-Update */
-        event.waitUntil(
-          fetchWithTimeout(event.request, 8000)
-            .then(resp => {
-              if (resp && resp.status === 200 && resp.type === 'basic')
-                caches.open(CACHE_NAME).then(c => c.put(event.request, resp));
-            })
-            .catch(() => {})
-        );
-        return cached;
-      }
-
-      /* Nicht gecacht → Netz */
-      try {
-        const resp = await fetchWithTimeout(event.request, 8000);
-        if (resp && resp.status === 200 && resp.type === 'basic') {
-          caches.open(CACHE_NAME).then(c => c.put(event.request, resp.clone()));
-        }
-        return resp;
-      } catch (_) {
-        return new Response('Offline', {
-          status: 503,
-          headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-        });
-      }
-
-    } catch (err) {
-      /* Absoluter Fallback – respondWith() darf NIE rejecten (WebKit-Bug) */
-      console.warn('[SW] Fetch-Fehler:', err);
-      return offlinePage();
-    }
-  })());
+      /* Aus Cache bedienen + Netz im Hintergrund */
+      return cached ? cached : networkFetch.then(r => r || new Response(
+        'Offline – bitte App neu starten',
+        { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
+      ));
+    })
+  );
 });
 
-/* ── Message-Handler ─────────────────────────────────────────────── */
+/* ── Message-Handler ────────────────────────────────────────────── */
 self.addEventListener('message', event => {
-  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
