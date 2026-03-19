@@ -1,49 +1,51 @@
 /* ═══════════════════════════════════════════════════════════════════
-   sw.js – Service Worker für Getränke-Tracker PWA  (V48)
+   sw.js – Service Worker für Getränke-Tracker PWA  (V47)
    ─────────────────────────────────────────────────────────────────
-   Update-Strategie (professionell / nutzergesteuert):
-   ① install  → Nur index.html cachen, KEIN skipWaiting()
-                → neuer SW bleibt im "waiting"-Zustand
-   ② App-Seite erkennt registration.waiting
-                → zeigt persistentes Gold-Banner
-   ③ Nutzer klickt "Jetzt laden"
-                → sendet SKIP_WAITING → SW übernimmt
-   ④ controllerchange-Event → location.reload()
-                → App startet sauber aus neuem Cache
+   NOTFALL-FIX:
+   Nach einem fehlerhaften Deploy (rekursiver onerror-Handler) war
+   der alte Cache blockiert. Die App fror im PWA-Modus sofort ein,
+   weil der neue SW nie aktiviert wurde (kein skipWaiting).
 
-   FIX V48:
-   - icon-192.png und icon-512.png ENTFERNT aus ASSETS.
-     Diese Dateien fehlen beim AirDrop-/file://-Betrieb und
-     würden sonst den gesamten SW-Install-Vorgang zum Scheitern bringen.
-     Das Apple-Touch-Icon ist direkt als Base64 in index.html eingebettet
-     und braucht den Service Worker nicht.
+   EINMALIGE MASSNAHME – tracker-v47-fix:
+   skipWaiting() im Install-Handler sorgt dafür, dass dieser SW
+   sofort übernimmt, den alten kaputten Cache löscht und die
+   korrigierte index.html ausliefert.
+
+   NORMALE UPDATE-STRATEGIE (nach diesem Fix wiederhergestellt):
+   ① install  → index.html cachen + sofort skipWaiting()
+   ② activate → alte Caches löschen, clients.claim()
+   ③ Fetch    → Cache-First mit Hintergrund-Update
+   ④ SKIP_WAITING-Message bleibt als Fallback für künftige Updates
    ═══════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'tracker-v47'; /* ← stets = APP_VERSION in index.html */
+const CACHE_NAME = 'tracker-v47-fix';
+
 const ASSETS = [
   './index.html'
-  /* Keine Icons hier – sie fehlen beim file://-Betrieb (AirDrop).
-     manifest.json ist optional: wenn vorhanden wird es gecacht,
-     das Fehlen bricht den Install nicht mehr ab. */
 ];
 
-/* ── Install: index.html cachen, dann WARTEN ──────────────────── */
+/* ── Install: cachen + SOFORT übernehmen (Notfall-Bypass) ─────── */
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(ASSETS))
-      /* ↓ KEIN self.skipWaiting() hier!
-           Der neue SW wartet, bis der Nutzer das Banner bestätigt.  */
-      .catch(err => console.warn('[SW] Cache-Fehler beim Install:', err))
+      .then(() => self.skipWaiting())   /* ← Notfall: sofort übernehmen */
+      .catch(err => {
+        console.warn('[SW] Cache-Fehler beim Install:', err);
+        self.skipWaiting(); /* auch bei Cache-Fehler übernehmen */
+      })
   );
 });
 
-/* ── Activate: alte Caches löschen, Clients übernehmen ─────────── */
+/* ── Activate: alle alten Caches löschen, Clients sofort übernehmen */
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+        keys.filter(k => k !== CACHE_NAME).map(k => {
+          console.log('[SW] Lösche alten Cache:', k);
+          return caches.delete(k);
+        })
       ))
       .then(() => self.clients.claim())
   );
@@ -56,7 +58,6 @@ self.addEventListener('fetch', event => {
 
   event.respondWith(
     caches.match(event.request).then(cached => {
-      /* Cache still im Hintergrund aktualisieren (kein Update-Toast) */
       const networkFetch = fetch(event.request)
         .then(response => {
           if (response && response.status === 200 && response.type === 'basic') {
@@ -67,7 +68,6 @@ self.addEventListener('fetch', event => {
         })
         .catch(() => null);
 
-      /* Aus Cache bedienen + Netz im Hintergrund */
       return cached ? cached : networkFetch.then(r => r || new Response(
         'Offline – bitte App neu starten',
         { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } }

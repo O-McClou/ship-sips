@@ -1929,14 +1929,15 @@ window.onerror = function(msg, src, line, col, err) {
   console.error('[App Error]', msg, src, line, col, err);
   if (_errGuard) return false;
   _errGuard = true;
-  // showToast erst aufrufen, wenn DOM sicher bereit ist
+  // showToast erst nach 2s aufrufen – App-UI ist dann sicher fertig initialisiert.
+  // _errGuard bleibt true bis nach dem Toast, verhindert Re-Eintritt.
   setTimeout(function() {
-    _errGuard = false;
     try {
       var L = (typeof S !== 'undefined' && S.lang === 'en');
       showToast('\u26A0\uFE0F ' + (L ? 'App error – please create a backup!' : 'App-Fehler – bitte Backup erstellen!'), 'error', 8000);
     } catch(_) {}
-  }, 100);
+    _errGuard = false;
+  }, 2000);
   return false;
 };
 window.addEventListener('unhandledrejection', function(e) {
@@ -1944,12 +1945,12 @@ window.addEventListener('unhandledrejection', function(e) {
   if (_errGuard) return;
   _errGuard = true;
   setTimeout(function() {
-    _errGuard = false;
     try {
       var L = (typeof S !== 'undefined' && S.lang === 'en');
       showToast('\u26A0\uFE0F ' + (L ? 'Storage error – please restart' : 'Speicherfehler – bitte neu starten'), 'error', 8000);
     } catch(_) {}
-  }, 100);
+    _errGuard = false;
+  }, 2000);
 });
 
 /* ═══════════════════════════════════════════════════════════════
