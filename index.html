@@ -1956,7 +1956,7 @@ window.addEventListener('unhandledrejection', function(e) {
 /* ═══════════════════════════════════════════════════════════════
    TRANSLATIONS – Complete DE / EN
 ═══════════════════════════════════════════════════════════════ */
-const APP_VERSION = 'V51';
+const APP_VERSION = 'V52';
 const I18N = {
   de:{
     'tab.drinks':'Getränke','tab.log':'Protokoll','tab.stats':'Statistik','tab.manage':'Verwaltung','tab.help':'Hilfe',
@@ -11279,7 +11279,7 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
            beim nächsten Kaltstart ein. Hier: Cache prüfen und ggf. sofort
            neu befüllen, solange Netz verfügbar ist. */
         if(reg.active && navigator.onLine){
-          caches.open('tracker-v51').then(function(cache){
+          caches.open('tracker-v52').then(function(cache){
             cache.match('./index.html').then(function(cached){
               if(!cached){
                 console.log('[App] SW-Cache leer – wird neu befüllt');
@@ -11291,12 +11291,14 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
       })
       .catch(function(){}); // privates Fenster, CSP etc. – ignorieren
 
-    /* Nach SKIP_WAITING: Seite neu laden – NUR wenn Nutzer es aktiv angefordert hat.
-       FIX V47: Verhindert Endlos-Reload-Schleife, da sw.js beim Install sofort
-       skipWaiting() aufruft und sonst bei jedem Start controllerchange → reload
-       → install → skipWaiting → controllerchange → reload … ausgelöst wurde. */
+    /* Nach SKIP_WAITING: Seite neu laden.
+       V52: Guard (_swUpdateRequested) entfernt.
+       Ein Reload-Loop entsteht nicht, weil gleiche sw.js-Bytes kein
+       neues Install-Event auslösen → kein erneutes skipWaiting → kein
+       erneutes controllerchange. Der Reload passiert genau einmal
+       nach einem echten SW-Update und lädt dann die frische index.html. */
     navigator.serviceWorker.addEventListener('controllerchange', function(){
-      if(window._swUpdateRequested) window.location.reload();
+      window.location.reload();
     });
 
   }catch(e){}
@@ -11307,7 +11309,7 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
     if(b) b.classList.remove('visible');
     var reg = _swReg;
     if(reg && reg.waiting){
-      window._swUpdateRequested = true; /* FIX V47: Reload nur bei expliziter Nutzer-Aktion */
+      window._swUpdateRequested = true; // legacy, nicht mehr nötig aber harmlos
       reg.waiting.postMessage({type:'SKIP_WAITING'});
     }
   };

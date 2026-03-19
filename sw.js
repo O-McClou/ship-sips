@@ -1,75 +1,80 @@
 /* ═══════════════════════════════════════════════════════════════════
-   sw.js – Service Worker für Getränke-Tracker PWA  (V51)
+   sw.js – Service Worker für Getränke-Tracker PWA  (V52)
    ─────────────────────────────────────────────────────────────────
-   URSACHEN-ANALYSE (endgültig):
+   ENDGÜLTIGE ROOT-CAUSE-ANALYSE:
 
-   1) iOS evicts den SW-Cache aggressiv (nach 7 Tagen ohne Nutzung,
-      bei Speicherdruck, nach Safari-Cache-Löschung). Der SW ist noch
-      registriert, sein Cache ist aber leer.
+   Problem A – Der _swUpdateRequested-Guard war falsch:
+   ─────────────────────────────────────────────────────
+   Wir hatten in index.html:
+     controllerchange → if(_swUpdateRequested) reload()
+   Das sollte eine Reload-Schleife verhindern. ABER:
+   - Neuer SW aktiviert sich (skipWaiting) → controllerchange
+   - _swUpdateRequested ist false → KEIN Reload
+   - Alte kaputte index.html bleibt geladen
+   - Neuer SW läuft, aber mit alter Seite → app bleibt eingefroren
+   - Nächstes Öffnen: alter SW cached HTML wird serviert → Banner wieder da
 
-   2) Wenn der Cache leer ist und networkFetch hängt (kein Netz,
-      langsames GitHub-CDN), resolved event.respondWith() NIEMALS
-      → App zeigt dauerhaft weißen Bildschirm / friert ein.
+   Eine Reload-Schleife entsteht gar nicht, weil:
+   Gleiche sw.js-Bytes → kein neues Install-Event → kein skipWaiting
+   → kein controllerchange → kein erneuter Reload. ✓
+   Der Guard war also unnötig UND schädlich.
 
-   3) WebKit-Bug iOS 16.4+: Wenn die an respondWith() übergebene
-      Promise rejected wird (statt resolved), wirft Safari intern
-      "FetchEvent.respondWith received an error: TypeError: Internal
-      error" → weißer Bildschirm ohne JS-Fehlermeldung.
+   Problem B – cache.addAll() cached ggf. stale HTML von GitHub CDN:
+   ──────────────────────────────────────────────────────────────────
+   Wenn GitHub Pages noch alte index.html ausliefert, landet diese
+   im SW-Cache. Auch nach Reload serviert der SW dann alte HTML.
 
-   LÖSUNG V51:
-   ① respondWith() ist komplett in try/catch gewrappt → kann nie
-      eine rejected Promise empfangen (WebKit-Bug-Fix)
-   ② networkFetch hat einen 8s-Timeout via Promise.race()
-   ③ Wenn Cache LEER + Netz-Timeout: sofortige Offline-Seite mit
-      Reload-Button (kein ewiges Hängen mehr)
-   ④ Bei Cache-Treffer: sofort ausliefern, Netz im Hintergrund
-      aktualisieren (stale-while-revalidate)
-   ⑤ skipWaiting() immer sofort → neuer SW übernimmt zuverlässig
-   ⑥ controllerchange-Guard in index.html verhindert Reload-Schleife
-
-   UPDATE-STRATEGIE (stabil ab V49+):
-   Install  → cachen + skipWaiting()
-   Activate → alte Caches löschen + clients.claim()
-   Fetch    → Cache-First + Netz-Revalidate + Timeout-Schutz
+   LÖSUNG V52:
+   ① index.html wird NICHT in install gecacht (kein cache.addAll)
+   ② Fetch-Handler: Network-First für HTML mit 8s-Timeout
+      → immer aktuell, Fallback auf Cache wenn offline
+   ③ controllerchange in index.html: KEIN Guard mehr
+      → Reload passiert genau einmal nach SW-Update, dann nie wieder
+   ④ Alle anderen Assets: Cache-First (wie bisher)
    ═══════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'tracker-v51';
-const ASSETS = ['./', './index.html'];
+const CACHE_NAME = 'tracker-v52';
 
-/* ── Install ──────────────────────────────────────────────────────── */
+/* ── Install: nur SW registrieren, KEIN HTML-Cachen ─────────────── */
+/* index.html wird beim ersten Fetch gecacht (Network-First),        */
+/* damit immer die aktuelle Version von GitHub geladen wird.         */
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(ASSETS))
-      .then(() => self.skipWaiting())
-      .catch(() => self.skipWaiting())   // auch bei Cache-Fehler übernehmen
-  );
+  event.waitUntil(self.skipWaiting());
 });
 
-/* ── Activate ─────────────────────────────────────────────────────── */
+/* ── Activate: alte Caches löschen ──────────────────────────────── */
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+        keys.filter(k => k !== CACHE_NAME).map(k => {
+          console.log('[SW] Lösche alten Cache:', k);
+          return caches.delete(k);
+        })
       ))
       .then(() => self.clients.claim())
   );
 });
 
-/* ── Hilfsfunktion: fetch mit Timeout ─────────────────────────────── */
+/* ── Hilfsfunktionen ─────────────────────────────────────────────── */
+function isHtmlRequest(request) {
+  const url = request.url;
+  return url.endsWith('/') || url.endsWith('.html') ||
+         url.endsWith('/index.html') ||
+         (!url.includes('.') && !url.includes('?'));
+}
+
 function fetchWithTimeout(request, ms) {
   return Promise.race([
-    fetch(request),
+    fetch(request.clone ? request.clone() : request),
     new Promise((_, reject) =>
       setTimeout(() => reject(new Error('SW fetch timeout')), ms)
     )
   ]);
 }
 
-/* ── Offline-Fallback-Seite ───────────────────────────────────────── */
 function offlinePage() {
-  const html = `<!DOCTYPE html>
+  return new Response(`<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -79,7 +84,8 @@ function offlinePage() {
 <style>
   body{font-family:Georgia,serif;background:#06101E;color:#EDE4CC;
        display:flex;flex-direction:column;align-items:center;
-       justify-content:center;height:100vh;margin:0;text-align:center;padding:20px;box-sizing:border-box}
+       justify-content:center;min-height:100vh;margin:0;text-align:center;
+       padding:20px;box-sizing:border-box}
   h1{color:#C9A84C;font-size:22px;margin-bottom:10px}
   p{color:#8DAFC8;font-size:14px;line-height:1.6;margin-bottom:24px}
   button{background:#C9A84C;color:#06101E;border:none;padding:14px 28px;
@@ -89,11 +95,11 @@ function offlinePage() {
 </head>
 <body>
   <h1>⚓ Keine Verbindung</h1>
-  <p>Der Tracker konnte nicht geladen werden.<br>Bitte stelle eine Internetverbindung her<br>und tippe auf Neu laden.</p>
+  <p>Der Tracker konnte nicht geladen werden.<br>
+  Bitte stelle eine Internetverbindung her<br>und tippe auf Neu laden.</p>
   <button onclick="location.reload()">↺ Neu laden</button>
 </body>
-</html>`;
-  return new Response(html, {
+</html>`, {
     status: 503,
     headers: { 'Content-Type': 'text/html; charset=utf-8' }
   });
@@ -104,48 +110,60 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   if (!event.request.url.startsWith('http')) return;
 
-  /* URL normalisieren: iOS PWA startet mit "/" → auf index.html mappen */
-  let requestUrl = event.request.url;
-  if (requestUrl.endsWith('/')) requestUrl += 'index.html';
-
-  /* KRITISCH: respondWith() darf NIEMALS eine rejected Promise erhalten
-     (WebKit-Bug iOS 16.4+: TypeError: Internal error → weißer Bildschirm).
-     Daher: alles in try/catch, alle Pfade resolven immer. */
   event.respondWith((async () => {
     try {
-      const cached = await caches.match(requestUrl);
+      /* ── HTML: Network-First ──────────────────────────────────────
+         Immer aktuellste index.html von GitHub holen.
+         Nur bei Netz-Fehler/Timeout → Cache-Fallback. */
+      if (isHtmlRequest(event.request)) {
+        try {
+          const networkResponse = await fetchWithTimeout(event.request, 8000);
+          if (networkResponse && networkResponse.status === 200) {
+            const clone = networkResponse.clone();
+            const cache = await caches.open(CACHE_NAME);
+            await cache.put(event.request, clone);
+          }
+          return networkResponse;
+        } catch (_) {
+          /* Netz-Timeout oder offline → Cache-Fallback */
+          const cached = await caches.match(event.request);
+          if (cached) return cached;
+          return offlinePage();
+        }
+      }
 
+      /* ── Alles andere: Cache-First ────────────────────────────── */
+      const cached = await caches.match(event.request);
       if (cached) {
-        /* Cache-Treffer: sofort ausliefern, Netz im Hintergrund aktualisieren */
+        /* Hintergrund-Update */
         event.waitUntil(
           fetchWithTimeout(event.request, 8000)
-            .then(response => {
-              if (response && response.status === 200 && response.type === 'basic') {
-                return caches.open(CACHE_NAME)
-                  .then(cache => cache.put(requestUrl, response));
-              }
+            .then(resp => {
+              if (resp && resp.status === 200 && resp.type === 'basic')
+                caches.open(CACHE_NAME).then(c => c.put(event.request, resp));
             })
-            .catch(() => { /* Hintergrund-Update fehlgeschlagen – ignorieren */ })
+            .catch(() => {})
         );
         return cached;
       }
 
-      /* Kein Cache-Treffer: Netz mit Timeout versuchen */
+      /* Nicht gecacht → Netz */
       try {
-        const response = await fetchWithTimeout(event.request, 8000);
-        if (response && response.status === 200 && response.type === 'basic') {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(requestUrl, clone));
+        const resp = await fetchWithTimeout(event.request, 8000);
+        if (resp && resp.status === 200 && resp.type === 'basic') {
+          caches.open(CACHE_NAME).then(c => c.put(event.request, resp.clone()));
         }
-        return response;
+        return resp;
       } catch (_) {
-        /* Netz-Timeout oder Fehler → Offline-Seite zeigen */
-        return offlinePage();
+        return new Response('Offline', {
+          status: 503,
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+        });
       }
 
     } catch (err) {
-      /* Absoluter Fallback – verhindert rejected Promise an respondWith() */
-      console.warn('[SW] Fetch-Handler Fehler:', err);
+      /* Absoluter Fallback – respondWith() darf NIE rejecten (WebKit-Bug) */
+      console.warn('[SW] Fetch-Fehler:', err);
       return offlinePage();
     }
   })());
