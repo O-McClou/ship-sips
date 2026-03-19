@@ -11235,7 +11235,16 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
 </script>
 
 <!-- Safe-Area-Füllung: verhindert den ungestylten Streifen am iPhone-Bildschirmrand -->
-
+<div id="safeAreaFill" style="
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-bottom, 0px);
+  background: var(--bg);
+  z-index: 2;
+  pointer-events: none;
+"></div>
 
 </body>
 </html>
