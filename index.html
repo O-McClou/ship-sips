@@ -3813,6 +3813,7 @@ function invalidateSzCache(){_szCache=null;}
 ──────────────────────────────────────────────────────────────── */
 /* FIX V47+: Schreib-Queue verhindert Race Condition bei überlappenden Speichervorgängen */
 let _saveQueue=Promise.resolve();
+let _saveCount=0; /* FIX V49: Zähler für gedrosselte Orphan-Erkennung */
 function saveState(){
   // Sofortiges visuelles Feedback (synchron)
   const sd=document.getElementById('saveDot');
@@ -3868,12 +3869,19 @@ async function _saveStateAsync(){
   });
   if(logsToSave.length>0){
     await db.logs.bulkPut(logsToSave);
-    // Verwaiste Einträge entfernen (Einträge in IDB die nicht mehr in S.log sind)
-    const currentIds=new Set(logsToSave.map(e=>e.id));
-    const allInDB=await db.logs.toArray();
-    const toDelete=allInDB.filter(e=>!currentIds.has(e.id)).map(e=>e.id);
-    if(toDelete.length>0){
-      await Promise.all(toDelete.map(id=>db.logs.delete(id)));
+    // FIX V49: Verwaiste Einträge nur alle 10 Speichervorgänge entfernen –
+    // die toArray()-Abfrage ist bei vielen Einträgen teuer und blockiert sonst jeden Tap.
+    _saveCount=((_saveCount||0)+1);
+    if(_saveCount>=10){
+      _saveCount=0;
+      try{
+        const currentIds=new Set(logsToSave.map(e=>e.id));
+        const allInDB=await db.logs.toArray();
+        const toDelete=allInDB.filter(e=>!currentIds.has(e.id)).map(e=>e.id);
+        if(toDelete.length>0){
+          await Promise.all(toDelete.map(id=>db.logs.delete(id)));
+        }
+      }catch(oe){ console.warn('[saveState] orphan-check Fehler:',oe); }
     }
   } else {
     await db.logs.clear();
@@ -10417,15 +10425,28 @@ async function loadStateFromDB(){
     try{S.statDayShow=JSON.parse(cfg.statDayShow||'{}');}catch(e){S.statDayShow={};}
     try{const _so=JSON.parse(cfg.statOpen||'null');S.statOpen=_so&&typeof _so==='object'?_so:{overview:true,topdrinks:true,byday:true};}catch(e){S.statOpen={overview:true,topdrinks:true,byday:true};}
     // Log-Einträge laden und chronologisch sortieren (neueste zuerst)
+    // FIX V49: ts-Feld (Unix-ms) direkt nutzen wenn vorhanden – spart Date()-Konstruktion pro Eintrag
     const rawLogs=await db.logs.toArray();
     const filteredLogs=rawLogs.filter(isVE).map(sanE);
-    filteredLogs.sort((a,b)=>new Date(b.time).getTime()-new Date(a.time).getTime());
+    filteredLogs.sort((a,b)=>{
+      const ta=a.ts||(a.time?new Date(a.time).getTime():0);
+      const tb=b.ts||(b.time?new Date(b.time).getTime():0);
+      return tb-ta;
+    });
     S.log=filteredLogs;
     // S-Objekt finalisieren
     syncCustomThemesToRuntime();
     S.favOrder=S.favOrder.filter(id=>S.favorites.has(id));
     S.favorites.forEach(id=>{if(!S.favOrder.includes(id))S.favOrder.push(id);});
     rebuildCounts();
+    // FIX V49: Theme, Sprache, Schriftgröße und Titel sofort anwenden –
+    // loadState() (localStorage-Pfad) macht das bereits; loadStateFromDB hatte
+    // diese Aufrufe fälschlicherweise nie. Ohne sie startet die App mit falschem
+    // Theme/Sprache/Titel bis _initUI irgendwann noch mal rendert.
+    applyTitle();
+    applyFontSize();
+    applyLang();
+    applyTheme(S.theme||'original');
     // Onboarding-Flag aus IDB setzen (damit checkOnboarding() korrekt arbeitet)
     if(cfg.onboardingDone==='1')window._idbOnboardingDone=true;
   }catch(e){
@@ -10436,24 +10457,36 @@ async function loadStateFromDB(){
 }
 
 /* initApp() – asynchrone Startlogik (ersetzt synchrones Inline-Init) */
+/* FIX V49: Hilfsfunktion – Promise mit Timeout */
+function _withTimeout(promise, ms, label){
+  return Promise.race([
+    promise,
+    new Promise((_,reject)=>setTimeout(()=>reject(new Error('TIMEOUT:'+label)),ms))
+  ]);
+}
+
 async function initApp(){
   try{
-    await db.open();
+    // FIX V49: db.open() mit 3-Sekunden-Timeout absichern
+    await _withTimeout(db.open(), 3000, 'db.open');
     // Persistenten Speicher anfordern (schützt vor iOS-Löschung)
     if(navigator.storage&&navigator.storage.persist){
       navigator.storage.persist().catch(()=>{});
     }
     // Einmalige Migration localStorage → IndexedDB
-    const wasMigrated=await migrateFromLocalStorage();
+    // FIX V49: Migration mit 3-Sekunden-Timeout
+    let wasMigrated=false;
+    try{
+      wasMigrated=await _withTimeout(migrateFromLocalStorage(), 3000, 'migrate');
+    }catch(me){console.warn('[initApp] Migration timeout/error:',me);}
     if(wasMigrated){
       showToast('✅ '+(S.lang==='en'?'Data transferred to IndexedDB – more storage, no limits!':'Daten in IndexedDB übertragen – mehr Speicher, kein Limit!'),'info',4000);
     }
-    // Zustand laden
-    await loadStateFromDB();
-    // UI initialisieren (analog zum bisherigen synchronen Init)
+    // FIX V49: Zustand laden mit 5-Sekunden-Timeout
+    await _withTimeout(loadStateFromDB(), 5000, 'loadState');
+    // UI initialisieren
     _initUI();
-    // Tägliches Auto-Backup (Gutachten §04 / §10 Punkt 6)
-    // Wenn kein internes Backup seit >24h → automatisch anlegen
+    // Tägliches Auto-Backup
     setTimeout(async()=>{
       try{
         const all=await InternalBackupDB.getAll();
@@ -10467,9 +10500,9 @@ async function initApp(){
       }catch(e2){console.warn('[AutoBackup]',e2);}
     },3000);
   }catch(e){
-    console.error('[initApp] Fehler:',e);
-    // Fallback: synchrones Init über localStorage
-    loadState();
+    console.error('[initApp] Fehler (Fallback auf localStorage):',e);
+    // FIX V49: Fallback über localStorage wenn IndexedDB hängt/fehlt
+    try{ loadState(); }catch(le){ console.error('[initApp] loadState Fehler:',le); }
     _initUI();
   }
 }
@@ -10488,7 +10521,40 @@ function _initUI(){
   initHeaderSwipe();
   renderActiveUserBar();
   updateHeaderUserDot();
-  switchTab(0);
+  // FIX V49: Tab-UI sofort ohne teures renderDrinks einblenden,
+  // dann renderDrinks nach erstem Paint via rAF nachladen.
+  // So ist die Shell in ≤16ms sichtbar, statt erst nach dem vollen DOM-Build.
+  (function _showTab0Shell(){
+    // Zeige Tab 0 an, verstecke alle anderen
+    ['p0','p1','p2','p3','p4'].forEach((id,j)=>{
+      const el=document.getElementById(id);
+      if(el) el.style.display=j===0?'':'none';
+    });
+    ['t0','t1','t2','t3','t4'].forEach((id,j)=>{
+      const el=document.getElementById(id);
+      if(el) el.className='tab'+(j===0?' on':'');
+    });
+    ['mt0','mt1','mt2','mt3','mt4'].forEach((id,j)=>{
+      const el=document.getElementById(id);
+      if(el) el.className='mini-tab'+(j===0?' on':'');
+    });
+    const sb=document.getElementById('drinkSbar');
+    if(sb) sb.style.display='';
+    S.activeTab=0;
+  })();
+  // Teures Rendering nach erstem Paint verschieben
+  requestAnimationFrame(function(){
+    setTimeout(function(){
+      try{
+        renderDrinks(false);
+        checkBackupReminder();
+        updateLimitBanner();
+        renderCurrentLocationBar();
+        updatePortQuickBar();
+        checkShipTimeWarning();
+      }catch(e){ console.error('[_initUI rAF]',e); }
+    }, 0);
+  });
   setTimeout(function(){try{maybeShowSwipeHint();}catch(e){}},1200);
   updateClock();
   setTimeout(()=>{checkBackupReminder();updateAdmBadge();checkInternalBackupReminder();},1800);
@@ -10541,19 +10607,60 @@ function _showPWAHint(){
 }
 
 /* ═══ INIT ═══════════════════════════════════════════════════ */
-// V46: Async-Start via initApp() → IndexedDB-Migration → loadStateFromDB → _initUI
-// FIX: Inline-Scripts laufen NACH DOM-Parse → DOMContentLoaded bereits gefeuert.
-// Daher readyState-Check statt addEventListener.
+// FIX V49: _startApp zeigt sofort eine Lade-Anzeige, startet initApp()
+// und hat einen Gesamt-Timeout als eiserne Notbremse.
 S.selCat='__all__';
 (function _startApp(){
+  /* ── Sofortiges Lade-Overlay ── */
+  function _showLoader(){
+    if(document.getElementById('_v49loader'))return;
+    const el=document.createElement('div');
+    el.id='_v49loader';
+    el.style.cssText='position:fixed;inset:0;background:#06101E;z-index:99998;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;pointer-events:none';
+    el.innerHTML='<div style="font-size:36px">🍹</div>'
+      +'<div style="color:#7898B0;font-size:13px;font-family:Georgia,serif;letter-spacing:0.5px">Daten werden geladen …</div>'
+      +'<div id="_v49spinner" style="width:28px;height:28px;border:2px solid #C9A84C33;border-top-color:#C9A84C;border-radius:50%;animation:_v49spin 0.8s linear infinite"></div>';
+    if(!document.getElementById('_v49spinStyle')){
+      const s=document.createElement('style');
+      s.id='_v49spinStyle';
+      s.textContent='@keyframes _v49spin{to{transform:rotate(360deg)}}';
+      document.head.appendChild(s);
+    }
+    document.body.appendChild(el);
+  }
+  function _hideLoader(){
+    const el=document.getElementById('_v49loader');
+    if(el){el.style.transition='opacity 0.25s';el.style.opacity='0';setTimeout(()=>el.remove(),260);}
+  }
+
+  function _runInit(){
+    _showLoader();
+    // Gesamt-Timeout: Wenn die App nach 8 Sekunden noch nicht startet →
+    // Notfall-Fallback auf localStorage, damit sie nicht für immer eingefroren bleibt.
+    const masterTimeout=setTimeout(function(){
+      console.warn('[V49] Master-Timeout ausgelöst – Notfall-Start via localStorage');
+      try{ loadState(); }catch(e){}
+      try{ _initUI(); }catch(e){}
+      _hideLoader();
+    }, 8000);
+
+    initApp()
+      .then(function(){
+        clearTimeout(masterTimeout);
+        _hideLoader();
+        try{ autoApplyRouteLocation(); }catch(e){}
+      })
+      .catch(function(e){
+        clearTimeout(masterTimeout);
+        console.error('[startup]',e);
+        _hideLoader();
+      });
+  }
+
   if(document.readyState==='loading'){
-    // Noch nicht bereit – auf Event warten (sollte bei Inline-Scripts nie passieren)
-    document.addEventListener('DOMContentLoaded',function(){
-      initApp().then(()=>autoApplyRouteLocation()).catch(e=>console.error('[startup]',e));
-    },{once:true});
+    document.addEventListener('DOMContentLoaded',_runInit,{once:true});
   } else {
-    // DOM bereits bereit (Normalfall bei Inline-Script am Ende von <body>)
-    initApp().then(()=>autoApplyRouteLocation()).catch(e=>console.error('[startup]',e));
+    _runInit();
   }
 })();
 // NTP-Drift: Auch prüfen wenn App aus Hintergrund zurückkommt (visibilitychange)
