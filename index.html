@@ -1921,22 +1921,35 @@ details.hlp-acc summary:active{opacity:.75}
 /* ═══════════════════════════════════════════════════════════════
    GLOBALER FEHLER-HANDLER – fängt unerwartete JS-Fehler ab
    (Gutachten §05 – Kritisch: kein stiller Absturz auf Reise)
+   FIX: _errGuard verhindert Endlosrekursion falls showToast()
+        selbst einen Fehler wirft (z.B. DOM noch nicht bereit).
 ═══════════════════════════════════════════════════════════════ */
+var _errGuard = false;
 window.onerror = function(msg, src, line, col, err) {
   console.error('[App Error]', msg, src, line, col, err);
-  // showToast ist ggf. noch nicht definiert – daher try/catch
-  try {
-    const L = (typeof S !== 'undefined' && S.lang === 'en');
-    showToast('⚠️ ' + (L ? 'App error – please create a backup!' : 'App-Fehler – bitte Backup erstellen!'), 'error', 8000);
-  } catch(_) {}
+  if (_errGuard) return false;
+  _errGuard = true;
+  // showToast erst aufrufen, wenn DOM sicher bereit ist
+  setTimeout(function() {
+    _errGuard = false;
+    try {
+      var L = (typeof S !== 'undefined' && S.lang === 'en');
+      showToast('\u26A0\uFE0F ' + (L ? 'App error – please create a backup!' : 'App-Fehler – bitte Backup erstellen!'), 'error', 8000);
+    } catch(_) {}
+  }, 100);
   return false;
 };
 window.addEventListener('unhandledrejection', function(e) {
   console.error('[Unhandled Promise]', e.reason);
-  try {
-    const L = (typeof S !== 'undefined' && S.lang === 'en');
-    showToast('⚠️ ' + (L ? 'Storage error – please restart' : 'Speicherfehler – bitte neu starten'), 'error', 8000);
-  } catch(_) {}
+  if (_errGuard) return;
+  _errGuard = true;
+  setTimeout(function() {
+    _errGuard = false;
+    try {
+      var L = (typeof S !== 'undefined' && S.lang === 'en');
+      showToast('\u26A0\uFE0F ' + (L ? 'Storage error – please restart' : 'Speicherfehler – bitte neu starten'), 'error', 8000);
+    } catch(_) {}
+  }, 100);
 });
 
 /* ═══════════════════════════════════════════════════════════════
@@ -10452,8 +10465,8 @@ async function initApp(){
     await loadStateFromDB();
     // UI initialisieren (analog zum bisherigen synchronen Init)
     _initUI();
-    // Tägliches Auto-Backup (Gutachten §04 / §10 Punkt 6)
-    // Wenn kein internes Backup seit >24h → automatisch anlegen
+    // Tägliches Auto-Backup (Gutachten §04 / §10 Punkt 6) – stille Version
+    // Wenn kein internes Backup seit >24h → automatisch und lautlos anlegen
     setTimeout(async()=>{
       try{
         const all=await InternalBackupDB.getAll();
@@ -10461,11 +10474,29 @@ async function initApp(){
         const lastTs=all.length>0?new Date(all[0].date).getTime():0;
         const hoursSince=(now-lastTs)/3600000;
         if(hoursSince>24){
-          await saveBackupInternal();
-          console.log('[AutoBackup] Tägliches internes Backup erstellt.');
+          // Stilles Backup: kein Toast, kein renderVerwaltung() – nur DB-Schreiben
+          const nm=typeof appNameClean==='function'?appNameClean():'Tracker';
+          const data={version:11,exportDate:new Date().toISOString(),
+            appTitle1:S.appTitle1||'🍹 Mein Tracker',appTitle2:S.appTitle2||'Meine Reise',titleIcon:S.titleIcon||'',
+            tzMode:S.tzMode||'auto',tzOffset:S.tzOffset||0,tzChangeLog:S.tzChangeLog||[],
+            drinks:S.drinks,log:S.log,favorites:[...S.favorites],favOrder:S.favOrder||[],
+            lang:S.lang,fontSize:S.fontSize,dailyGoal:S.dailyGoal,currency:S.currency,
+            catColorMap:S.ccm,dayEndHour:S.dayEndHour||0,dayEndMinute:S.dayEndMinute||0,
+            users:S.users||[],activeUserId:S.activeUserId||'',userBudgets:S.userBudgets||{},
+            voyageRoute:S.voyageRoute||[],currentLocation:S.currentLocation||'',
+            serviceCharge:S.serviceCharge||0,customThemes:S.customThemes||[],
+            btnLayout:S.btnLayout||'plus-left',
+            conceptFavorites:S.conceptFavorites||['kapitaensbuch','atelier','sonnendeck'],
+            conceptTheme:S.conceptTheme||'kapitaensbuch'};
+          const jsonStr=JSON.stringify(data);
+          const sizeKb=Math.round(jsonStr.length/1024*10)/10;
+          const nowD=new Date();
+          await InternalBackupDB.saveBackup({id:Date.now(),date:nowD.toISOString(),
+            label:nm+' Auto '+nowD.toLocaleDateString('de-DE'),size_kb:sizeKb,data:jsonStr});
+          console.log('[AutoBackup] Tägliches internes Backup erstellt ('+sizeKb+' KB).');
         }
       }catch(e2){console.warn('[AutoBackup]',e2);}
-    },3000);
+    },4000);
   }catch(e){
     console.error('[initApp] Fehler:',e);
     // Fallback: synchrones Init über localStorage
