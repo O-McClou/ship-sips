@@ -1,13 +1,13 @@
 /* ═══════════════════════════════════════════════════════════════════
    sw.js – Service Worker für Getränke-Tracker PWA  (V47)
    ─────────────────────────────────────────────────────────────────
-   Cache-Version tracker-v47-fix2:
+   Cache-Version tracker-v47-fix3:
    Erzwingt erneuten Cache-Bust nach Entfernung des fehlerhaften
    window.onerror-Handlers, der die App einfrieren ließ.
    skipWaiting() bleibt aktiv damit der neue Cache sofort greift.
    ═══════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'tracker-v47-fix2';
+const CACHE_NAME = 'tracker-v47-fix3';
 
 const ASSETS = [
   './index.html'
