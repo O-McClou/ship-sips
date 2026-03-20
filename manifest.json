@@ -9,7 +9,10 @@
   "theme_color": "#06101E",
   "orientation": "portrait",
   "lang": "de",
-  "categories": ["lifestyle", "travel"],
+  "categories": [
+    "lifestyle",
+    "travel"
+  ],
   "icons": [
     {
       "src": "./icon-192.png",
@@ -22,6 +25,32 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Backup speichern",
+      "short_name": "Backup",
+      "description": "Backup der Reisedaten herunterladen",
+      "url": "./index.html?action=backup",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Getränk hinzufügen",
+      "short_name": "+ Getränk",
+      "description": "Schnell ein neues Getränk erfassen",
+      "url": "./index.html?action=add",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }

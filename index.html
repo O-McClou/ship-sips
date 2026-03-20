@@ -1918,6 +1918,21 @@ details.hlp-acc summary:active{opacity:.75}
 </div>
 
 <script>
+// ── [PUNKT-B] Globaler Fehler-Handler (Gutachten §05 FEHLT-03) ──
+window.onerror = function(msg, src, line, col, err) {
+  console.error('[App Error]', msg, src, line, col, err);
+  if (typeof showToast === 'function') {
+    showToast('⚠️ App-Fehler – bitte Backup erstellen!', 'error', 8000);
+  }
+  return false;
+};
+window.addEventListener('unhandledrejection', function(e) {
+  console.error('[Unhandled Promise]', e.reason);
+  if (typeof showToast === 'function') {
+    showToast('⚠️ Speicherfehler – bitte App neu starten', 'error', 8000);
+  }
+});
+// ────────────────────────────────────────────────────────────────
 /* ═══════════════════════════════════════════════════════════════
    TRANSLATIONS – Complete DE / EN
 ═══════════════════════════════════════════════════════════════ */
@@ -2573,8 +2588,51 @@ function openCustomThemeEditor(editId){
 function closeCustomThemeEditor(){document.getElementById('customThemeEditorOv').className='ov';}
 
 /* ══ ICON-BIBLIOTHEK (Custom Import, max. 20) ════════════════════════════ */
+// [PUNKT-E] getIconLib – bleibt synchron aus localStorage
 function getIconLib(){try{const r=localStorage.getItem('a4_iconlib');return r?JSON.parse(r):[];}catch(e){return[];}}
-function saveIconLib(lib){try{db.setCfg('iconLib',JSON.stringify(lib)).catch(()=>{});localStorage.setItem('a4_iconlib',JSON.stringify(lib));}catch(e){}}
+// [PUNKT-E] saveIconLib – schreibt in localStorage UND async in IndexedDB
+function saveIconLib(lib){
+  try{db.setCfg('iconLib',JSON.stringify(lib)).catch(()=>{});localStorage.setItem('a4_iconlib',JSON.stringify(lib));}catch(e){}
+  // [PUNKT-E] Zusätzlich async in IndexedDB sichern
+  try{
+    const req=indexedDB.open('TrackerDB',2);
+    req.onsuccess=function(e){
+      try{
+        const idb=e.target.result;
+        const tx=idb.transaction('iconlib','readwrite');
+        tx.objectStore('iconlib').put({key:'data',value:JSON.stringify(lib)});
+        tx.onerror=function(){console.warn('[PUNKT-E] IDB iconlib write error');};
+      }catch(ex){console.warn('[PUNKT-E] IDB iconlib tx error',ex);}
+    };
+    req.onerror=function(){console.warn('[PUNKT-E] IDB open error for iconlib');};
+  }catch(ex){console.warn('[PUNKT-E] IDB iconlib save failed',ex);}
+}
+// [PUNKT-E] syncIconLibFromIDB – stellt Icon-Library aus IndexedDB wieder her
+async function syncIconLibFromIDB(){
+  try{
+    const lsVal=localStorage.getItem('a4_iconlib');
+    if(lsVal&&lsVal!=='[]')return; // localStorage hat Daten → kein Restore nötig
+    await new Promise((resolve)=>{
+      const req=indexedDB.open('TrackerDB',2);
+      req.onsuccess=function(e){
+        try{
+          const idb=e.target.result;
+          const tx=idb.transaction('iconlib','readonly');
+          const getReq=tx.objectStore('iconlib').get('data');
+          getReq.onsuccess=function(){
+            if(getReq.result&&getReq.result.value){
+              localStorage.setItem('a4_iconlib',getReq.result.value);
+              console.log('[PUNKT-E] Icon-Library aus IndexedDB wiederhergestellt');
+            }
+            resolve();
+          };
+          getReq.onerror=function(){resolve();};
+        }catch(ex){console.warn('[PUNKT-E] IDB iconlib read error',ex);resolve();}
+      };
+      req.onerror=function(){resolve();};
+    });
+  }catch(ex){console.warn('[PUNKT-E] syncIconLibFromIDB Fehler',ex);}
+}
 function removeCustomIcon(id){const lib=getIconLib().filter(x=>x.id!==id);saveIconLib(lib);if(_ctEdit.icon==='custom:'+id){_ctEdit.icon='⚓';}renderCustomThemeEditor();}
 function importCustomIcon(){
   const inp=document.createElement('input');
@@ -3662,7 +3720,7 @@ return r;}
    ═══════════════════════════════════════════════════════════════════ */
 const TrackerDB = (function(){
   const DB_NAME = 'TrackerDB';
-  const DB_VERSION = 1;
+  const DB_VERSION = 2; // [PUNKT-E] Version erhöht für neuen 'iconlib'-Store
   let _db = null;
 
   function _open(){
@@ -3678,6 +3736,9 @@ const TrackerDB = (function(){
         }
         if(!db.objectStoreNames.contains('config'))
           db.createObjectStore('config', {keyPath:'key'});
+        // [PUNKT-E] iconlib-Store für Icon-Library-Sicherung
+        if(!db.objectStoreNames.contains('iconlib'))
+          db.createObjectStore('iconlib', {keyPath:'key'});
       };
       req.onsuccess = e=>{ _db=e.target.result; resolve(_db); };
       req.onerror  = e=>reject(e.target.error);
@@ -10416,6 +10477,7 @@ async function loadStateFromDB(){
 
 /* initApp() – asynchrone Startlogik (ersetzt synchrones Inline-Init) */
 async function initApp(){
+  syncIconLibFromIDB(); // [PUNKT-E] Icon-Library aus IDB wiederherstellen (ohne await)
   try{
     await db.open();
     // Persistenten Speicher anfordern (schützt vor iOS-Löschung)

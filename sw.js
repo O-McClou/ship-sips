@@ -57,9 +57,56 @@ self.addEventListener('fetch', event => {
         })
         .catch(() => null);
 
+      // [PUNKT-C] Freundliche Offline-Seite (statt plain-text Fallback)
       return cached ? cached : networkFetch.then(r => r || new Response(
-        'Offline – bitte App neu starten',
-        { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
+        `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Offline – Getränke-Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #06101E;
+      color: #e8eaf0;
+      font-family: system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+      text-align: center;
+    }
+    .icon { font-size: 4rem; margin-bottom: 1.5rem; }
+    h1 { font-size: 1.4rem; color: #4f9eff; margin-bottom: 1rem; }
+    p { font-size: 1rem; line-height: 1.6; max-width: 360px; margin-bottom: 0.5rem; }
+    .lang-en { color: #a0aec0; font-size: 0.9rem; margin-bottom: 2rem; }
+    button {
+      background: #4f9eff;
+      color: #06101E;
+      border: none;
+      border-radius: 0.75rem;
+      padding: 0.75rem 2rem;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 0.5rem;
+    }
+    button:active { opacity: 0.8; }
+  </style>
+</head>
+<body>
+  <div class="icon">⚓</div>
+  <h1>Keine Verbindung</h1>
+  <p>Die App muss einmalig mit Internet geöffnet werden, damit sie offline funktioniert.</p>
+  <p class="lang-en">No connection – the app needs to be opened once with internet to work offline.</p>
+  <button onclick="location.reload()">🔄 Neu laden</button>
+</body>
+</html>`,
+        { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
       ));
     })
   );
