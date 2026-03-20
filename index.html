@@ -1433,11 +1433,11 @@ details.hlp-acc summary:active{opacity:.75}
     <div class="loghdr" style="position:relative">
       <div class="logtitle" id="logTitleEl">Bestellprotokoll</div>
       <div class="log-hdr-btns">
-        <button id="logFilterToggleBtn" onclick="toggleLogFilterPanel()" class="log-multisel-btn">🔍 Filter ▾</button>
         <div style="position:relative;display:inline-block">
-          <button id="logMoreBtn" onclick="toggleLogMoreMenu(event)" class="log-multisel-btn" style="font-size:16px;padding:7px 11px;line-height:1;letter-spacing:0" aria-label="Weitere Optionen">⋯</button><!-- [PUNKT-F] -->
-          <div id="logMoreMenu" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--bg2);border:1px solid var(--ac-27);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.2);min-width:190px;z-index:200;overflow:hidden">
+          <button id="logMoreBtn" onclick="toggleLogMoreMenu(event)" class="log-multisel-btn" style="font-size:16px;padding:7px 11px;line-height:1;letter-spacing:0;position:relative" aria-label="Weitere Optionen">⋯<span id="logFilterBadge" style="display:none;position:absolute;top:3px;right:3px;background:var(--ac);color:#06101E;font-size:8px;font-weight:bold;border-radius:50%;width:13px;height:13px;line-height:13px;text-align:center;font-family:Georgia,serif;pointer-events:none"></span></button><!-- [PUNKT-F] -->
+          <div id="logMoreMenu" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--bg2);border:1px solid var(--ac-27);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.2);min-width:200px;z-index:200;overflow:hidden">
             <button id="logAddBtn" onclick="openAddEntry();closeLogMoreMenu()" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;font-family:Georgia,serif;font-size:14px;font-weight:bold;color:var(--ac);cursor:pointer;background:var(--ac-07);border:none;border-bottom:2px solid var(--ac-27);text-align:left;touch-action:manipulation;-webkit-user-select:none;box-sizing:border-box">➕ Eintrag hinzufügen</button>
+            <button id="logFilterToggleBtn" onclick="toggleLogFilterPanel();closeLogMoreMenu()" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;font-family:Georgia,serif;font-size:13px;color:var(--tx0);cursor:pointer;background:transparent;border:none;border-bottom:1px solid var(--ac-07);text-align:left;touch-action:manipulation;-webkit-user-select:none;box-sizing:border-box">🔍 Filter</button>
             <button onclick="toggleLogMultiSelect();closeLogMoreMenu()" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;font-family:Georgia,serif;font-size:13px;color:var(--tx0);cursor:pointer;background:transparent;border:none;border-bottom:1px solid var(--ac-07);text-align:left;touch-action:manipulation;-webkit-user-select:none;box-sizing:border-box">☑ Mehrfach auswählen</button>
             <button onclick="exportLogCSV();closeLogMoreMenu()" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;font-family:Georgia,serif;font-size:13px;color:var(--tx0);cursor:pointer;background:transparent;border:none;text-align:left;touch-action:manipulation;-webkit-user-select:none;box-sizing:border-box">📤 CSV exportieren</button>
           </div>
@@ -1472,7 +1472,7 @@ details.hlp-acc summary:active{opacity:.75}
       <input type="date" id="logDFrom" onchange="S.logDateFrom=this.value;renderLog()" style="-webkit-appearance:none;appearance:none;flex:1;min-width:0;padding:6px 8px;background:var(--bg2);border:1px solid var(--ac-27);border-radius:7px;color:var(--tx0);font-size:13px;outline:none;font-family:Georgia,serif;-webkit-text-fill-color:var(--tx0)">
       <label style="font-size:11px;color:var(--tx2);flex-shrink:0">–</label>
       <input type="date" id="logDTo" onchange="S.logDateTo=this.value;renderLog()" style="-webkit-appearance:none;appearance:none;flex:1;min-width:0;padding:6px 8px;background:var(--bg2);border:1px solid var(--ac-27);border-radius:7px;color:var(--tx0);font-size:13px;outline:none;font-family:Georgia,serif;-webkit-text-fill-color:var(--tx0)">
-      <button id="logDateClearBtn" onclick="S.logDateFrom='';S.logDateTo='';document.getElementById('logDFrom').value='';document.getElementById('logDTo').value='';renderLog()" style="flex-shrink:0;padding:6px 10px;background:var(--bg2);border:1px solid var(--ac-20);border-radius:6px;color:var(--ac);font-size:12px;cursor:pointer;font-family:Georgia,serif;font-weight:bold" aria-label="Datumsfilter zurücksetzen" title="Datumsfilter zurücksetzen">✕</button>
+      <button id="logDateClearBtn" onclick="S.logDateFrom='';S.logDateTo='';document.getElementById('logDFrom').value='';document.getElementById('logDTo').value='';_visibleMonths=new Set();renderLog()" style="flex-shrink:0;padding:6px 10px;background:var(--bg2);border:1px solid var(--ac-20);border-radius:6px;color:var(--ac);font-size:12px;cursor:pointer;font-family:Georgia,serif;font-weight:bold" aria-label="Datumsfilter zurücksetzen" title="Datumsfilter zurücksetzen">✕</button>
     </div>
     <!-- V33 V7: Preis-Bereich Filter -->
     <div id="logPriceRow" style="display:flex;gap:5px;padding:0 0 6px;align-items:center;flex-wrap:nowrap">
@@ -5608,7 +5608,7 @@ function renderLogUserFilter(){
   const userBtns=usersWithEntries.map(u=>`<button class="lufc${S.logUserFilter===u.id?' on':''}" style="background:${S.logUserFilter===u.id?u.color:'transparent'};color:${S.logUserFilter===u.id?'var(--bg)':u.color};border-color:${u.color}${S.logUserFilter===u.id?'':'88'}" onclick="setLogUserFilter('${u.id}')">${esc(u.name)}</button>`).join('');
   el.innerHTML=allBtn+userBtns;
 }
-function setLogUserFilter(uid){S.logUserFilter=uid;S.logVisibleCount=100;/* FIX V47+: Reset Lazy Loading */updateLogFilterBadge();renderLog();}
+function setLogUserFilter(uid){S.logUserFilter=uid;S.logVisibleCount=100;/* FIX V47+: Reset Lazy Loading */_visibleMonths=new Set();updateLogFilterBadge();renderLog();}
 
 // Badge helper for log entries
 function userBadgeHtml(userId){if(!userId||S.users.length<=1)return'';const u=getUserById(userId);if(!u)return'';return `<span class="user-badge" style="background:${u.color}22;color:${u.color};border:1px solid ${u.color}44"><span class="user-dot" style="background:${u.color}"></span>${esc(u.name)}</span>`;}
@@ -6087,7 +6087,7 @@ function initDrinkSwipe(){
   });
 }
 
-function onLogSearch(){S.logSearchQ=(document.getElementById('logSearch').value||'').toLowerCase();S.logVisibleCount=100;/* FIX V47+ */;_fullExpandedDays=new Set();updateLogFilterBadge();renderLog();}
+function onLogSearch(){S.logSearchQ=(document.getElementById('logSearch').value||'').toLowerCase();S.logVisibleCount=100;/* FIX V47+ */;_fullExpandedDays=new Set();_visibleMonths=new Set();updateLogFilterBadge();renderLog();}
 function updateLogFilterBadge(){
   let n=0;
   if(S.logSearchQ)n++;
@@ -6098,7 +6098,9 @@ function updateLogFilterBadge(){
   if(S.logPriceMin!=null)n++;
   if(S.logPriceMax!=null)n++;
   const btn=document.getElementById('logFilterToggleBtn');
-  if(btn)btn.textContent=n>0?'🔍 Filter ▾ ('+n+' aktiv)':'🔍 Filter ▾';
+  if(btn)btn.textContent=n>0?'🔍 Filter ('+n+' aktiv)':'🔍 Filter';
+  const badge=document.getElementById('logFilterBadge');
+  if(badge){badge.textContent=n>0?String(n):'';badge.style.display=n>0?'block':'none';}
 }
 function toggleLogFilterPanel(){
   const p=document.getElementById('logFilterPanel');
@@ -6118,7 +6120,7 @@ function closeLogMoreMenu(){
 document.addEventListener('click',function(e){
   if(!e.target.closest('#logMoreBtn')&&!e.target.closest('#logMoreMenu'))closeLogMoreMenu();
 });
-function setLogCatFilter(cat){S.logCatFilter=cat;S.logVisibleCount=100;/* FIX V47+ */_fullExpandedDays=new Set();updateLogFilterBadge();renderLog();}
+function setLogCatFilter(cat){S.logCatFilter=cat;S.logVisibleCount=100;/* FIX V47+ */_fullExpandedDays=new Set();_visibleMonths=new Set();updateLogFilterBadge();renderLog();}
 
 /* ── Multi-Select-Modus ──────────────────────────────────────── */
 function toggleLogMultiSelect(){
@@ -6531,6 +6533,8 @@ function validatePriceRange(){
 }
 // V40 T10: Virtuelles Scrollen – Tage die vollständig angezeigt werden
 var _fullExpandedDays = new Set();
+var _visibleMonths = new Set(); // Monatsbasiertes Paging: welche Monate sind geladen
+var _logInited = false;          // true nach erstem renderLog()-Aufruf dieser Session
 function renderLog(){
   updateLogFilterBadge();
   updateHeader();
@@ -6574,12 +6578,18 @@ function renderLog(){
   // mkeys = month-key strings "YYYY-MM", dkeys = day-key strings "YYYY-MM-DD"
   // Using the entry's recorded tz (entryLogicalDayStr) so each entry always
   // appears under the day it was ACTUALLY recorded, regardless of viewer tz.
-  /* FIX V47+: Lazy Loading – nur S.logVisibleCount Einträge auf einmal rendern */
-  if(typeof S.logVisibleCount!=='number'||S.logVisibleCount<100)S.logVisibleCount=100;
-  const totalFilteredReal=filteredReal.length;
-  const hasMore=totalFilteredReal>S.logVisibleCount;
-  // Schnitt nach Visible-Count auf dem echten (nicht-Marker) Log, dann Marker wieder einfügen
-  const visibleIds=new Set(filteredReal.slice(0,S.logVisibleCount).map(e=>e.id));
+  /* ── Monatsbasiertes Paging (ersetzt count-basiertes logVisibleCount) ── */
+  const _todayMk=(()=>{const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');})();
+  // 1. Alle Monate + Zählungen aus filteredReal aufbauen (vollständig, unabhängig vom Sichtfenster)
+  const allMkeysFull=[],allMonthCounts={};
+  filteredReal.forEach(e=>{const mk=entryLogicalMKey(e);if(!allMonthCounts[mk]){allMonthCounts[mk]=0;allMkeysFull.push(mk);}allMonthCounts[mk]++;});
+  // 2. _visibleMonths initialisieren oder bei leerem/ungültigem Stand zurücksetzen
+  if(_visibleMonths.size===0||!allMkeysFull.some(mk=>_visibleMonths.has(mk))){
+    _visibleMonths.clear();
+    if(allMkeysFull.length){const startMk=allMkeysFull.includes(_todayMk)?_todayMk:allMkeysFull[0];_visibleMonths.add(startMk);}
+  }
+  // 3. visibleLog: nur Einträge sichtbarer Monate + Marker immer mitnehmen
+  const visibleIds=new Set(filteredReal.filter(e=>_visibleMonths.has(entryLogicalMKey(e))).map(e=>e.id));
   const visibleLog=filteredLog.filter(e=>e._marker||visibleIds.has(e.id));
   const mkeys=[],months={},dkeys=[],days={};
   visibleLog.forEach(e=>{
@@ -6591,8 +6601,16 @@ function renderLog(){
     if(!days[dk]){days[dk]=[];dkeys.push(dk);}
     days[dk].push(e);
   });
-  if(!S.expandedMonthsInited&&mkeys.length){S.expandedMonths.add(mkeys[0]);S.expandedMonthsInited=true;}
-  if(!S.expandedDaysInited&&dkeys.length){S.expandedDays.add(dkeys[0]);S.expandedDaysInited=true;}
+  // 4. Beim ersten Laden dieser Session: aktuellen Monat aufklappen, nur heute-Tag aufklappen
+  if(!_logInited&&mkeys.length){
+    _logInited=true;
+    const initMk=mkeys.includes(_todayMk)?_todayMk:mkeys[0];
+    S.expandedMonths.add(initMk);S.expandedMonthsInited=true;
+    const _todayDk=logicalTodayStr();
+    if(days[_todayDk])S.expandedDays.add(_todayDk);
+    else if(dkeys.length)S.expandedDays.add(dkeys[0]); // Fallback: neuester Tag
+    S.expandedDaysInited=true;
+  }
 
   let html='';
   // prevEntryTz: tracks last rendered entry's tz across day AND month boundaries
@@ -6679,11 +6697,14 @@ function renderLog(){
   });
 
   const el=document.getElementById('loglist');
-  // FIX V47+: "Mehr laden"-Button wenn nicht alle Einträge sichtbar
-  if(hasMore){
+  // Nächster verborgener Monat als "Mehr laden"-Button (monatsbasiert)
+  const hiddenMkeysFull=allMkeysFull.filter(mk=>!_visibleMonths.has(mk));
+  if(hiddenMkeysFull.length){
     const L=S.lang==='en';
-    const remaining=totalFilteredReal-S.logVisibleCount;
-    html+=`<div style="text-align:center;padding:18px 14px 8px"><button onclick="S.logVisibleCount=(S.logVisibleCount||100)+100;renderLog()" style="padding:10px 28px;background:var(--bg2);border:1px solid var(--ac-27);border-radius:10px;color:var(--ac);font-family:Georgia,serif;font-size:13px;cursor:pointer;touch-action:manipulation;width:100%;max-width:320px">↓ ${remaining} ${L?'more entries':'weitere Einträge'}</button></div>`;
+    const nextMk=hiddenMkeysFull[0];
+    const nextLabel=entryMKeyLabel(nextMk);
+    const nextCount=allMonthCounts[nextMk];
+    html+=`<div style="text-align:center;padding:18px 14px 8px"><button onclick="_visibleMonths.add('${nextMk}');S.expandedMonths.add('${nextMk}');renderLog()" style="padding:10px 28px;background:var(--bg2);border:1px solid var(--ac-27);border-radius:10px;color:var(--ac);font-family:Georgia,serif;font-size:13px;cursor:pointer;touch-action:manipulation;width:100%;max-width:320px">↓ ${esc(nextLabel)} · ${fmtNum(nextCount)} ${L?'entries':'Einträge'}</button></div>`;
   }
   el.innerHTML=html;el._mk=mkeys;el._dk=dkeys;
   if(!S.logMultiSelect)initSwipeDelete();
