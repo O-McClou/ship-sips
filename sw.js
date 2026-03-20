@@ -1,15 +1,17 @@
 /* ═══════════════════════════════════════════════════════════════════
    sw.js – Service Worker für Ship-Sips PWA
    ─────────────────────────────────────────────────────────────────
-   Cache-Version ship-sips-v1:
+   Cache-Version ship-sips-v2:
    App umbenannt zu „Ship-Sips", neuer Cache-Bust.
    skipWaiting() bleibt aktiv damit der neue Cache sofort greift.
    ═══════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'ship-sips-v1';
+const CACHE_NAME = 'ship-sips-v2';
 
 const ASSETS = [
-  './index.html'
+  './index.html',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
 /* ── Install: cachen + sofort übernehmen ──────────────────────── */
