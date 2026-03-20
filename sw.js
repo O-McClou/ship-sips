@@ -1,13 +1,12 @@
 /* ═══════════════════════════════════════════════════════════════════
-   sw.js – Service Worker für Getränke-Tracker PWA  (V47)
+   sw.js – Service Worker für Ship-Sips PWA
    ─────────────────────────────────────────────────────────────────
-   Cache-Version tracker-v47-fix3:
-   Erzwingt erneuten Cache-Bust nach Entfernung des fehlerhaften
-   window.onerror-Handlers, der die App einfrieren ließ.
+   Cache-Version ship-sips-v1:
+   App umbenannt zu „Ship-Sips", neuer Cache-Bust.
    skipWaiting() bleibt aktiv damit der neue Cache sofort greift.
    ═══════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'tracker-v47-fix3';
+const CACHE_NAME = 'ship-sips-v1';
 
 const ASSETS = [
   './index.html'
@@ -64,7 +63,7 @@ self.addEventListener('fetch', event => {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Offline – Getränke-Tracker</title>
+  <title>Offline – Ship-Sips</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {

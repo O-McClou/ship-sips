@@ -1,7 +1,7 @@
 {
-  "name": "Mein Tracker – Meine Reise",
-  "short_name": "Tracker",
-  "description": "Getränke-Tracker für Kreuzfahrten und lange Reisen",
+  "name": "Ship-Sips",
+  "short_name": "Ship-Sips",
+  "description": "Ship-Sips – Getränke-Tracker für Kreuzfahrten und lange Reisen",
   "id": "./index.html",
   "start_url": "./index.html",
   "display": "standalone",
