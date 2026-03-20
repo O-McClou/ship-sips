@@ -345,7 +345,7 @@ body.fz-small .bplus{width:44px;height:44px;min-width:44px;font-size:22px}
 body.fz-small .bminus{width:40px;height:40px;min-width:40px;font-size:18px}
 body.fz-small .tab-icon{font-size:14px}
 body.fz-small .tab-label{font-size:8px}
-body.fz-small .tab{padding:5px 0}
+body.fz-small .tab{padding:4px 0}
 body.fz-small .monthhdr .monthname{font-size:11px}
 body.fz-small .dayname{font-size:10px}
 body.fz-small .logname{font-size:11px}
@@ -363,12 +363,12 @@ body.fz-large .dnum{font-size:28px}
 body.fz-large .dprice{font-size:13px}
 body.fz-large .dcat{font-size:12px}
 body.fz-large .sinput{font-size:17px}
-body.fz-large .cbtn{font-size:13px;padding:0 12px;min-height:44px;height:auto;box-sizing:border-box}
+body.fz-large .cbtn{font-size:13px;padding:0 12px;min-height:33px;height:auto;box-sizing:border-box}
 body.fz-large .bplus{width:58px;height:58px;min-width:58px;font-size:32px}
 body.fz-large .bminus{width:52px;height:52px;min-width:52px;font-size:27px}
 body.fz-large .tab-icon{font-size:16px}
 body.fz-large .tab-label{font-size:8px}
-body.fz-large .tab{padding:8px 0 9px}
+body.fz-large .tab{padding:7px 0 8px}
 body.fz-large .monthhdr .monthname{font-size:15px}
 body.fz-large .dayname{font-size:14px}
 body.fz-large .logname{font-size:15px}
@@ -387,12 +387,12 @@ body.fz-xlarge .dnum{font-size:34px}
 body.fz-xlarge .dprice{font-size:15px}
 body.fz-xlarge .dcat{font-size:13px}
 body.fz-xlarge .sinput{font-size:21px;padding:0 14px;height:26px;box-sizing:border-box}
-body.fz-xlarge .cbtn{font-size:15px;padding:0 12px;min-height:44px;height:auto;box-sizing:border-box}
+body.fz-xlarge .cbtn{font-size:15px;padding:0 12px;min-height:33px;height:auto;box-sizing:border-box}
 body.fz-xlarge .bplus{width:66px;height:66px;min-width:66px;font-size:38px}
 body.fz-xlarge .bminus{width:58px;height:58px;min-width:58px;font-size:30px}
 body.fz-xlarge .tab-icon{font-size:16px}
 body.fz-xlarge .tab-label{font-size:8px}
-body.fz-xlarge .tab{padding:8px 0 9px}
+body.fz-xlarge .tab{padding:7px 0 8px}
 body.fz-xlarge .monthhdr .monthname{font-size:17px}
 body.fz-xlarge .dayname{font-size:16px}
 body.fz-xlarge .logname{font-size:17px}
@@ -457,7 +457,7 @@ body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;
 .goal-bar-fill{height:100%;border-radius:2px;transition:width .5s ease,background .5s ease;background:linear-gradient(to right,var(--ac-deep),var(--ac))}
 /* Tabs: Navigation oben im Header – kein safe-area-bottom hier (tabs sind oben, nicht unten) */
 .tabs{display:flex;margin:0 -16px;border-top:1px solid var(--ac-13);background:var(--bg)}
-.tab{flex:1;padding:8px 0 9px;background:transparent;color:var(--tx2);border:none;cursor:pointer;font-family:Georgia,serif;font-size:9px;letter-spacing:0.5px;transition:color .2s,background .2s;display:flex;flex-direction:column;align-items:center;gap:3px;-webkit-user-select:none;touch-action:manipulation;position:relative}
+.tab{flex:1;padding:7px 0 8px;background:transparent;color:var(--tx2);border:none;cursor:pointer;font-family:Georgia,serif;font-size:9px;letter-spacing:0.5px;transition:color .2s,background .2s;display:flex;flex-direction:column;align-items:center;gap:3px;-webkit-user-select:none;touch-action:manipulation;position:relative}
 .tab.on{background:var(--ac-07);color:var(--ac);font-weight:bold}
 .tab.on::after{content:'';position:absolute;top:0;left:25%;right:25%;height:2px;background:var(--ac);border-radius:0 0 2px 2px}
 .tab:active{background:var(--ac-10);opacity:1}
@@ -528,7 +528,7 @@ body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;
 .sinput::placeholder{color:var(--tx2)}
 .cscroll{display:flex;gap:5px;overflow-x:auto;padding:3px 0 1px;-webkit-overflow-scrolling:touch;scrollbar-width:none;scroll-snap-type:x mandatory}
 .cscroll::-webkit-scrollbar{display:none}
-.cbtn{flex-shrink:0;padding:0 12px;background:var(--bg2);color:var(--tx1);border:1px solid var(--ac-13);border-radius:20px;cursor:pointer;font-size:10px;font-family:Georgia,serif;white-space:nowrap;display:flex;align-items:center;gap:4px;scroll-snap-align:start;transition:all .2s;touch-action:manipulation;letter-spacing:0.3px;min-height:44px;height:auto;box-sizing:border-box;/* FIX V47+: min-height 44px (Apple HIG) statt fix 26px */}
+.cbtn{flex-shrink:0;padding:0 12px;background:var(--bg2);color:var(--tx1);border:1px solid var(--ac-13);border-radius:20px;cursor:pointer;font-size:10px;font-family:Georgia,serif;white-space:nowrap;display:flex;align-items:center;gap:4px;scroll-snap-align:start;transition:all .2s;touch-action:manipulation;letter-spacing:0.3px;min-height:33px;height:auto;box-sizing:border-box;/* V48: min-height 33px (–25% von 44px Apple HIG) */}
 .cbtn.on{background:var(--ac);color:var(--ac-fg);border-color:var(--ac);font-weight:bold}
 .cbtn:active{opacity:.75}
 .tbar{padding:7px 14px;display:flex;justify-content:flex-end}
@@ -3923,8 +3923,9 @@ async function _saveStateAsync(){
 }
 
 function _saveStateLocalStorageFallback(){
-  // Bei file://-Protokoll zusätzlich localStorage schreiben (kein SW, kein IndexedDB-Persist)
-  if(location.protocol!=='file:')return;
+  // Immer in localStorage schreiben: auf iOS (file:// UND https:// PWA) ist
+  // IndexedDB nicht persistent garantiert – localStorage überlebt App-Schließen
+  // zuverlässig. Schadet auf anderen Plattformen nicht (doppeltes Backup).
   const pairs=[['a4_drinks',JSON.stringify(S.drinks)],['a4_log',JSON.stringify(S.log)],
     ['a4_title1',S.appTitle1],['a4_title2',S.appTitle2],['a4_titleicon',S.titleIcon||''],
     ['a4_lastbkp',S.lastBackupDate||''],['a4_lastbkpreminder',S.lastBackupReminderDate||''],
@@ -10533,8 +10534,15 @@ async function loadStateFromDB(){
     if(cfg.onboardingDone==='1')window._idbOnboardingDone=true;
   }catch(e){
     console.error('[loadStateFromDB]',e);
-    // Fallback auf localStorage wenn IndexedDB fehlschlägt
+    // Fallback auf localStorage wenn IndexedDB fehlschlägt oder leer ist (iOS-Eviction)
     loadState();
+  }
+  // Zusätzliche Sicherheit: Wenn IndexedDB log leer und localStorage hat Daten → Merge
+  if(S.log.length===0){
+    try{
+      const lsl=localStorage.getItem('a4_log');
+      if(lsl){const p=JSON.parse(lsl);if(Array.isArray(p)&&p.length>0){S.log=p.filter(isVE).map(sanE);S.log.sort((a,b)=>new Date(b.time).getTime()-new Date(a.time).getTime());console.log('[loadStateFromDB] Log aus localStorage wiederhergestellt:',S.log.length,'Einträge');}}
+    }catch(e2){}
   }
 }
 
@@ -10680,6 +10688,18 @@ S.selCat='__all__';
 })();
 // NTP-Drift: Auch prüfen wenn App aus Hintergrund zurückkommt (visibilitychange)
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')checkFutureEntries();});
+
+/* ── iOS-Datenpersistenz: pagehide erzwingt Letzt-Speichern ──────
+   iOS beendet PWAs ohne beforeunload zu feuern; pagehide ist das
+   letzte verlässliche Event vor dem App-Schließen. IndexedDB-Write
+   läuft asynchron (fire-and-forget), localStorage-Fallback ist
+   synchron und sichert die Daten zuverlässig auf dem Gerät. ─────── */
+window.addEventListener('pagehide',function(){
+  // Synchroner localStorage-Write (überlebt App-Neustart auf iOS)
+  _saveStateLocalStorageFallback();
+  // Async IndexedDB-Write (best-effort, kann nicht auf Abschluss warten)
+  try{saveState();}catch(e){}
+});
 // iOS keyboard: scroll Save button into view when virtual keyboard appears in modals
 (function(){
   if(!window.visualViewport)return;
