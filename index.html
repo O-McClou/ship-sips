@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Ship-Sips">
 <meta name="theme-color" content="#06101E">
-<link rel="apple-touch-icon" sizes="180x180" href="./icon-192.png">
+<link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Ship-Sips – Meine Reise</title>
 <style>
@@ -457,7 +457,7 @@ body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;
 .goal-bar-fill{height:100%;border-radius:2px;transition:width .5s ease,background .5s ease;background:linear-gradient(to right,var(--ac-deep),var(--ac))}
 /* Tabs: fixierte Bottom-Nav (iOS-konform, Daumen-erreichbar) */
 .tabs{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:200;display:flex;border-top:1px solid var(--ac-20);background:var(--bg);padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -3px 18px rgba(0,0,0,0.45)}
-.tab{flex:1;padding:3px 0 8px;background:transparent;color:var(--tx2);border:none;cursor:pointer;font-family:Georgia,serif;font-size:9px;letter-spacing:0.5px;transition:color .2s,background .2s;display:flex;flex-direction:column;align-items:center;gap:3px;-webkit-user-select:none;touch-action:manipulation;position:relative}
+.tab{flex:1;padding:7px 0 8px;background:transparent;color:var(--tx2);border:none;cursor:pointer;font-family:Georgia,serif;font-size:9px;letter-spacing:0.5px;transition:color .2s,background .2s;display:flex;flex-direction:column;align-items:center;gap:3px;-webkit-user-select:none;touch-action:manipulation;position:relative}
 .tab.on{background:var(--ac-07);color:var(--ac);font-weight:bold}
 .tab.on::after{content:'';position:absolute;top:0;left:25%;right:25%;height:2px;background:var(--ac);border-radius:0 0 2px 2px}
 .tab:active{background:var(--ac-10);opacity:1}
@@ -1403,7 +1403,7 @@ details.hlp-acc summary:active{opacity:.75}
   <div id="storageBanner" style="display:none;margin:6px 14px 0;padding:10px 12px;background:#2a1000;border:1px solid #dd660055;border-radius:10px;align-items:center;gap:10px;font-size:12px;color:#dd8833">
     <span style="font-size:18px;flex-shrink:0">💾</span>
     <span id="storageBannerMsg" style="flex:1;line-height:1.5"></span>
-    <button onclick="exportBackup();hideStoWarn()" style="flex-shrink:0;padding:5px 10px;background:#dd663322;border:1px solid #dd6633aa;border-radius:7px;color:#dd8833;cursor:pointer;font-size:11px;font-family:inherit" aria-label="Backup exportieren">Backup jetzt</button><!-- [PUNKT-F] -->
+    <button onclick="shareBackup().catch(()=>exportBackup());hideStoWarn()" style="flex-shrink:0;padding:5px 10px;background:#dd663322;border:1px solid #dd6633aa;border-radius:7px;color:#dd8833;cursor:pointer;font-size:11px;font-family:inherit" aria-label="Backup exportieren">Backup jetzt</button><!-- [PUNKT-F] -->
   </div>
   <!-- V2: Aktueller Hafen/Ort wurde in den Kopfbereich verschoben -->
   <div id="limitBanner" style="display:none" class="limit-banner"><span style="font-size:18px">🚨</span><span id="limitBannerText"></span></div>
@@ -2595,45 +2595,21 @@ function closeCustomThemeEditor(){document.getElementById('customThemeEditorOv')
 function getIconLib(){try{const r=localStorage.getItem('a4_iconlib');return r?JSON.parse(r):[];}catch(e){return[];}}
 // [PUNKT-E] saveIconLib – schreibt in localStorage UND async in IndexedDB
 function saveIconLib(lib){
-  try{db.setCfg('iconLib',JSON.stringify(lib)).catch(()=>{});localStorage.setItem('a4_iconlib',JSON.stringify(lib));}catch(e){}
-  // [PUNKT-E] Zusätzlich async in IndexedDB sichern
-  try{
-    const req=indexedDB.open('TrackerDB',2);
-    req.onsuccess=function(e){
-      try{
-        const idb=e.target.result;
-        const tx=idb.transaction('iconlib','readwrite');
-        tx.objectStore('iconlib').put({key:'data',value:JSON.stringify(lib)});
-        tx.onerror=function(){console.warn('[PUNKT-E] IDB iconlib write error');};
-      }catch(ex){console.warn('[PUNKT-E] IDB iconlib tx error',ex);}
-    };
-    req.onerror=function(){console.warn('[PUNKT-E] IDB open error for iconlib');};
-  }catch(ex){console.warn('[PUNKT-E] IDB iconlib save failed',ex);}
+  try{localStorage.setItem('a4_iconlib',JSON.stringify(lib));}catch(e){}
+  // FIX V47 F9: TrackerDB-Wrapper statt direktem indexedDB.open()
+  db.iconlib.put({key:'data',value:JSON.stringify(lib)}).catch(ex=>console.warn('[PUNKT-E] iconlib save failed',ex));
 }
 // [PUNKT-E] syncIconLibFromIDB – stellt Icon-Library aus IndexedDB wieder her
 async function syncIconLibFromIDB(){
   try{
     const lsVal=localStorage.getItem('a4_iconlib');
     if(lsVal&&lsVal!=='[]')return; // localStorage hat Daten → kein Restore nötig
-    await new Promise((resolve)=>{
-      const req=indexedDB.open('TrackerDB',2);
-      req.onsuccess=function(e){
-        try{
-          const idb=e.target.result;
-          const tx=idb.transaction('iconlib','readonly');
-          const getReq=tx.objectStore('iconlib').get('data');
-          getReq.onsuccess=function(){
-            if(getReq.result&&getReq.result.value){
-              localStorage.setItem('a4_iconlib',getReq.result.value);
-              console.log('[PUNKT-E] Icon-Library aus IndexedDB wiederhergestellt');
-            }
-            resolve();
-          };
-          getReq.onerror=function(){resolve();};
-        }catch(ex){console.warn('[PUNKT-E] IDB iconlib read error',ex);resolve();}
-      };
-      req.onerror=function(){resolve();};
-    });
+    // FIX V47 F9: TrackerDB-Wrapper statt direktem indexedDB.open()
+    const rec=await db.iconlib.get('data');
+    if(rec&&rec.value){
+      localStorage.setItem('a4_iconlib',rec.value);
+      console.log('[PUNKT-E] Icon-Library aus IndexedDB wiederhergestellt');
+    }
   }catch(ex){console.warn('[PUNKT-E] syncIconLibFromIDB Fehler',ex);}
 }
 function removeCustomIcon(id){const lib=getIconLib().filter(x=>x.id!==id);saveIconLib(lib);if(_ctEdit.icon==='custom:'+id){_ctEdit.icon='⚓';}renderCustomThemeEditor();}
@@ -3824,6 +3800,7 @@ const TrackerDB = (function(){
     open: ()=>_open(),
     logs:    _store('logs'),
     config:  _store('config'),
+    iconlib: _store('iconlib'), // FIX V47 F9: iconlib über Wrapper-API zugänglich
     /* Hilfsmethode: cfg-Wert lesen */
     getCfg: async key=>{
       const r=await _store('config').get(key);
@@ -4155,10 +4132,10 @@ function showUrgentBackupDialog(){
     </div>`;
   ov.appendChild(box);
   document.body.appendChild(ov);
-  // [PUNKT-G] "Backup jetzt erstellen" → normalen Backup-Download auslösen + Dialog schließen
+  // [PUNKT-G] "Backup jetzt erstellen" → shareBackup() (iOS PWA-kompatibel); exportBackup() als Fallback
   document.getElementById('urgentBkpNowBtn').addEventListener('click',function(){
     ov.remove();
-    exportBackup();
+    shareBackup().catch(()=>exportBackup());
   });
   // [PUNKT-G] "Später erinnern (1h)" → Dialog schließen, Timer auf 1h setzen
   document.getElementById('urgentBkpLaterBtn').addEventListener('click',function(){
@@ -4697,8 +4674,8 @@ async function importLatestInternal(){
     if(!latest){showToast(T('bkp.internal.none'),'warn',4000);return;}
     const d=new Date(latest.date);
     const dateStr=d.toLocaleDateString(L?'en-US':'de-DE')+' '+d.toLocaleTimeString(L?'en-US':'de-DE',{hour:'2-digit',minute:'2-digit'});
-    const msg=(L?'⚡ Load last backup from ':'⚡ Letztes Backup vom ')+dateStr+(L?' ?':' laden?');
-    if(confirm(msg)){
+    const msg=(L?'⚡ Load last backup from ':'⚡ Letztes Backup vom ')+dateStr+(L?' – replace all current data?':' laden?');
+    showCfm(L?'⚡ Load Internal Backup':'⚡ Internes Backup laden',msg,L?'Load':'Laden',()=>{
       try{
         const data=JSON.parse(latest.data);
         if(!data||(!data.log&&!data.drinks)){showToast('⚠️ '+(L?'Invalid backup data.':'Ungültige Backup-Daten.'),'error',4000);return;}
@@ -4708,7 +4685,7 @@ async function importLatestInternal(){
         doImport('replace');
         showToast('✅ '+(L?'Internal backup restored.':'Internes Backup wiederhergestellt.'),'info',4000);
       }catch(e2){showToast('⚠️ '+(L?'Could not parse backup.':'Backup konnte nicht gelesen werden.'),'error',4000);}
-    }
+    });
   }catch(e){
     showToast('⚠️ '+(L?'Error loading internal backup: ':'Fehler beim Laden: ')+e.message,'error',5000);
   }
@@ -4760,14 +4737,14 @@ async function internalRestoreById(id){
     if(!bkp){showToast('⚠️ '+(L?'Backup not found.':'Backup nicht gefunden.'),'error');return;}
     const d=new Date(bkp.date);
     const ds=d.toLocaleDateString(L?'en-US':'de-DE')+' '+d.toLocaleTimeString(L?'en-US':'de-DE',{hour:'2-digit',minute:'2-digit'});
-    if(confirm((L?'Restore backup from ':'Backup vom ')+ds+(L?' – replace all current data?':' laden und alle aktuellen Daten ersetzen?'))){
+    showCfm(L?'Restore Backup':'Backup wiederherstellen',(L?'Restore backup from ':'Backup vom ')+ds+(L?' – replace all current data?':' laden und alle aktuellen Daten ersetzen?'),L?'Restore':'Wiederherstellen',()=>{
       const data=JSON.parse(bkp.data);
       const vl=(data.log||[]).filter(e=>e&&e.time);
       const vd=Array.isArray(data.drinks)?data.drinks:[];
       _bkp=Object.assign({},data,{log:vl,drinks:vd});
       doImport('replace');
       showToast('✅ '+(L?'Restored.':'Wiederhergestellt.'),'info',3500);
-    }
+    });
   }catch(e){showToast('⚠️ '+(L?'Restore failed: ':'Fehler: ')+e.message,'error',5000);}
 }
 
@@ -4783,13 +4760,14 @@ async function internalDeleteById(id){
 
 async function internalClearAll(){
   const L=S.lang==='en';
-  if(!confirm(L?'Delete all internal backups?':'Alle internen Backups löschen?'))return;
+  showCfm(L?'Delete All Internal Backups':'Alle internen Backups löschen',L?'This will permanently delete all stored internal backups.':'Alle gespeicherten internen Backups werden unwiderruflich gelöscht.',L?'Delete All':'Alle löschen',async()=>{
   try{
     await InternalBackupDB.clear();
     showToast('🗑️ '+(L?'All internal backups deleted.':'Alle internen Backups gelöscht.'),'info',3000);
     renderInternalBackups();
     renderVerwaltung&&renderVerwaltung();
   }catch(e){showToast('⚠️ '+(L?'Failed: ':'Fehler: ')+e.message,'error',5000);}
+  });
 }
 
 /* ═══ EXPORT CSV DRINKS ══════════════════════════════════════ */
@@ -5519,10 +5497,10 @@ function confirmDeleteUser(i){
     return;
   }
   const entryCount=S.log.filter(e=>e.userId===u.id).length;
-  let msg=`„${u.name}" wird gelöscht.`;
-  if(entryCount>0)msg+=` Dieser Nutzer hat ${entryCount} Protokolleintrag${entryCount===1?'':'einträge'}, die ohne Nutzerzuordnung verbleiben.`;
-  msg+='\n\nTrotzdem löschen?';
-  if(confirm(msg))deleteUser(i);
+  const L=S.lang==='en';
+  let msg=L?`"${u.name}" will be deleted.`:`„${u.name}" wird gelöscht.`;
+  if(entryCount>0)msg+=L?` This user has ${entryCount} log entr${entryCount===1?'y':'ies'} that will remain without a user assignment.`:` Dieser Nutzer hat ${entryCount} Protokolleintrag${entryCount===1?'':'einträge'}, die ohne Nutzerzuordnung verbleiben.`;
+  showCfm(L?'Delete User':'Nutzer löschen',msg,L?'Delete':'Löschen',()=>deleteUser(i));
 }
 function deleteUser(i){const uid=S.users[i].id;if(S.users.length<=1){showToast('Mindestens 1 Nutzer muss vorhanden sein.','error');return;}S.users.splice(i,1);if(S.activeUserId===uid)S.activeUserId=S.users[0].id;renderUserProfileList();}
 function saveUsers(){saveState();closeUserModal();renderActiveUserBar();updateHeaderUserDot();renderLog();}
@@ -6926,6 +6904,8 @@ function renderStats(){
   if(!fl.length){pane.innerHTML=html+`<div class="stat-empty"><div style="font-size:40px;margin-bottom:12px">📊</div>${S.lang==='en'?'No data for this period.':'Keine Daten für diesen Zeitraum.'}<br><small style="color:#4a5a70;font-size:11px">${S.lang==='en'?'Select another period or count drinks.':'Anderen Zeitraum wählen oder Getränke zählen.'}</small></div>`;return;}
   const L=S.lang==='en';
   const tot=fl.reduce((s,e)=>s+(e.price||0),0),n=fl.length;
+  // FIX V47 F7: drinkMap einmal aufbauen – ersetzt S.drinks.find() in forEach-Loops
+  const drinkMap=Object.fromEntries(S.drinks.map(d=>[d.id,d]));
   // Group by entry's own recorded timezone local day (entryLogicalDayStr)
   // This ensures merged data from different timezone devices counts correctly
   const dm={};
@@ -6954,7 +6934,7 @@ function renderStats(){
   /* ── INKLUSIVE ── */
   (()=>{
     let inclCount=0,inclTotal=0,notInclCount=0,notInclTotal=0;
-    fl.forEach(e=>{const d=S.drinks.find(x=>x.id===e.drinkId);if(d&&d.included){inclCount++;inclTotal+=(e.price||0);}else{notInclCount++;notInclTotal+=(e.price||0);}});
+    fl.forEach(e=>{const d=drinkMap[e.drinkId];if(d&&d.included){inclCount++;inclTotal+=(e.price||0);}else{notInclCount++;notInclTotal+=(e.price||0);}});
     if(inclCount>0||notInclCount>0){
       const inclPct=n>0?Math.round(inclCount/n*100):0;
       html+=`<div class="stat-card" data-sc="inclvnotincl"><div class="stat-card-title">⬤ ${L?'Included vs. Not Included':'Inklusive vs. Nicht inklusive'}</div>
@@ -7059,7 +7039,7 @@ function renderStats(){
   html+=`</div>`;
 
   /* ── BY CATEGORY ── */
-  const cm={};fl.forEach(e=>{const d=S.drinks.find(x=>x.id===e.drinkId),cat=d?d.cat:(L?'Other':'Sonstiges');if(!cm[cat])cm[cat]={count:0,total:0,prices:[]};cm[cat].count++;cm[cat].total+=(e.price||0);cm[cat].prices.push(e.price||0);});
+  const cm={};fl.forEach(e=>{const d=drinkMap[e.drinkId],cat=d?d.cat:(L?'Other':'Sonstiges');if(!cm[cat])cm[cat]={count:0,total:0,prices:[]};cm[cat].count++;cm[cat].total+=(e.price||0);cm[cat].prices.push(e.price||0);});
   const ck=Object.keys(cm).sort((a,b)=>cm[b].total-cm[a].total);
   if(ck.length){html+=`<div class="stat-card" data-sc="bycat"><div class="stat-card-title">${T('stat.by_cat')}</div>`;ck.forEach(cat=>{const{count:cc,total:ct,prices}=cm[cat],bp=tot>0?(ct/tot*100):0,pct=tot>0?(ct/tot*100).toFixed(1)+'%':'–',avgP=prices.length?prices.reduce((a,b)=>a+b,0)/prices.length:0,col=catColor(cat);html+=`<div class="stat-day-row"><div class="stat-day-label"><span class="cdot" style="background:${col}"></span>${esc(cat)}</div><div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:${bp}%;background:${col}"></div></div><div class="stat-day-cnt">${fmtNum(cc)}×</div><div class="stat-pct">${pct}</div><div class="stat-day-total">${eur(ct)}</div></div><div class="cat-avg">${T('cat.avg')}: ${eur(avgP)}</div>`;});html+=`</div>`;}
 
@@ -7910,8 +7890,8 @@ function renderVerwaltung(){
     </div>
     <div style="font-size:11px;color:var(--tx2);line-height:1.7;margin-bottom:12px;padding:9px 11px;background:#0a1f10;border-radius:8px;border-left:3px solid #2a7a4a55">
       ${L
-        ?'Creates a complete <strong>1:1 copy of the app</strong> as an HTML file – with all settings, design, route, drinks, log and all entries. Open the file in Edge to continue exactly where you left off. Perfect for archiving or transferring to another device.'
-        :'Erstellt eine vollständige <strong>1:1-Kopie der App</strong> als HTML-Datei – mit allen Einstellungen, Design, Route, Getränken, Protokoll und allen Einträgen. Datei in Edge öffnen und direkt weitermachen. Ideal zur Archivierung oder Übertragung auf ein anderes Gerät.'}
+        ?'Creates a complete <strong>1:1 copy of the app</strong> as an HTML file – with all settings, design, route, drinks, log and all entries. Open the file in Safari to continue exactly where you left off. Perfect for archiving or transferring to another device.'
+        :'Erstellt eine vollständige <strong>1:1-Kopie der App</strong> als HTML-Datei – mit allen Einstellungen, Design, Route, Getränken, Protokoll und allen Einträgen. Datei in Safari öffnen und direkt weitermachen. Ideal zur Archivierung oder Übertragung auf ein anderes Gerät.'}
     </div>
     <div style="display:flex;gap:8px">
       <button onclick="shareAppAsHTML()" style="flex:1;padding:13px;background:transparent;border:2px solid #2a7a4a88;border-radius:10px;color:#5ec98a;font-family:Georgia,serif;font-size:13px;font-weight:bold;cursor:pointer;letter-spacing:.3px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:7px">
@@ -7923,8 +7903,8 @@ function renderVerwaltung(){
     </div>
     <div style="margin-top:8px;padding:8px 10px;background:var(--bg3);border-radius:7px;border-left:3px solid var(--ac-20);font-size:11px;color:var(--tx2);line-height:1.6">
       ${L
-        ?'💡 <strong>Tip:</strong> In the share menu, choose <strong>"Save to Files"</strong> to store the file in the iOS Files app. Reopen later via Files app → Share → Edge.'
-        :'💡 <strong>Tipp:</strong> Waehle im Teilen-Menue <strong>In Dateien sichern</strong>, um die Datei in der iOS Dateien-App zu speichern. Oeffne sie spaeter ueber Dateien-App → Teilen → Edge.'}
+        ?'💡 <strong>Tip:</strong> In the share menu, choose <strong>"Save to Files"</strong> to store the file in the iOS Files app. Reopen later via Files app → Share → Open in Safari.'
+        :'💡 <strong>Tipp:</strong> Wähle im Teilen-Menü <strong>In Dateien sichern</strong>, um die Datei in der iOS Dateien-App zu speichern. Öffne sie später über Dateien-App → Teilen → In Safari öffnen.'}
     </div>
   </div>
 
@@ -8121,7 +8101,7 @@ function renderHelp(){
   <button class="hlp-nav-btn" onclick="hlpNav('acc-backup')"><span class="hlp-nav-ico">💾</span>${h('Backup','Backup')}</button>
   <button class="hlp-nav-btn" onclick="hlpNav('acc-cruise')"><span class="hlp-nav-ico">🚢</span>${h('Kreuzfahrt','Cruise')}</button>
   <button class="hlp-nav-btn" onclick="hlpNav('acc-route')"><span class="hlp-nav-ico">🗺️</span>${h('Reiseroute','Route')}</button>
-  <button class="hlp-nav-btn" onclick="hlpNav('acc-iphone')"><span class="hlp-nav-ico">📱</span>${h('iPhone & Edge','iPhone & Edge')}</button>
+  <button class="hlp-nav-btn" onclick="hlpNav('acc-iphone')"><span class="hlp-nav-ico">📱</span>${h('iPhone & PWA','iPhone & PWA')}</button>
   <button class="hlp-nav-btn" onclick="hlpNav('acc-pwa')"><span class="hlp-nav-ico">🏠</span>${h('App installieren','Install App')}</button>
   <button class="hlp-nav-btn" onclick="hlpNav('acc-smartsync')"><span class="hlp-nav-ico">🔄</span>${h('Smart Sync','Smart Sync')}</button>
 </div>
@@ -8192,7 +8172,7 @@ function renderHelp(){
 
     <div class="hlp-card">
       <div class="hlp-card-title">🚀 ${h('Onboarding – Erste Schritte','Onboarding – First Steps')}</div>
-      <div class="hlp-info">ℹ️ ${h('Beim ersten Start erscheint ein kurzes Onboarding (3 Schritte). Alle Infos sind hier im Hilfe-Tab jederzeit abrufbar.','On first launch, a short 3-step onboarding guide appears. All information is available here at any time.')}</div>
+      <div class="hlp-info">ℹ️ ${h('Beim ersten Start erscheint ein kurzes Onboarding (10 Schritte). Alle Infos sind hier im Hilfe-Tab jederzeit abrufbar.','On first launch, a short 10-step onboarding guide appears. All information is available here at any time.')}</div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('Header nach Setup','Header after setup')}</span><span>${h('Nach Abschluss des Onboardings klappt der Header automatisch ein – die App startet direkt im Betriebsmodus mit maximalem Platz für die Getränkeliste. Er lässt sich jederzeit durch Antippen des schmalen Streifens oder Wischen nach unten wieder aufklappen.','After completing onboarding, the header automatically collapses – the app starts directly in operating mode with maximum space for the drink list. It can be expanded at any time by tapping the thin strip or swiping downward.')}</span></div>
     </div>
 
@@ -8437,12 +8417,12 @@ function renderHelp(){
     <div class="hlp-card" style="margin-top:10px">
       <div class="hlp-card-title">💾 ${h('Backup &amp; Daten (immer sichtbar)','Backup &amp; Data (always visible)')}</div>
       <div class="hlp-row"><span class="hlp-badge blue">💽 ${h('Speicher','Storage')}</span><span>${h('Die App nutzt IndexedDB – kein festes Speicherlimit. Einträge werden zuverlässig gespeichert, egal wie lang die Reise dauert. Regelmäßige Backups trotzdem empfohlen.','The app uses IndexedDB – no fixed storage limit. Entries are saved reliably no matter how long the voyage. Regular backups are still recommended.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge gold">📤 ${h('Backup speichern','Save backup')}</span><span>${h('Speichert <strong>alle Daten</strong> als JSON-Datei (Download): Getränkeliste, komplettes Protokoll, Einstellungen, Nutzer-Profile, Reisebudgets, Zeitzone, Farbschema, Titelzeilen. Im Edge-Download-Menü die Datei antippen → <strong>Teilen</strong> → <em>In Dateien sichern</em> → iCloud Drive oder „Auf meinem iPhone".','Saves <strong>all data</strong> as a JSON file (download): drink list, complete log, settings, user profiles, travel budgets, timezone, colour scheme, title lines. In Edge downloads tap the file → <strong>Share</strong> → <em>Save to Files</em> → iCloud Drive or "On My iPhone".')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge gold">📡 ${h('Backup teilen','Share backup')}</span><span>${h('Öffnet den <strong>nativen iOS-Teilen-Dialog</strong> direkt aus der App heraus – ohne Umweg über das Edge-Download-Menü. Die Backup-JSON-Datei wird über folgende Wege geteilt:<br>• <strong>AirDrop</strong>: Empfänger-iPhone erscheint im Sheet → Ein Tap → Datei wird übertragen → landet in Dateien-App des Empfängers<br>• <strong>WhatsApp / iMessage / Signal</strong>: Kontakt wählen → Senden → Empfänger kann Anhang direkt in Dateien sichern<br>• <strong>E-Mail</strong>: Mail-App öffnet sich, Datei als Anhang, Betreff vorausgefüllt<br>• <strong>In Dateien sichern</strong>: Ordner auf eigenem Gerät wählen (lokales Backup, kein Empfänger nötig)<br>• <strong>iCloud Drive / Google Drive / Dropbox</strong>: falls installiert, erscheinen direkt im Sheet<br><em>Hinweis: Der Empfänger erhält die JSON-Backup-Datei (nicht die App selbst). Er importiert sie über VERWALTUNG → 📥 Backup laden.</em>','Opens the <strong>native iOS share sheet</strong> directly from within the app – without going via the Edge download menu. The backup JSON file can be shared via:<br>• <strong>AirDrop</strong>: recipient iPhone appears in the sheet → one tap → file is transferred → lands in recipient\'s Files app<br>• <strong>WhatsApp / iMessage / Signal</strong>: choose contact → send → recipient can save attachment to Files<br>• <strong>Email</strong>: Mail app opens with file attached, subject pre-filled<br>• <strong>Save to Files</strong>: choose a folder on your own device (local backup, no recipient needed)<br>• <strong>iCloud Drive / Google Drive / Dropbox</strong>: if installed, appear directly in the sheet<br><em>Note: the recipient gets the JSON backup file (not the app itself). They import it via MANAGEMENT → 📥 Restore backup.</em>')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge gold">📤 ${h('Backup speichern','Save backup')}</span><span>${h('Speichert <strong>alle Daten</strong> als JSON-Datei (Download): Getränkeliste, komplettes Protokoll, Einstellungen, Nutzer-Profile, Reisebudgets, Zeitzone, Farbschema, Titelzeilen. Der <strong>iOS-Teilen-Dialog</strong> öffnet sich direkt → <em>In Dateien sichern</em> → iCloud Drive oder „Auf meinem iPhone", oder per AirDrop / WhatsApp / E-Mail.','Saves <strong>all data</strong> as a JSON file (download): drink list, complete log, settings, user profiles, travel budgets, timezone, colour scheme, title lines. In Edge downloads tap the file → <strong>Share</strong> → <em>Save to Files</em> → iCloud Drive or "On My iPhone".')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge gold">📡 ${h('Backup teilen','Share backup')}</span><span>${h('Öffnet den <strong>nativen iOS-Teilen-Dialog</strong> direkt aus der App heraus – direkt aus der App heraus. Die Backup-JSON-Datei wird über folgende Wege geteilt:<br>• <strong>AirDrop</strong>: Empfänger-iPhone erscheint im Sheet → Ein Tap → Datei wird übertragen → landet in Dateien-App des Empfängers<br>• <strong>WhatsApp / iMessage / Signal</strong>: Kontakt wählen → Senden → Empfänger kann Anhang direkt in Dateien sichern<br>• <strong>E-Mail</strong>: Mail-App öffnet sich, Datei als Anhang, Betreff vorausgefüllt<br>• <strong>In Dateien sichern</strong>: Ordner auf eigenem Gerät wählen (lokales Backup, kein Empfänger nötig)<br>• <strong>iCloud Drive / Google Drive / Dropbox</strong>: falls installiert, erscheinen direkt im Sheet<br><em>Hinweis: Der Empfänger erhält die JSON-Backup-Datei (nicht die App selbst). Er importiert sie über VERWALTUNG → 📥 Backup laden.</em>','Opens the <strong>native iOS share sheet</strong> directly from within the app – directly from within the app. The backup JSON file can be shared via:<br>• <strong>AirDrop</strong>: recipient iPhone appears in the sheet → one tap → file is transferred → lands in recipient\'s Files app<br>• <strong>WhatsApp / iMessage / Signal</strong>: choose contact → send → recipient can save attachment to Files<br>• <strong>Email</strong>: Mail app opens with file attached, subject pre-filled<br>• <strong>Save to Files</strong>: choose a folder on your own device (local backup, no recipient needed)<br>• <strong>iCloud Drive / Google Drive / Dropbox</strong>: if installed, appear directly in the sheet<br><em>Note: the recipient gets the JSON backup file (not the app itself). They import it via MANAGEMENT → 📥 Restore backup.</em>')}</span></div>
       <div class="hlp-row"><span class="hlp-badge gold">📥 ${h('Backup importieren','Import backup')}</span><span>${h('JSON-Datei auswählen → <strong>Vorschau</strong> zeigt Details (Exportdatum, Zeitraum, Anzahl Einträge, neue Einträge, bereits vorhandene) → dann wählen:<br>• <strong>📥 Ergänzen (Merge)</strong> – fügt nur neue Einträge hinzu, vorhandene Daten und Einstellungen bleiben erhalten. Sicher für tägliche Synchronisation. Duplikate werden automatisch erkannt und übersprungen.<br>• <strong>⚠️ Ersetzen</strong> – löscht <em>alle</em> vorhandenen Daten und ersetzt durch Backup vollständig. Nur bei Gerätewechsel oder nach Reset verwenden.','Select JSON file → <strong>preview</strong> shows details (export date, period, entry count, new entries, already present) → then choose:<br>• <strong>📥 Merge</strong> – adds only new entries, existing data and settings are preserved. Safe for daily sync. Duplicates are detected and skipped automatically.<br>• <strong>⚠️ Replace</strong> – deletes <em>all</em> existing data and replaces with backup completely. Only use on device change or after reset.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge gold">👤 ${h('Nutzer-Zuordnungs-Dialog','User mapping dialog')}</span><span>${h('Wenn ein Backup <strong>andere Namen</strong> für die festen Nutzerplätze 1–4 enthält als lokal gespeichert, erscheint nach dem Import automatisch der Dialog <strong>„Nutzer-Zuordnung prüfen"</strong>. Er zeigt pro Platz:<br>• <strong>Lokalname</strong> (aktuell auf diesem Gerät) → <strong>Backup-Name</strong> (aus der Datei)<br>• Schaltfläche <strong>Umbenennen</strong> (standard: aktiv, gold): lokalen Namen durch Backup-Namen ersetzen<br>• Schaltfläche <strong>Behalten</strong>: lokalen Namen unverändert lassen<br>→ <strong>✓ Übernehmen</strong>: alle als „Umbenennen" markierten Plätze werden aktualisiert.<br>→ <strong>Überspringen</strong>: alle lokalen Namen bleiben unverändert.<br><em>Empfehlung: „Überspringen" wenn alle Geräte in der Gruppe bereits einheitlich benannt sind. „Übernehmen" wenn du von einem neuen Gerät importierst und die Backup-Namen korrekter sind.</em>','When a backup contains <strong>different names</strong> for fixed user slots 1–4 than stored locally, the dialog <strong>"Check user mapping"</strong> appears automatically after import. It shows per slot:<br>• <strong>Local name</strong> (currently on this device) → <strong>Backup name</strong> (from the file)<br>• Button <strong>Rename</strong> (default: active, gold): replace local name with backup name<br>• Button <strong>Keep</strong>: leave local name unchanged<br>→ <strong>✓ Apply</strong>: all slots marked "Rename" are updated.<br>→ <strong>Skip</strong>: all local names remain unchanged.<br><em>Recommendation: "Skip" if all devices in the group are already named consistently. "Apply" if importing from a new device where the backup names are more correct.</em>')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">📊 ${h('Protokoll CSV','Log CSV')}</span><span>${h('Exportiert das <strong>vollständige</strong> Protokoll als CSV-Datei (kein Filter, alle Einträge). Felder: Datum, Uhrzeit, Zeitzone, Nutzer, Getränkename, Preis, Kategorie, Hafen/Ort, Notiz. CSV-Import empfangen: Edge → Downloads → Teilen → Numbers oder Excel.','Exports the <strong>complete</strong> log as a CSV file (no filter, all entries). Fields: date, time, timezone, user, drink name, price, category, port/location, note. Receive CSV: Edge → Downloads → Share → Numbers or Excel.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">📄 ${h('PDF-Reisebericht','PDF voyage report')}</span><span>${h('Öffnet einen vollständigen <strong>Reisebericht</strong> als neue Browser-Seite (HTML-Druckansicht). Enthält:<br>• Übersichts-KPIs (Gesamtbetrag, Anzahl, Tage, Durchschnitte)<br>• Top-10-Getränke<br>• Ausgaben pro Nutzer (mit Budget falls gesetzt)<br>• Ausgaben nach Hafen (falls Hafen-Daten vorhanden)<br>• Ausgaben nach Kategorie<br>• Zeitzonenverlauf der Reise (falls vorhanden)<br>• Tagesübersicht (bis 365 Tage)<br>In Edge: <strong>Teilen → Drucken</strong> → Ziel: <strong>Als PDF sichern</strong> → iCloud Drive. Enthält immer <em>alle</em> Einträge, kein Filter.','Opens a complete <strong>voyage report</strong> as a new browser page (HTML print view). Contains:<br>• Overview KPIs (total, count, days, averages)<br>• Top-10 drinks<br>• Spending per user (with budget if set)<br>• Spending by port (if port data exists)<br>• Spending by category<br>• Timezone journey of the voyage (if present)<br>• Daily overview (up to 365 days)<br>In Edge: <strong>Share → Print</strong> → target: <strong>Save as PDF</strong> → iCloud Drive. Always contains <em>all</em> entries, no filter.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">📊 ${h('Protokoll CSV','Log CSV')}</span><span>${h('Exportiert das <strong>vollständige</strong> Protokoll als CSV-Datei (kein Filter, alle Einträge). Felder: Datum, Uhrzeit, Zeitzone, Nutzer, Getränkename, Preis, Kategorie, Hafen/Ort, Notiz. CSV empfangen: iOS-Teilen-Dialog → In Dateien sichern → Numbers oder Excel öffnen.','Exports the <strong>complete</strong> log as a CSV file (no filter, all entries). Fields: date, time, timezone, user, drink name, price, category, port/location, note. Receive CSV: iOS share sheet → Save to Files → open in Numbers or Excel.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">📄 ${h('PDF-Reisebericht','PDF voyage report')}</span><span>${h('Öffnet einen vollständigen <strong>Reisebericht</strong> als neue Browser-Seite (HTML-Druckansicht). Enthält:<br>• Übersichts-KPIs (Gesamtbetrag, Anzahl, Tage, Durchschnitte)<br>• Top-10-Getränke<br>• Ausgaben pro Nutzer (mit Budget falls gesetzt)<br>• Ausgaben nach Hafen (falls Hafen-Daten vorhanden)<br>• Ausgaben nach Kategorie<br>• Zeitzonenverlauf der Reise (falls vorhanden)<br>• Tagesübersicht (bis 365 Tage)<br>Im Browser: <strong>Teilen → Drucken</strong> → Ziel: <strong>Als PDF sichern</strong> → iCloud Drive. Enthält immer <em>alle</em> Einträge, kein Filter.','Opens a complete <strong>voyage report</strong> as a new browser page (HTML print view). Contains:<br>• Overview KPIs (total, count, days, averages)<br>• Top-10 drinks<br>• Spending per user (with budget if set)<br>• Spending by port (if port data exists)<br>• Spending by category<br>• Timezone journey of the voyage (if present)<br>• Daily overview (up to 365 days)<br>In the browser: <strong>Share → Print</strong> → target: <strong>Save as PDF</strong> → iCloud Drive. Always contains <em>all</em> entries, no filter.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">📤 ${h('Export &amp; Übertragung','Export &amp; Transfer')}</span><span>${h('Unter Backup &amp; Daten im Einstellungs-Tab. CSV, App-Export und weitere Optionen sind hinter <strong>„Export &amp; Übertragung"</strong> versteckt – antippen zum Aufklappen.','Under Backup &amp; Data in the Settings tab. CSV, app export and more are behind <strong>"Export &amp; Transfer"</strong> – tap to expand.')}</span></div>
     <div class="hlp-card">
       <div class="hlp-card-title">💾 ${h('Daten sichern &amp; synchronisieren','Backup &amp; sync data')}</div>
@@ -8497,7 +8477,7 @@ function renderHelp(){
       <div class="hlp-row"><span class="hlp-badge gold">📤 ${h('Alle exportieren (Bundle)','Export all (Bundle)')}</span><span>${h('Schaltfläche <strong>📤 Alle exportieren</strong> am Ende des Abschnitts: Exportiert <em>alle</em> eigenen Konzepte als ein einziges Bundle in einem Code. Ideal zum Sichern aller eigenen Konzepte oder zum Übertragen auf ein anderes Gerät. Beim Import eines Bundles werden alle enthaltenen Konzepte auf einmal importiert.','Button <strong>📤 Export all</strong> at the bottom of the section: Exports <em>all</em> custom concepts as a single bundle in one code. Ideal for backing up all custom concepts or transferring to another device. When importing a bundle, all contained concepts are imported at once.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge gold">📥 ${h('Konzept importieren','Import concept')}</span><span>${h('Schaltfläche <strong>📥 Konzept importieren</strong>: Eingabe eines Export-Codes (Einzelkonzept oder Bundle) aus der Zwischenablage oder gespeicherten .txt-Datei. Einzelne Codes und Bundle-Codes werden automatisch erkannt.','Button <strong>📥 Import concept</strong>: Enter an export code (single concept or bundle) from the clipboard or a saved .txt file. Single codes and bundle codes are automatically detected.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">🔍 ${h('Icon-Suche','Icon Search')}</span><span>${h('Im Suchfeld oben im Icon-Bereich kann nach Emojis gesucht werden. Die Suche durchsucht alle 6 Kategorien gleichzeitig. Einfach tippen – die Ergebnisse erscheinen sofort.','In the search field at the top of the icon area you can search for emojis. The search covers all 6 categories at once. Just type – results appear instantly.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge gold">📥 ${h('Eigene Icons importieren','Import custom icons')}</span><span>${h('Im Tab <strong>📥 Eigene</strong> des Icon-Pickers können eigene Bilder als Konzept-Icon importiert werden:<br>• Unterstützte Formate: <strong>PNG, JPG, SVG, GIF, WebP</strong><br>• Maximale Dateigröße: <strong>1 MB</strong> pro Icon<br>• Maximal <strong>20 eigene Icons</strong> gleichzeitig gespeichert<br>• Antippen von <strong>➕</strong> öffnet die Dateiauswahl des iPhones (Fotos, Dateien-App, Cloud-Quellen)<br>• Jedes importierte Icon kann mit <strong>✕</strong> wieder gelöscht werden<br>• Eigene Icons werden dauerhaft in Edge gespeichert und bleiben auch nach Schließen der App erhalten<br>• <em>Empfehlung: SVG-Dateien eignen sich am besten – sie sind klein und verlustfrei skalierbar.</em>','In the <strong>📥 Custom</strong> tab of the icon picker, your own images can be imported as a concept icon:<br>• Supported formats: <strong>PNG, JPG, SVG, GIF, WebP</strong><br>• Maximum file size: <strong>1 MB</strong> per icon<br>• Maximum <strong>20 custom icons</strong> stored simultaneously<br>• Tapping <strong>➕</strong> opens the iPhone file picker (Photos, Files app, cloud sources)<br>• Each imported icon can be deleted with <strong>✕</strong><br>• Custom icons are permanently stored in Edge and remain available after closing the app<br>• <em>Tip: SVG files work best – they are small and scale without quality loss.</em>')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge gold">📥 ${h('Eigene Icons importieren','Import custom icons')}</span><span>${h('Im Tab <strong>📥 Eigene</strong> des Icon-Pickers können eigene Bilder als Konzept-Icon importiert werden:<br>• Unterstützte Formate: <strong>PNG, JPG, SVG, GIF, WebP</strong><br>• Maximale Dateigröße: <strong>1 MB</strong> pro Icon<br>• Maximal <strong>20 eigene Icons</strong> gleichzeitig gespeichert<br>• Antippen von <strong>➕</strong> öffnet die Dateiauswahl des iPhones (Fotos, Dateien-App, Cloud-Quellen)<br>• Jedes importierte Icon kann mit <strong>✕</strong> wieder gelöscht werden<br>• Eigene Icons werden dauerhaft in der App gespeichert (IndexedDB) und bleiben auch nach Schließen der App erhalten<br>• <em>Empfehlung: SVG-Dateien eignen sich am besten – sie sind klein und verlustfrei skalierbar.</em>','In the <strong>📥 Custom</strong> tab of the icon picker, your own images can be imported as a concept icon:<br>• Supported formats: <strong>PNG, JPG, SVG, GIF, WebP</strong><br>• Maximum file size: <strong>1 MB</strong> per icon<br>• Maximum <strong>20 custom icons</strong> stored simultaneously<br>• Tapping <strong>➕</strong> opens the iPhone file picker (Photos, Files app, cloud sources)<br>• Each imported icon can be deleted with <strong>✕</strong><br>• Custom icons are permanently stored in the app (IndexedDB) and remain available after closing the app<br>• <em>Tip: SVG files work best – they are small and scale without quality loss.</em>')}</span></div>
       <div class="hlp-tip">💡 ${h('<strong>Empfehlung Langzeitnutzung:</strong> Je ein dunkles (z. B. Kapitänsbuch oder Tiefsee), ein warmes (z. B. Capitaine) und ein helles (z. B. Sonnendeck oder Champagner) Konzept als Favoriten wählen → für Kabine, Abend und Sonnendeck optimal abgedeckt.','<strong>Long-term use tip:</strong> Set one dark (e.g. Captain\'s Log or Deep Sea), one warm (e.g. Capitaine) and one light (e.g. Sun Deck or Champagne) concept as favourites → optimal coverage for cabin, evening and sun deck.')}</div>
 
     <div class="hlp-card">
@@ -8520,15 +8500,15 @@ function renderHelp(){
 
     <div class="hlp-card" style="border-color:#2a7a4a55;background:#081a10">
       <div class="hlp-card-title" style="color:#5ec98a">📲 ${h('App als HTML-Datei exportieren','Export app as HTML file')}</div>
-      <div class="hlp-row"><span class="hlp-badge green">${h('App teilen (HTML)','Share app (HTML)')}</span><span>${h('Erstellt eine <strong>vollständige 1:1-Kopie der App</strong> als HTML-Datei und öffnet den iOS-Teilen-Dialog. Alle aktuellen Daten – Einstellungen, Design-Konzept, Reiseroute, Getränkeliste, Protokoll und alle Einträge – sind direkt in die HTML-Datei eingebettet. Die Datei kann per AirDrop, iCloud Drive, E-Mail o. ä. weitergegeben und in Edge geöffnet werden.','Creates a <strong>complete 1:1 copy of the app</strong> as an HTML file and opens the iOS share sheet. All current data – settings, design concept, voyage route, drink list, log and all entries – are embedded directly into the HTML file. The file can be shared via AirDrop, iCloud Drive, email etc. and opened in Edge.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge green">${h('App speichern (HTML)','Save app (HTML)')}</span><span>${h('Lädt die HTML-Datei direkt herunter (erscheint im Edge-Download-Menü). Von dort per <em>Teilen → In Dateien sichern</em> dauerhaft speichern. Ideal zur Archivierung eines bestimmten Reiseabschnitts.','Downloads the HTML file directly (appears in Edge download menu). From there, use <em>Share → Save to Files</em> to save it permanently. Ideal for archiving a specific voyage segment.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge green">${h('So öffnen','How to open')}</span><span>${h('Exportierte Datei in der <strong>Dateien</strong>-App auswählen → Teilen → <strong>In Edge öffnen</strong>. Die App startet sofort mit allen gespeicherten Daten – kein Import nötig. Läuft vollständig offline.','Select the exported file in the <strong>Files</strong> app → Share → <strong>Open in Edge</strong>. The app starts immediately with all saved data – no import needed. Works fully offline.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge green">${h('App teilen (HTML)','Share app (HTML)')}</span><span>${h('Erstellt eine <strong>vollständige 1:1-Kopie der App</strong> als HTML-Datei und öffnet den iOS-Teilen-Dialog. Alle aktuellen Daten – Einstellungen, Design-Konzept, Reiseroute, Getränkeliste, Protokoll und alle Einträge – sind direkt in die HTML-Datei eingebettet. Die Datei kann per AirDrop, iCloud Drive, E-Mail o. ä. weitergegeben und in Safari geöffnet werden.','Creates a <strong>complete 1:1 copy of the app</strong> as an HTML file and opens the iOS share sheet. All current data – settings, design concept, voyage route, drink list, log and all entries – are embedded directly into the HTML file. The file can be shared via AirDrop, iCloud Drive, email etc. and opened in Safari.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge green">${h('App speichern (HTML)','Save app (HTML)')}</span><span>${h('Lädt die vollständige App als HTML-Datei herunter. Der <strong>iOS-Teilen-Dialog</strong> öffnet sich → <em>In Dateien sichern</em> zum dauerhaften Speichern. Ideal zur Archivierung eines bestimmten Reiseabschnitts.','Downloads the complete app as an HTML file. The <strong>iOS share sheet</strong> opens → <em>Save to Files</em> to save permanently. Ideal for archiving a specific voyage segment.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge green">${h('So öffnen','How to open')}</span><span>${h('GitHub-Link in <strong>Safari</strong> öffnen → zum Home-Bildschirm als PWA hinzufügen. Oder: exportierte HTML-Datei in der <strong>Dateien</strong>-App antippen → Teilen → <strong>In Safari öffnen</strong>. Die App startet sofort mit allen gespeicherten Daten – kein Import nötig. Läuft vollständig offline.','Open the GitHub link in <strong>Safari</strong> → add to Home Screen as a PWA. Or: select the exported HTML file in the <strong>Files</strong> app → Share → <strong>Open in Safari</strong>. The app starts with all saved data – no import needed. Works fully offline.')}</span></div>
     </div>
 
     <div class="hlp-card" style="border-color:#e0555533;background:#1e0808">
       <div class="hlp-card-title" style="color:#e07070">🔴 ${h('Zurücksetzen (Gefahrenbereich)','Reset (Danger zone)')}</div>
       <div class="hlp-row"><span class="hlp-badge red">${h('Zähler &amp; Protokoll zurücksetzen','Reset counters &amp; log')}</span><span>${h('Setzt alle Zähler auf 0 und löscht das gesamte Protokoll. <strong>Vor dem Reset wird automatisch ein Backup heruntergeladen</strong> (muss manuell in Dateien gespeichert werden!). Getränkeliste, Einstellungen, Nutzer-Profile und Reisebudgets bleiben vollständig erhalten. <strong>Nicht rückgängig machbar!</strong>','Resets all counters to 0 and deletes the entire log. <strong>A backup is automatically downloaded before the reset</strong> (must be manually saved to Files!). Drink list, settings, user profiles and travel budgets are fully preserved. <strong>Cannot be undone!</strong>')}</span></div>
-      <div class="hlp-danger">⚠️ ${h('Vor jedem Reset zuerst manuell ein Backup teilen oder speichern (<strong>📡 Backup teilen</strong> oder 📤 Backup speichern). Der beim Reset automatisch heruntergeladene Pre-Reset-Backup erscheint im Edge-Download-Menü und muss von dort per Teilen → In Dateien sichern gespeichert werden!','Before every reset first manually share or save a backup (<strong>📡 Share backup</strong> or 📤 Save backup). The automatically downloaded pre-reset backup appears in the Edge download menu and must be saved from there via Share → Save to Files!')}</div>
+      <div class="hlp-danger">⚠️ ${h('Vor jedem Reset zuerst manuell ein Backup teilen oder speichern (<strong>📡 Backup teilen</strong> oder 📤 Backup speichern). Der beim Reset automatisch erstellte Pre-Reset-Backup wird über den iOS-Teilen-Dialog geteilt – dort <em>In Dateien sichern</em> wählen, um ihn dauerhaft zu sichern!','Before every reset first manually share or save a backup (<strong>📡 Share backup</strong> or 📤 Save backup). The automatically created pre-reset backup is shared via the iOS share sheet – choose <em>Save to Files</em> there to keep it permanently!')}</div>
     </div>
 
   </div>
@@ -8609,8 +8589,8 @@ function renderHelp(){
       <div style="font-size:11px;font-weight:bold;color:var(--tx1);letter-spacing:.5px;margin:10px 0 6px">📥 ${h('Alternativer Weg – Download + manuell sichern','Alternative – download + save manually')}</div>
       <div class="hlp-steps">
         <div class="hlp-step"><div class="hlp-step-num">1</div><span>${h('Einstellungen → <strong>📤 Backup speichern</strong> antippen (oder <strong>💾 BKP</strong>-Button oben in der Tab-Leiste).','Settings → tap <strong>📤 Save backup</strong> (or the <strong>💾 BKP</strong> button at the top of the tab bar).')}</span></div>
-        <div class="hlp-step"><div class="hlp-step-num">2</div><span>${h('Edge lädt die Datei herunter. Download-Benachrichtigung antippen oder Edge-Menü (···) → Downloads öffnen.','Edge downloads the file. Tap the download notification or open Edge menu (···) → Downloads.')}</span></div>
-        <div class="hlp-step"><div class="hlp-step-num">3</div><span>${h('Backup-Datei antippen → <strong>Teilen</strong>-Symbol → <strong>In Dateien sichern</strong> → iCloud Drive wählen (empfohlen) oder „Auf meinem iPhone".','Tap the backup file → <strong>Share</strong> icon → <strong>Save to Files</strong> → choose iCloud Drive (recommended) or "On My iPhone".')}</span></div>
+        <div class="hlp-step"><div class="hlp-step-num">2</div><span>${h('Der iOS-Teilen-Dialog öffnet sich. Ziel wählen: <em>In Dateien sichern</em>, AirDrop, iCloud Drive …','The iOS share sheet opens. Choose destination: <em>Save to Files</em>, AirDrop, iCloud Drive …')}</span></div>
+        <div class="hlp-step"><div class="hlp-step-num">3</div><span>${h('Fertig – die Datei ist im gewählten Ziel gespeichert. Für iCloud Drive: im Teilen-Dialog <em>In Dateien sichern → iCloud Drive</em> wählen.','Done – the file is saved to the chosen destination. For iCloud Drive: in the share sheet choose <em>Save to Files → iCloud Drive</em>.')}</span></div>
       </div>
 
       <div style="font-size:11px;color:var(--tx2);margin-top:8px;line-height:1.6">🗓 ${h('<strong>Empfohlenes Intervall:</strong> nach jeder Schicht oder mindestens einmal pro Woche. Bei Kreuzfahrten: täglich.','<strong>Recommended interval:</strong> after every session or at least once a week. On cruises: daily.')}</div>
@@ -8620,7 +8600,7 @@ function renderHelp(){
       <div class="hlp-card-title">🔄 ${h('Daten auf neuem iPhone / nach App-Verlust wiederherstellen','Restore data on new iPhone / after app loss')}</div>
       <div class="hlp-steps">
         <div class="hlp-step"><div class="hlp-step-num">1</div><span>${h('HTML-Datei auf das neue iPhone übertragen (AirDrop, E-Mail, iCloud Drive oder USB-Kabel).','Transfer the HTML file to the new iPhone (AirDrop, email, iCloud Drive or USB cable).')}</span></div>
-        <div class="hlp-step"><div class="hlp-step-num">2</div><span>${h('HTML-Datei in der iOS-App <strong>Dateien</strong> antippen → Teilen → <strong>Microsoft Edge</strong> auswählen.','Tap the HTML file in the iOS <strong>Files</strong> app → Share → select <strong>Microsoft Edge</strong>.')}</span></div>
+        <div class="hlp-step"><div class="hlp-step-num">2</div><span>${h('HTML-Datei in der iOS-App <strong>Dateien</strong> antippen → Teilen → <strong>In Safari öffnen</strong> auswählen.','Tap the HTML file in the iOS <strong>Files</strong> app → Share → select <strong>Open in Safari</strong>.')}</span></div>
         <div class="hlp-step"><div class="hlp-step-num">3</div><span>${h('Tab <strong>EINSTELLUNGEN</strong> → <strong>📥 Backup importieren</strong> → neueste Backup-JSON-Datei auswählen → <strong>⚠️ Ersetzen</strong> wählen (auf dem neuen Gerät sind noch keine Daten vorhanden).','Tab <strong>SETTINGS</strong> → <strong>📥 Import backup</strong> → select the latest JSON backup file → choose <strong>⚠️ Replace</strong> (on the new device there is no existing data yet).')}</span></div>
         <div class="hlp-step"><div class="hlp-step-num">4</div><span>${h('Alle Daten, Einstellungen, Nutzer-Profile, Reisebudgets und Getränkeliste sind vollständig wiederhergestellt.','All data, settings, user profiles, travel budgets and drink list are fully restored.')}</span></div>
       </div>
@@ -8629,7 +8609,7 @@ function renderHelp(){
     <div class="hlp-card">
       <div class="hlp-card-title">🔀 ${h('Mehrere Backups zusammenführen – Schritt für Schritt','Merging multiple backups – step by step')}</div>
       <div class="hlp-steps">
-        <div class="hlp-step"><div class="hlp-step-num">1</div><span>${h('<strong>Nutzer A</strong>: Einstellungen → <strong>📡 Backup teilen</strong> → im iOS-Teilen-Sheet den AirDrop-Empfänger (Nutzer B) antippen → Datei wird direkt übertragen. Alternativ: 📤 Backup speichern → Edge-Downloads → Teilen → AirDrop.','<strong>User A</strong>: Settings → <strong>📡 Share backup</strong> → in the iOS share sheet tap the AirDrop recipient (User B) → file is transferred directly. Alternative: 📤 Save backup → Edge downloads → Share → AirDrop.')}</span></div>
+        <div class="hlp-step"><div class="hlp-step-num">1</div><span>${h('<strong>Nutzer A</strong>: Einstellungen → <strong>📡 Backup teilen</strong> → im iOS-Teilen-Sheet den AirDrop-Empfänger (Nutzer B) antippen → Datei wird direkt übertragen. Alternativ: 📤 Backup speichern → iOS-Teilen-Dialog → AirDrop.','<strong>User A</strong>: Settings → <strong>📡 Share backup</strong> → in the iOS share sheet tap the AirDrop recipient (User B) → file is transferred directly. Alternative: 📤 Save backup → iOS share sheet → AirDrop.')}</span></div>
         <div class="hlp-step"><div class="hlp-step-num">2</div><span>${h('<strong>Nutzer B</strong>: Datei aus AirDrop in Dateien-App speichern → Einstellungen → 📥 Backup importieren → Datei auswählen → Vorschau prüfen → <strong>📥 Ergänzen (Merge)</strong> wählen.','<strong>User B</strong>: save file from AirDrop in Files app → Settings → 📥 Import backup → select file → check preview → choose <strong>📥 Merge</strong>.')}</span></div>
         <div class="hlp-step"><div class="hlp-step-num">3</div><span>${h('Nutzer B hat nun <strong>alle Einträge beider Personen</strong> – korrekt mit Nutzer-Badge sortiert.','User B now has <strong>all entries of both people</strong> – correctly sorted with user badge.')}</span></div>
         <div class="hlp-step"><div class="hlp-step-num">4</div><span>${h('Optional: Nutzer B exportiert und sendet das kombinierte Backup zurück an Nutzer A, damit beide den vollständigen Gesamtüberblick haben.','Optional: User B exports and sends the combined backup back to User A, so both have the complete overview.')}</span></div>
@@ -8639,8 +8619,8 @@ function renderHelp(){
     </div>
 
     <div class="hlp-danger">⚠️ <strong>${h('Datenverlust-Risiken auf iPhone – unbedingt beachten!','Data loss risks on iPhone – important!')}</strong><br><br>
-    ${h('Alle Daten liegen im lokalen Browser-Speicher (<strong>localStorage</strong>). iOS kann diesen <strong>ohne Vorwarnung löschen</strong>, wenn der Gerätespeicher knapp wird.<br><br><strong>Situationen mit Datenverlust-Risiko:</strong><br>• iOS → Einstellungen → Safari → Verlauf und Websitedaten löschen<br>• Microsoft Edge wird deinstalliert und neu installiert<br>• Das iPhone wird auf Werkseinstellungen zurückgesetzt<br>• Das Gerät wird gewechselt<br>• iOS-Systemupdate (sehr selten, aber möglich)<br>• Edge-Update (sehr selten)<br><br>→ <strong>Einziger Schutz: regelmäßige JSON-Backups in iCloud Drive oder lokal auf dem iPhone sichern!</strong>',
-    'All data is stored in the browser\'s local storage (<strong>localStorage</strong>). iOS may <strong>delete this without warning</strong> when device storage is low.<br><br><strong>Situations with data loss risk:</strong><br>• iOS → Settings → Safari → Clear History and Website Data<br>• Microsoft Edge is uninstalled and reinstalled<br>• The iPhone is reset to factory settings<br>• The device is changed<br>• iOS system update (very rare but possible)<br>• Edge update (very rare)<br><br>→ <strong>Only protection: save regular JSON backups to iCloud Drive or locally on the iPhone!</strong>')}</div>
+    ${h('Die Daten liegen in <strong>IndexedDB</strong> (+ localStorage-Fallback). iOS kann diese <strong>ohne Vorwarnung löschen</strong>, wenn der Gerätespeicher knapp wird.<br><br><strong>Situationen mit Datenverlust-Risiko:</strong><br>• iOS → Einstellungen → Safari → Verlauf und Websitedaten löschen<br>• Das iPhone wird auf Werkseinstellungen zurückgesetzt<br>• Das Gerät wird gewechselt<br>• iOS-Systemupdate (sehr selten, aber möglich)<br><br>→ <strong>Einziger Schutz: regelmäßige JSON-Backups in iCloud Drive oder lokal auf dem iPhone sichern!</strong>',
+    'Data is stored in <strong>IndexedDB</strong> (+ localStorage fallback). iOS may <strong>delete this without warning</strong> when device storage is low.<br><br><strong>Situations with data loss risk:</strong><br>• iOS → Settings → Safari → Clear History and Website Data<br>• The iPhone is reset to factory settings<br>• The device is changed<br>• iOS system update (very rare but possible)<br><br>→ <strong>Only protection: save regular JSON backups to iCloud Drive or locally on the iPhone!</strong>')}</div>
 
     <div class="hlp-card" style="border-color:var(--col-err);background:rgba(208,85,85,0.07)">
       <div class="hlp-card-title" style="color:var(--col-err)">☁️ ${h('Wichtig: Deine Daten sind NICHT in iCloud gesichert!','Important: Your data is NOT backed up in iCloud!')}</div>
@@ -8781,13 +8761,13 @@ function renderHelp(){
      10. iPHONE & EDGE
 ══════════════════════════════════════════════════════════ -->
 <details class="hlp-acc" id="acc-iphone">
-  <summary><span class="hlp-acc-icon">📱</span><span>${h('iPhone &amp; Edge – Technische Hinweise','iPhone &amp; Edge – Technical Notes')}</span></summary>
+  <summary><span class="hlp-acc-icon">📱</span><span>${h('iPhone &amp; PWA – Technische Hinweise','iPhone &amp; PWA – Technical Notes')}</span></summary>
   <div class="hlp-acc-body">
 
     <div class="hlp-card">
       <div class="hlp-card-title">⚙️ ${h('Betrieb &amp; Kompatibilität','Operation &amp; compatibility')}</div>
-      <div class="hlp-row"><span class="hlp-badge gold">${h('So öffnet man die App','How to open the app')}</span><span>${h('HTML-Datei in der iOS-App <strong>Dateien</strong> antippen → Teilen → <strong>Microsoft Edge</strong> auswählen → die App öffnet sich direkt im Browser. Kein Server, keine Installation, kein Internet nötig. Die URL-Leiste zeigt eine lokale Datei-URL (beginnt mit file://).','Tap the HTML file in the iOS <strong>Files</strong> app → Share → select <strong>Microsoft Edge</strong> → the app opens directly in the browser. No server, no installation, no internet needed. The URL bar shows a local file URL (starts with file://).')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge gold">${h('Optimiert für Edge','Optimised for Edge')}</span><span>${h('Die App ist optimiert für <strong>Microsoft Edge auf iPhone 15+ und neuer</strong>. Edge verwendet auf iOS die WebKit-Engine (wie Safari). Alle Touch-Gesten, Animationen, Swipes und Speicherfunktionen sind auf diese Kombination abgestimmt.','The app is optimised for <strong>Microsoft Edge on iPhone 15+</strong>. Edge uses the WebKit engine on iOS (like Safari). All touch gestures, animations, swipes and storage functions are tuned for this combination.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge gold">${h('So öffnet man die App','How to open the app')}</span><span>${h('GitHub-Link in <strong>Safari</strong> öffnen → zum Home-Bildschirm hinzufügen (PWA). Die App läuft dann vollständig offline. Kein Server-Aufruf nötig – Service Worker liefert alle Inhalte aus dem Cache.','Open the GitHub link in <strong>Safari</strong> → add to Home Screen (PWA). The app then works fully offline. No server call needed – the service worker serves all content from cache.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge gold">${h('GitHub Pages PWA','GitHub Pages PWA')}</span><span>${h('Die App läuft als <strong>Progressive Web App (PWA) via GitHub Pages</strong>. Sie nutzt Safari/WebKit auf iOS. Alle Touch-Gesten, Animationen, Swipes und Speicherfunktionen sind auf iPhone optimiert. Einmalig in Safari öffnen und zum Home-Bildschirm hinzufügen – danach startet sie wie eine native App.','The app runs as a <strong>Progressive Web App (PWA) via GitHub Pages</strong>. It uses Safari/WebKit on iOS. All touch gestures, animations, swipes and storage functions are optimised for iPhone. Open in Safari once and add to the Home Screen – after that it launches like a native app.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('Hochformat (Portrait)','Portrait mode')}</span><span>${h('Optimiert für <strong>Hochformat</strong>. Querformat ist grundsätzlich funktional, aber Layout und Lesbarkeit sind auf Hochformat ausgelegt.','Optimised for <strong>portrait mode</strong>. Landscape is functional but the layout and readability are designed for portrait.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('Dynamic Island &amp; Home-Indikator','Dynamic Island &amp; Home indicator')}</span><span>${h('Die App berücksichtigt die Safe-Area des iPhones (Dynamic Island oben, Home-Indikator unten). Inhalte werden nicht von Systemelementen abgeschnitten.','The app respects the iPhone\'s safe area (Dynamic Island at top, Home indicator at bottom). Content is not clipped by system elements.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('Automatisches Speichern','Auto-save')}</span><span>${h('Die App speichert bei <strong>jeder Aktion automatisch</strong> in IndexedDB (Erfassung, Bearbeitung, Einstellungsänderung, Nutzer-Wechsel). Der grüne Punkt oben rechts bestätigt jede Speicherung. <strong>Kein manuelles Speichern nötig. Kein Speicherlimit.</strong>','The app saves <strong>automatically with every action</strong> to IndexedDB (recording, editing, settings change, user switch). The green dot top-right confirms every save. <strong>No manual saving needed. No storage limit.</strong>')}</span></div>
@@ -8815,22 +8795,20 @@ function renderHelp(){
       <div class="hlp-card-title">📱 ${h('App zum iPhone-Homescreen hinzufügen (optional)','Add app to iPhone home screen (optional)')}</div>
       <div class="hlp-info">ℹ️ ${h('Die App funktioniert vollständig direkt aus der Dateien-App heraus. Das Hinzufügen zum Homescreen ist ein optionaler Komfort. Wenn du die App aus der Dateien-App öffnest, ist kein Service Worker aktiv – das ist normal und hat keinen Einfluss auf die Offline-Funktion.','The app works fully directly from the Files app. Adding to the home screen is an optional convenience. When you open the app from the Files app, no Service Worker is active – this is normal and has no effect on offline functionality.')}</div>
       <div class="hlp-steps">
-        <div class="hlp-step"><div class="hlp-step-num">1</div><span>${h('App in Microsoft Edge öffnen (wie gewohnt über Dateien → Teilen → Edge).','Open the app in Microsoft Edge (as usual via Files → Share → Edge).')}</span></div>
-        <div class="hlp-step"><div class="hlp-step-num">2</div><span>${h('Edge-Menü oben rechts <strong>···</strong> antippen → <strong>Zum Startbildschirm hinzufügen</strong>. Kurzen Namen eingeben → <strong>Hinzufügen</strong>.','Tap the Edge menu top-right <strong>···</strong> → <strong>Add to Home Screen</strong>. Enter a short name → <strong>Add</strong>.')}</span></div>
-        <div class="hlp-step"><div class="hlp-step-num">3</div><span>${h('Ein Icon erscheint auf dem Homescreen. Antippen → Edge öffnet die App direkt (ohne Safari-Rahmen).','An icon appears on the home screen. Tap → Edge opens the app directly (without Safari chrome).')}</span></div>
+        <div class="hlp-step"><div class="hlp-step-num">1</div><span>${h('App in <strong>Safari</strong> über den GitHub-Link öffnen.','Open the app in <strong>Safari</strong> via the GitHub link.')}</span></div>
+        <div class="hlp-step"><div class="hlp-step-num">2</div><span>${h('Safari-Menü unten (Teilen-Symbol □↑) antippen → <strong>Zum Home-Bildschirm</strong>. Kurzen Namen eingeben → <strong>Hinzufügen</strong>.','Tap the Safari share button (□↑) at the bottom → <strong>Add to Home Screen</strong>. Enter a short name → <strong>Add</strong>.')}</span></div>
+        <div class="hlp-step"><div class="hlp-step-num">3</div><span>${h('Ein Icon erscheint auf dem Home-Bildschirm. Antippen → App öffnet sich direkt als PWA (ohne Browser-Rahmen).','An icon appears on the home screen. Tap → the app opens directly as a PWA (without browser chrome).')}</span></div>
       </div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('Wichtig: Daten bleiben erhalten','Important: data is preserved')}</span><span>${h('Die Daten liegen in Edges localStorage. Wird die App vom Homescreen geöffnet, werden dieselben Daten verwendet. Wird Edge gelöscht oder neu installiert, gehen die Daten verloren – unabhängig vom Homescreen-Icon.','Data is stored in Edge\'s localStorage. When the app is opened from the home screen, the same data is used. If Edge is deleted or reinstalled, data is lost – regardless of the home screen icon.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('Wichtig: Daten bleiben erhalten','Important: data is preserved')}</span><span>${h('Die Daten liegen in der <strong>IndexedDB</strong> des Browsers (+ localStorage als Fallback). Wird die App vom Home-Bildschirm geöffnet, werden dieselben Daten verwendet. Wird Safari-Verlauf gelöscht oder das iPhone zurückgesetzt, können Daten verloren gehen – deshalb regelmäßig Backups erstellen!','Data is stored in the browser\'s <strong>IndexedDB</strong> (+ localStorage as fallback). When opened from the home screen, the same data is used. If Safari history is cleared or the iPhone is reset, data may be lost – so create regular backups!')}</span></div>
     </div>
 
     <div class="hlp-card">
       <div class="hlp-card-title">🔧 ${h('Häufige Fragen &amp; Problemlösungen','FAQ &amp; Troubleshooting')}</div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('„Die App reagiert langsam"','App responds slowly')}</span><span>${h('Bei sehr vielen Einträgen (über 5.000) kann das Rendern kurz verzögern. Abhilfe: Backup erstellen → Reset → frisch starten.','With very many entries (over 5,000) rendering may briefly delay. Solution: create backup → reset → fresh start.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('„Einträge sind weg"','Entries are gone')}</span><span>${h('Mögliche Ursache: Edge wurde neu installiert, iOS hat den Speicher geleert, oder „Verlauf löschen" in Safari/Edge. Wenn ein Backup vorhanden ist: Einstellungen → Backup importieren → Ergänzen oder Ersetzen.','Possible cause: Edge was reinstalled, iOS cleared storage, or "Clear history" in Safari/Edge was used. If a backup exists: Settings → Import backup → Merge or Replace.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('„Die Uhrzeit stimmt nicht"','Time is wrong')}</span><span>${h('Wenn im Auto-Modus: Edge/WebKit übernimmt die iPhone-Systemzeit. Prüfen: iPhone Einstellungen → Allgemein → Datum &amp; Uhrzeit → Automatisch. Alternativ: Zeitzone auf Manuell setzen.','In Auto mode: Edge/WebKit uses the iPhone system time. Check: iPhone Settings → General → Date &amp; Time → Set Automatically. Alternatively: set timezone to Manual.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('„Der Download-Dialog erscheint nicht"','Download dialog does not appear')}</span><span>${h('Edge auf iOS zeigt Downloads in der Benachrichtigungsleiste und im Menü → Downloads. Falls nichts passiert: Edge-Einstellungen prüfen, ob Downloads aktiviert sind. Alternativ: Edge neu starten.','Edge on iOS shows downloads in the notification bar and in menu → Downloads. If nothing happens: check Edge settings to see if downloads are enabled. Alternatively: restart Edge.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('„Einträge sind weg"','Entries are gone')}</span><span>${h('Mögliche Ursache: iOS hat den Speicher geleert, „Verlauf löschen" in Safari wurde genutzt, oder das iPhone wurde zurückgesetzt. Wenn ein Backup vorhanden ist: Einstellungen → Backup importieren → Ergänzen oder Ersetzen.','Possible cause: iOS cleared storage, "Clear history" in Safari was used, or the iPhone was reset. If a backup exists: Settings → Import backup → Merge or Replace.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('„Die Uhrzeit stimmt nicht"','Time is wrong')}</span><span>${h('Wenn im Auto-Modus: Safari/WebKit übernimmt die iPhone-Systemzeit. Prüfen: iPhone Einstellungen → Allgemein → Datum &amp; Uhrzeit → Automatisch. Alternativ: Zeitzone auf Manuell setzen.','In Auto mode: Safari/WebKit uses the iPhone system time. Check: iPhone Settings → General → Date &amp; Time → Set Automatically. Alternatively: set timezone to Manual.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('„Der Download-Dialog erscheint nicht"','Download dialog does not appear')}</span><span>${h('Der iOS-Teilen-Dialog öffnet sich direkt aus der App. Falls nichts passiert: Safari neu starten oder die Seite erneut laden. Sicherstellen, dass die App als PWA vom Home-Bildschirm geöffnet wurde.','The iOS share sheet opens directly from the app. If nothing happens: restart Safari or reload the page. Make sure the app is opened as a PWA from the Home Screen.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('„CSV öffnet sich falsch in Numbers"','CSV opens incorrectly in Numbers')}</span><span>${h('Die CSV verwendet Semikolon als Trennzeichen und Komma als Dezimaltrennzeichen (DE-Format). In Numbers: Trennzeichen auf Semikolon stellen beim Importieren.','The CSV uses semicolons as separators and commas as decimal separators (DE format). In Numbers: set separator to semicolon when importing.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('„Edge lädt die HTML-Datei herunter statt sie zu öffnen"','Edge downloads the HTML file instead of opening it')}</span><span>${h('Auf manchen Edge-Versionen oder nach bestimmten Edge-Updates wird die Datei heruntergeladen statt als App geöffnet. Lösung: Nicht die Datei direkt in Edge antippen. Immer den korrekten Weg nutzen: <strong>Dateien-App → HTML-Datei antippen → Teilen → Microsoft Edge auswählen</strong>.','On some Edge versions or after certain updates, the file is downloaded rather than opened as an app. Solution: Do not tap the file directly in Edge. Always use the correct method: <strong>Files app → tap HTML file → Share → select Microsoft Edge</strong>.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('„App zeigt nach Edge-Update alten Inhalt / weiße Seite"','App shows old content or blank page after Edge update')}</span><span>${h('Nach einem Edge-Update kann eine zwischengespeicherte oder fehlerhafte Version der App angezeigt werden. Lösung: <strong>Dateien-App → HTML-Datei antippen → Teilen → Edge</strong> → die Datei wird neu geladen. Alle gespeicherten Daten im localStorage bleiben dabei vollständig erhalten.','After an Edge update a cached or broken version may appear. Solution: <strong>Files app → tap HTML file → Share → Edge</strong> → the file is freshly loaded. All data stored in localStorage is fully preserved.')}</span></div>
     </div>
 
   </div>
@@ -8849,7 +8827,7 @@ function renderHelp(){
         ${h('Als PWA (Progressive Web App) verhält sich der Tracker wie eine native App: kein Browser-Chrome, echter Vollbild-Modus, schneller Start, Offline-Betrieb. Die Daten bleiben auf dem Gerät – nichts landet auf einem Server.','As a PWA (Progressive Web App), the Tracker behaves like a native app: no browser chrome, true full-screen mode, fast startup, offline operation. All data stays on the device – nothing goes to a server.')}
       </div>
       <div class="hlp-steps">
-        <div class="hlp-step"><div class="hlp-step-num">1</div><span>${h('GitHub-Link in <strong>Safari</strong> öffnen (nicht Chrome, nicht Edge – nur Safari unterstützt PWA-Installation auf iPhone).','Open the GitHub link in <strong>Safari</strong> (not Chrome, not Edge – only Safari supports PWA installation on iPhone).')}</span></div>
+        <div class="hlp-step"><div class="hlp-step-num">1</div><span>${h('GitHub-Link in <strong>Safari</strong> öffnen (nicht Chrome – nur Safari unterstützt PWA-Installation auf iPhone).','Open the GitHub link in <strong>Safari</strong> (not Chrome – only Safari supports PWA installation on iPhone).')}</span></div>
         <div class="hlp-step"><div class="hlp-step-num">2</div><span>${h('Unten das <strong>Teilen-Symbol</strong> antippen (Quadrat mit Pfeil nach oben).','Tap the <strong>Share icon</strong> at the bottom (square with upward arrow).')}</span></div>
         <div class="hlp-step"><div class="hlp-step-num">3</div><span>${h('<strong>„Zum Home-Bildschirm"</strong> wählen.','Select <strong>"Add to Home Screen"</strong>.')}</span></div>
         <div class="hlp-step"><div class="hlp-step-num">4</div><span>${h('Name bestätigen → <strong>„Hinzufügen"</strong> tippen. Fertig – die App erscheint als Icon auf dem Homescreen.','Confirm the name → tap <strong>"Add"</strong>. Done – the app appears as an icon on the Home Screen.')}</span></div>
@@ -9097,6 +9075,7 @@ async function smartMerge(incomingLogs){
   // UIDs sicherstellen
   newEntries.forEach(e=>{if(!e.uid)e.uid='mg_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);});
   S.log=[...newEntries,...S.log];
+  S.log.sort((a,b)=>new Date(b.time)-new Date(a.time)); // FIX V47 F3: Re-Sort nach Merge
   rebuildCounts();saveStateDebounced();renderDrinks(false);
   if(S.activeTab===1)renderLog();
   updateHeader();updateLimitBanner();
@@ -9112,7 +9091,7 @@ async function smartMerge(incomingLogs){
 async function createSyncPackage(){
   const L=S.lang==='en';
   try{
-    if(!S.syncEnabled){showToast(L?'Sync not activated.':'Sync nicht aktiviert.','warn',3000);return;}
+    if(!S.syncEnabled){showToast((L?'Sync not activated – Settings → Synchronisation':'Sync nicht aktiviert – Einstellungen → Synchronisation'),'warn',4000);return;}
     // UIDs für alle Einträge sicherstellen
     S.log=S.log.map(e=>e.uid?e:{...e,uid:'sp_'+e.time+'_'+Math.random().toString(36).slice(2,7)});
     const activeUser=S.users&&S.activeUserId?S.users.find(u=>u.id===S.activeUserId):null;
@@ -9146,7 +9125,7 @@ async function handleIncomingSyncPackage(data){
   const L=S.lang==='en';
   try{
     if(!S.syncEnabled){
-      showToast(L?'Sync not activated.':'Sync nicht aktiviert.','warn',3000);
+      showToast((L?'Sync not activated – Settings → Synchronisation':'Sync nicht aktiviert – Einstellungen → Synchronisation'),'warn',4000);
       return;
     }
     if(!data||data.type!=='sync_package'||!Array.isArray(data.log)){
@@ -9155,15 +9134,16 @@ async function handleIncomingSyncPackage(data){
     }
     const d=data.created?new Date(data.created):new Date();
     const ds=d.toLocaleDateString(L?'en-US':'de-DE')+', '+d.toLocaleTimeString(L?'en-US':'de-DE',{hour:'2-digit',minute:'2-digit'});
-    const msg='📦 '+(L?'Sync package from ':'Sync-Paket von ')+esc(data.deviceLabel||'?')+'\n'
+    const title='📦 '+(L?'Sync Package':'Sync-Paket');
+    const msg=(L?'From: ':'Von: ')+esc(data.deviceLabel||'?')+'\n'
       +(data.entryCount||data.log.length)+' '+(L?'entries':'Einträge')+' · '+(L?'Created: ':'Erstellt: ')+ds+'\n'
       +(L?'New entries will be added to yours.':'Neue Einträge werden zu deinen hinzugefügt.');
-    if(confirm(msg)){
+    showCfm(title,msg,L?'Import':'Importieren',async()=>{
       await smartMerge(data.log);
       S.lastSyncDate=new Date().toISOString();
       saveStateDebounced();
       renderVerwaltung&&renderVerwaltung();
-    }
+    });
   }catch(e){
     showToast('⚠️ '+(L?'Sync error: ':'Sync-Fehler: ')+e.message,'error',5000);
   }
@@ -10117,13 +10097,16 @@ function closeRouteEditor(){document.getElementById('routeOv').className='ov';}
 function renderRouteEditorBody(){
   const route=S.voyageRoute||[];
   const today=logicalTodayStr();
+  // FIX V47 F8: Set-basierter Duplikat-Check – O(n) statt O(n²)
+  const dateCounts={};
+  route.forEach(r=>{if(r.date)dateCounts[r.date]=(dateCounts[r.date]||0)+1;});
   let h='';
   // ── Erster Einfügen-Button ──
   h+=`<div class="route-sep"><button class="route-sep-btn" onclick="addRouteRowAt(-1)">＋ Tag an erster Stelle einfügen</button></div>`;
   route.forEach((r,i)=>{
     const isToday=r.date===today;
-    // Duplikat-Check: gleiche ISO-Datum wie ein anderer Eintrag?
-    const isDup=route.some((x,j)=>j!==i&&x.date&&x.date===r.date);
+    // Duplikat-Check: Set-Lookup statt route.some()
+    const isDup=r.date&&dateCounts[r.date]>1;
     // Datum-Klasse
     let dateCls='route-date-inp';
     if(!r.date||!r.date.match(/^\d{4}-\d{2}-\d{2}$/))dateCls+=' invalid';
@@ -11148,12 +11131,12 @@ function showPwaGuide(){
   const L=S.lang==='en';
   const steps=L?[
     {n:1,icon:'📂',t:'Open the file',d:'Open this HTML file in the <strong>Files</strong> app on your iPhone.'},
-    {n:2,icon:'↑',t:'Tap Share',d:'Tap the <strong>Share</strong> button (square with arrow) at the bottom of the screen in Microsoft Edge or Safari.'},
+    {n:2,icon:'↑',t:'Tap Share',d:'Tap the <strong>Share</strong> button (square with arrow) at the bottom of the screen in <strong>Safari</strong>.'},
     {n:3,icon:'🏠',t:'Add to Home Screen',d:'Scroll down in the share sheet and tap <strong>„Add to Home Screen"</strong>.'},
     {n:4,icon:'✅',t:'Confirm',d:'Enter a name (e.g. <em>Drink Tracker</em>) and tap <strong>Add</strong>. The app icon now appears on your home screen.'}
   ]:[
     {n:1,icon:'📂',t:'Datei öffnen',d:'Öffne diese HTML-Datei in der <strong>Dateien</strong>-App auf dem iPhone.'},
-    {n:2,icon:'↑',t:'Teilen antippen',d:'Tippe auf das <strong>Teilen</strong>-Symbol (Quadrat mit Pfeil) unten im Bildschirm in Microsoft Edge oder Safari.'},
+    {n:2,icon:'↑',t:'Teilen antippen',d:'Tippe auf das <strong>Teilen</strong>-Symbol (Quadrat mit Pfeil) unten im Bildschirm in Safari.'},
     {n:3,icon:'🏠',t:'Zum Home-Bildschirm',d:'Scrolle im Teilen-Menü nach unten und tippe auf <strong>„Zum Home-Bildschirm"</strong>.'},
     {n:4,icon:'✅',t:'Bestätigen',d:'Gib einen Namen ein (z. B. <em>Getränke-Tracker</em>) und tippe auf <strong>Hinzufügen</strong>. Das App-Icon erscheint jetzt auf dem Home-Bildschirm.'}
   ];
@@ -11161,7 +11144,7 @@ function showPwaGuide(){
   const ov=document.createElement('div');
   ov.className='ov show-center';
   ov.id='pwaGuideOv';
-  ov.innerHTML=`<div class="modal-box" style="max-width:380px"><div class="cfm-title" style="margin-bottom:4px">📱 ${L?'Add App to Home Screen':'App zum Home-Bildschirm hinzufügen'}</div><div style="font-size:11px;color:var(--tx2);margin-bottom:12px">${L?'Step-by-step guide for iPhone (iOS / Microsoft Edge):':'Schritt-für-Schritt-Anleitung für iPhone (iOS / Microsoft Edge):'}</div>${stepsHtml}<div style="margin-top:14px;padding:9px 12px;background:var(--bg3);border-radius:8px;border:1px solid var(--ac-13);font-size:11px;color:var(--tx1);line-height:1.55">💡 ${L?'<strong>Note:</strong> The app works perfectly without a home screen icon. This step is optional.':'<strong>Hinweis:</strong> Die App funktioniert auch ohne Home-Screen-Icon einwandfrei. Dieser Schritt ist optional.'}</div><div style="display:flex;gap:8px;margin-top:14px"><button class="cfm-yes" style="background:var(--ac);color:var(--bg);flex:2" onclick="document.getElementById('pwaGuideOv').remove()">✓ ${L?'Got it':'Verstanden'}</button><button class="cfm-no" onclick="dismissPwa();document.getElementById('pwaGuideOv').remove()">✕ ${L?"Don't show again":'Nicht mehr zeigen'}</button></div></div>`;
+  ov.innerHTML=`<div class="modal-box" style="max-width:380px"><div class="cfm-title" style="margin-bottom:4px">📱 ${L?'Add App to Home Screen':'App zum Home-Bildschirm hinzufügen'}</div><div style="font-size:11px;color:var(--tx2);margin-bottom:12px">${L?'Step-by-step guide for iPhone (iOS / Safari):':'Schritt-für-Schritt-Anleitung für iPhone (iOS / Safari):'}</div>${stepsHtml}<div style="margin-top:14px;padding:9px 12px;background:var(--bg3);border-radius:8px;border:1px solid var(--ac-13);font-size:11px;color:var(--tx1);line-height:1.55">💡 ${L?'<strong>Note:</strong> The app works perfectly without a home screen icon. This step is optional.':'<strong>Hinweis:</strong> Die App funktioniert auch ohne Home-Screen-Icon einwandfrei. Dieser Schritt ist optional.'}</div><div style="display:flex;gap:8px;margin-top:14px"><button class="cfm-yes" style="background:var(--ac);color:var(--bg);flex:2" onclick="document.getElementById('pwaGuideOv').remove()">✓ ${L?'Got it':'Verstanden'}</button><button class="cfm-no" onclick="dismissPwa();document.getElementById('pwaGuideOv').remove()">✕ ${L?"Don't show again":'Nicht mehr zeigen'}</button></div></div>`;
   document.body.appendChild(ov);
 }
 function dismissPwa(){
@@ -11189,7 +11172,7 @@ function dismissPwa(){
 })();
 
 /* ══════════════════════════════════════════════════════════
-   ONBOARDING – Erstnutzer-Modal (3 Schritte)
+   ONBOARDING – Erstnutzer-Modal (10 Schritte)
 ══════════════════════════════════════════════════════════ */
 function showOnboarding(){
   try{
