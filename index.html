@@ -431,7 +431,7 @@ body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;
 /* Panes: flex:1 füllt den verbleibenden Platz bis zum physischen Rand.
    padding-bottom = home-indicator-Höhe → Inhalt endet darüber,
    background füllt nahtlos bis zum Rand (wie native App). */
-#p0,#p1,#p2,#p3,#p4{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;overscroll-behavior-y:none;background:var(--bg);padding-bottom:0}
+#p0,#p1,#p2,#p3,#p4{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;overscroll-behavior-y:none;background:var(--bg);padding-bottom:calc(52px + env(safe-area-inset-bottom,0px))}
 /* p0: flex-Spalte, damit der Spacer am Ende die volle Höhe ausfüllt */
 #p0{display:flex;flex-direction:column}
 .hdr-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:0}
@@ -455,15 +455,15 @@ body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;
 .goal-bar-meta{display:flex;justify-content:space-between;font-size:8px;color:var(--tx2);margin-bottom:4px;letter-spacing:0.5px}
 .goal-bar-track{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
 .goal-bar-fill{height:100%;border-radius:2px;transition:width .5s ease,background .5s ease;background:linear-gradient(to right,var(--ac-deep),var(--ac))}
-/* Tabs: Navigation oben im Header – kein safe-area-bottom hier (tabs sind oben, nicht unten) */
-.tabs{display:flex;margin:0 -16px;border-top:1px solid var(--ac-13);background:var(--bg)}
+/* Tabs: fixierte Bottom-Nav (iOS-konform, Daumen-erreichbar) */
+.tabs{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:200;display:flex;border-top:1px solid var(--ac-20);background:var(--bg);padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -3px 18px rgba(0,0,0,0.45)}
 .tab{flex:1;padding:7px 0 8px;background:transparent;color:var(--tx2);border:none;cursor:pointer;font-family:Georgia,serif;font-size:9px;letter-spacing:0.5px;transition:color .2s,background .2s;display:flex;flex-direction:column;align-items:center;gap:3px;-webkit-user-select:none;touch-action:manipulation;position:relative}
 .tab.on{background:var(--ac-07);color:var(--ac);font-weight:bold}
 .tab.on::after{content:'';position:absolute;top:0;left:25%;right:25%;height:2px;background:var(--ac);border-radius:0 0 2px 2px}
 .tab:active{background:var(--ac-10);opacity:1}
 .tab-icon{font-size:16px;line-height:1}
 .tab-label{font-size:9px;letter-spacing:0.5px;line-height:1;text-transform:uppercase}
-#toast{position:fixed;bottom:36px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--col-ok-bg);color:var(--col-ok);border:1px solid rgba(95,170,112,0.35);border-radius:14px;padding:11px 20px;font-size:13px;font-family:Georgia,serif;z-index:9999;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap;max-width:92vw;text-align:center;box-shadow:var(--shadow-deep)}
+#toast{position:fixed;bottom:calc(52px + max(16px,env(safe-area-inset-bottom,16px)));left:50%;transform:translateX(-50%) translateY(20px);background:var(--col-ok-bg);color:var(--col-ok);border:1px solid rgba(95,170,112,0.35);border-radius:14px;padding:11px 20px;font-size:13px;font-family:Georgia,serif;z-index:9999;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap;max-width:92vw;text-align:center;box-shadow:var(--shadow-deep)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
 #toast.error{background:var(--col-err-bg);color:var(--col-err);border-color:rgba(208,85,85,.35)}
 #toast.info{background:var(--bg2);color:var(--tx1);border-color:var(--ac-20)}
@@ -598,8 +598,8 @@ body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;
 .srow{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;color:var(--tx3)}
 .srow span:last-child{color:var(--ac)}
 .stot{border-top:1px solid var(--ac-20);margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;font-weight:bold;font-size:14px}
-.logpane{padding:14px 14px max(14px,env(safe-area-inset-bottom,14px)) 14px;min-height:100%;box-sizing:border-box}
-.statpane{padding:14px 14px max(14px,env(safe-area-inset-bottom,14px)) 14px;min-height:100%;box-sizing:border-box}
+.logpane{padding:14px 14px calc(66px + env(safe-area-inset-bottom,0px)) 14px;min-height:100%;box-sizing:border-box}
+.statpane{padding:14px 14px calc(66px + env(safe-area-inset-bottom,0px)) 14px;min-height:100%;box-sizing:border-box}
 .loghdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:6px;flex-wrap:wrap}
 .logtitle{font-size:16px;color:var(--ac);font-weight:bold;letter-spacing:0.5px}
 .log-hdr-btns{display:flex;gap:6px}
@@ -720,7 +720,7 @@ body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;
 .stat-empty{text-align:center;color:var(--tx2);padding:60px 0;font-size:13px}
 .stat-period-lbl{font-size:10px;color:var(--tx1);text-align:center;margin-bottom:10px;font-style:italic}
 .cat-avg{font-size:10px;color:#4a5a70;text-align:right;padding:0 0 3px}
-.vwpane{padding:14px 14px max(14px,env(safe-area-inset-bottom,14px)) 14px;min-height:100%;box-sizing:border-box}
+.vwpane{padding:14px 14px calc(66px + env(safe-area-inset-bottom,0px)) 14px;min-height:100%;box-sizing:border-box}
 .vw-section{background:var(--bg3);border:1px solid var(--ac-13);border-radius:10px;padding:14px;margin-bottom:12px}
 .vw-sec-title{font-size:11px;color:var(--ac);font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
 .vw-btn{display:block;width:100%;padding:10px;background:var(--bg2);color:var(--tx0);border:1px solid var(--ac-27);border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:13px;text-align:left;margin-bottom:8px}
@@ -798,7 +798,7 @@ body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;
 .adm-danger{background:#1a0808;border-color:#c0392b88;border-left:4px solid #e05555;border-radius:12px;padding:14px;margin-bottom:10px}
 .adm-danger-title{font-size:11px;color:#e05555;font-weight:bold;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px}
 
-.hlppane{padding:14px 14px max(14px,env(safe-area-inset-bottom,14px)) 14px;min-height:100%;box-sizing:border-box}
+.hlppane{padding:14px 14px calc(66px + env(safe-area-inset-bottom,0px)) 14px;min-height:100%;box-sizing:border-box}
 .hlp-hero{text-align:center;padding:28px 16px 24px;background:linear-gradient(135deg,var(--bg2),var(--bg1));border-radius:16px;border:1px solid var(--ac-27);margin-bottom:16px;box-shadow:var(--shadow-card)}{font-size:38px;margin-bottom:6px}
 .hlp-hero-title{font-size:18px;font-weight:bold;color:var(--ac);letter-spacing:1.5px}
 .hlp-hero-sub{font-size:10px;color:var(--tx1);letter-spacing:3px;text-transform:uppercase;margin-top:5px}
@@ -1166,8 +1166,9 @@ body.msel-active #undoPanel{bottom:calc(70px + 16px);}
 .port-mini-wrap input::placeholder{color:var(--tx1);font-style:italic}
 .port-mini-wrap .port-mini-clear{background:transparent;border:none;color:var(--tx2);font-size:11px;cursor:pointer;padding:0 1px;line-height:1;display:none;flex-shrink:0;touch-action:manipulation}
 /* ── Mini-Tabs im eingeklappten Kopfbereich ── */
-#hdrMiniTabs{display:none;flex-wrap:nowrap;border-bottom:2px solid var(--ac-27);background:linear-gradient(180deg,var(--bg1) 0%,var(--bg) 100%)}
-.hdr.hdr-is-collapsed #hdrMiniTabs{display:flex}
+/* #hdrMiniTabs: durch Bottom-Nav ersetzt, dauerhaft ausgeblendet */
+#hdrMiniTabs{display:none!important}
+/* war: #hdrMiniTabs{display:none;…} .hdr.hdr-is-collapsed #hdrMiniTabs{display:flex} */
 #hdrMiniTabs .mini-tab{flex:1;padding:7px 2px;background:transparent;color:var(--tx2);border:none;cursor:pointer;font-family:Georgia,serif;font-size:10px;letter-spacing:0.3px;text-align:center;-webkit-user-select:none;touch-action:manipulation;position:relative;transition:color .2s,background .2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #hdrMiniTabs .mini-tab.on{background:var(--ac-07);color:var(--ac);font-weight:bold}
 #hdrMiniTabs .mini-tab.on::after{content:'';position:absolute;top:0;left:25%;right:25%;height:2px;background:var(--ac);border-radius:0 0 2px 2px}
@@ -1349,14 +1350,6 @@ details.hlp-acc summary:active{opacity:.75}
       </div>
       <div class="goal-bar-track"><div class="goal-bar-fill" id="goalBarFill"></div></div>
     </div>
-    <div style="height:5px"></div>
-    <div class="tabs">
-      <button class="tab on" id="t0" onclick="switchTab(0)" aria-label="Tab: Getränke"><!-- [PUNKT-F] --><span class="tab-icon">🍹</span><span class="tab-label">Getränke</span></button>
-      <button class="tab"    id="t1" onclick="switchTab(1)" aria-label="Tab: Protokoll"><!-- [PUNKT-F] --><span class="tab-icon">📋</span><span class="tab-label">Protokoll</span></button>
-      <button class="tab"    id="t2" onclick="switchTab(2)" aria-label="Tab: Statistik"><!-- [PUNKT-F] --><span class="tab-icon">📊</span><span class="tab-label">Statistik</span></button>
-      <button class="tab"    id="t3" onclick="switchTab(3)" aria-label="Tab: Verwaltung" style="position:relative"><!-- [PUNKT-F] --><span class="tab-icon">⚙️</span><span class="tab-label">Verwaltung</span><div id="admBadge" style="display:none;position:absolute;width:8px;height:8px;border-radius:50%;background:#E53935;top:6px;right:6px;pointer-events:none"></div></button>
-      <button class="tab"    id="t4" onclick="switchTab(4)" aria-label="Tab: Hilfe"><!-- [PUNKT-F] --><span class="tab-icon">❓</span><span class="tab-label">Hilfe</span></button>
-    </div>
   </div>
   <div class="hdr-toggle" id="hdrHandle">
     <div class="hdr-coll-left">
@@ -1512,6 +1505,15 @@ details.hlp-acc summary:active{opacity:.75}
 
 <div id="p4" style="display:none">
   <div class="hlppane" id="hlppane"></div>
+</div>
+
+<!-- BOTTOM-NAV: fixierte Tab-Leiste (aus Header verschoben, position:fixed bottom:0) -->
+<div class="tabs">
+  <button class="tab on" id="t0" onclick="switchTab(0)" aria-label="Tab: Getränke"><!-- [PUNKT-F] --><span class="tab-icon">🍹</span><span class="tab-label">Getränke</span></button>
+  <button class="tab"    id="t1" onclick="switchTab(1)" aria-label="Tab: Protokoll"><!-- [PUNKT-F] --><span class="tab-icon">📋</span><span class="tab-label">Protokoll</span></button>
+  <button class="tab"    id="t2" onclick="switchTab(2)" aria-label="Tab: Statistik"><!-- [PUNKT-F] --><span class="tab-icon">📊</span><span class="tab-label">Statistik</span></button>
+  <button class="tab"    id="t3" onclick="switchTab(3)" aria-label="Tab: Verwaltung" style="position:relative"><!-- [PUNKT-F] --><span class="tab-icon">⚙️</span><span class="tab-label">Verwaltung</span><div id="admBadge" style="display:none;position:absolute;width:8px;height:8px;border-radius:50%;background:#E53935;top:6px;right:6px;pointer-events:none"></div></button>
+  <button class="tab"    id="t4" onclick="switchTab(4)" aria-label="Tab: Hilfe"><!-- [PUNKT-F] --><span class="tab-icon">❓</span><span class="tab-label">Hilfe</span></button>
 </div>
 
 <!-- MODAL: User Management -->
