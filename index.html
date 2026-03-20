@@ -528,7 +528,7 @@ body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;
 .sinput::placeholder{color:var(--tx2)}
 .cscroll{display:flex;gap:5px;overflow-x:auto;padding:3px 0 1px;-webkit-overflow-scrolling:touch;scrollbar-width:none;scroll-snap-type:x mandatory}
 .cscroll::-webkit-scrollbar{display:none}
-.cbtn{flex-shrink:0;padding:0 12px;background:var(--bg2);color:var(--tx1);border:1px solid var(--ac-13);border-radius:20px;cursor:pointer;font-size:10px;font-family:Georgia,serif;white-space:nowrap;display:flex;align-items:center;gap:4px;scroll-snap-align:start;transition:all .2s;touch-action:manipulation;letter-spacing:0.3px;min-height:33px;height:auto;box-sizing:border-box;/* V48: min-height 33px (–25% von 44px Apple HIG) */}
+.cbtn{flex-shrink:0;padding:0 12px;background:var(--bg2);color:var(--tx1);border:1px solid var(--ac-13);border-radius:20px;cursor:pointer;font-size:10px;font-family:Georgia,serif;white-space:nowrap;display:flex;align-items:center;gap:4px;scroll-snap-align:start;transition:all .2s;touch-action:manipulation;letter-spacing:0.3px;min-height:44px;height:auto;box-sizing:border-box;/* FIX V48 F10: 44px Apple HIG Touch-Target */}
 .cbtn.on{background:var(--ac);color:var(--ac-fg);border-color:var(--ac);font-weight:bold}
 .cbtn:active{opacity:.75}
 .tbar{padding:7px 14px;display:flex;justify-content:flex-end}
@@ -1333,6 +1333,11 @@ details.hlp-acc summary:active{opacity:.75}
         onclick="cycleConcept()"
         title="Design ändern"
         aria-label="Design ändern">🎨<span class="hdr-design-lbl">Design</span></button>
+      <!-- FIX V48 F12: Hell-/Dunkel-Umschalter -->
+      <button id="dayNightBtn" class="hdr-design-btn"
+        onclick="toggleDayNight()"
+        title="Tagmodus aktivieren"
+        aria-label="Tagmodus aktivieren">☀️<span class="hdr-design-lbl">Tag</span></button>
       <div id="hdrUserExpanded" onclick="openUserSwitcher()"></div>
       <div id="currentLocBar" class="port-input-wrap">
         <input id="currentLocInput" type="text" placeholder="Hafen …" maxlength="100" autocomplete="off" spellcheck="false" list="locDatalist"
@@ -1939,7 +1944,7 @@ window.addEventListener('unhandledrejection', function(e) {
 /* ═══════════════════════════════════════════════════════════════
    TRANSLATIONS – Complete DE / EN
 ═══════════════════════════════════════════════════════════════ */
-const APP_VERSION = 'V47';
+const APP_VERSION = 'V48';
 const I18N = {
   de:{
     'tab.drinks':'Getränke','tab.log':'Protokoll','tab.stats':'Statistik','tab.manage':'Einstellungen','tab.help':'Hilfe',
@@ -2379,6 +2384,8 @@ function applyTheme(id){
   const themeIcons={kapitaensbuch:'⚓',atelier:'🎩',sonnendeck:'☀️',original:'✦',nautical_noir:'🎩',mare_sereno:'🌊',capitaine:'⚓',pergament:'📜',tiefsee:'🌑',champagner:'🥂',aida:'builtin:brand_aida',nicko:'builtin:brand_nicko',mein_schiff:'builtin:brand_mein_schiff'};
   const ctIcon=(S&&S.customThemes||[]).find(ct=>ct.id===id);
   if(btn){const _ic=ctIcon?ctIcon.icon:(themeIcons[id]||'✦');if(_ic.startsWith('custom:')||_ic.startsWith('builtin:')){const _du=resolveIconDataUrl(_ic);if(_du){btn.innerHTML=`<img src="${_du}" style="width:22px;height:22px;object-fit:contain;border-radius:3px;display:block">`;btn.style.fontSize='0';}else{btn.textContent='🎨';btn.style.fontSize='';}}else{btn.textContent=_ic;btn.style.fontSize='';}}
+  // FIX V48 F12: Tag-/Nacht-Button-Label aktualisieren (nach applyTheme immer aufrufen)
+  try{_updateDayNightBtn();}catch(e){}
 }
 function toggleThemePanel(){S.themeOpen=!S.themeOpen;renderVerwaltung();}
 function setTheme(id){
@@ -2407,7 +2414,48 @@ function cycleConcept(){
   S.conceptTheme=next;
   setTheme(next);
 }
-function toggleConceptFavorite(id){
+/* FIX V48 F12: Hell-/Dunkel-Umschalter – unabhängig vom Theme-System ── */
+// Helle Design-Konzepte (bg luminance > 0.15)
+const LIGHT_THEMES_SET=new Set(['sonnendeck','mare_sereno','pergament','champagner','nicko']);
+function _isCurrentThemeDark(){
+  const t=THEMES[S.theme]||THEMES.kapitaensbuch;
+  return luminanceHex(t.vars.bg||'#06101E')<=0.15;
+}
+function toggleDayNight(){
+  const L=S.lang==='en';
+  if(_isCurrentThemeDark()){
+    // Aktuelles dunkles Theme merken, zu hellem wechseln
+    S.lastDarkTheme=S.theme;
+    const target=S.lastLightTheme||'sonnendeck';
+    setTheme(target);
+    showToast('☀️ '+(L?'Day mode':'Tagmodus'),'info',1500);
+  } else {
+    // Aktuelles helles Theme merken, zu dunklem wechseln
+    S.lastLightTheme=S.theme;
+    const target=S.lastDarkTheme||'kapitaensbuch';
+    setTheme(target);
+    showToast('🌙 '+(L?'Night mode':'Nachtmodus'),'info',1500);
+  }
+  try{
+    localStorage.setItem('a4_lastdarktheme',S.lastDarkTheme);
+    localStorage.setItem('a4_lastlighttheme',S.lastLightTheme);
+    db.setCfg('lastDarkTheme',S.lastDarkTheme).catch(()=>{});
+    db.setCfg('lastLightTheme',S.lastLightTheme).catch(()=>{});
+  }catch(e){}
+}
+function _updateDayNightBtn(){
+  const btn=document.getElementById('dayNightBtn');
+  if(!btn)return;
+  const isDark=_isCurrentThemeDark();
+  const L=S.lang==='en';
+  btn.textContent=isDark?'☀️':'🌙';
+  btn.title=isDark?(L?'Switch to day mode':'Tagmodus aktivieren'):(L?'Switch to night mode':'Nachtmodus aktivieren');
+  btn.setAttribute('aria-label',btn.title);
+  const lbl=btn.querySelector('.hdr-design-lbl');
+  if(lbl)lbl.textContent=isDark?(L?'Day':'Tag'):(L?'Night':'Nacht');
+}
+
+
   if(!S.conceptFavorites)S.conceptFavorites=['kapitaensbuch','atelier','sonnendeck'];
   const idx=S.conceptFavorites.indexOf(id);
   if(idx>=0){
@@ -3242,14 +3290,15 @@ function doThemeImport(){
   const raw=ta?ta.value.trim():'';
   if(!raw){showToast('\u26a0\ufe0f '+(L?'Please paste a code first.':'Bitte zuerst einen Code einfügen.'),'warn',2500);return;}
   try{
-    /* Robust decode: support both old escape()-based and new TextDecoder-based base64 */
+    /* FIX V48 F6: TextDecoder als primärer Pfad (escape() ist deprecated).
+       Fallback auf altes escape()-Verfahren für ältere Export-Codes. */
     let decoded;
-    try{decoded=JSON.parse(decodeURIComponent(escape(atob(raw))));}
-    catch(e1){
-      try{
-        const bytes=Uint8Array.from(atob(raw),c=>c.charCodeAt(0));
-        decoded=JSON.parse(new TextDecoder().decode(bytes));
-      }catch(e2){throw new Error('decode');}
+    try{
+      const bytes=Uint8Array.from(atob(raw),c=>c.charCodeAt(0));
+      decoded=JSON.parse(new TextDecoder().decode(bytes));
+    }catch(e1){
+      try{decoded=JSON.parse(decodeURIComponent(escape(atob(raw))));}  // legacy fallback
+      catch(e2){throw new Error('decode');}
     }
     if(!S.customThemes)S.customThemes=[];
     if(decoded.bundle&&Array.isArray(decoded.themes)){
@@ -3303,7 +3352,10 @@ const DD=[
 /* ═══ STATE ═══════════════════════════════════════════════════ */
 let S={
   drinks:[],log:[],counts:{},
-  activeTab:0,selCat:'Alle',flashId:null,
+  /* FIX V48 F2: 'Alle' → '__all__' (Kategorie-Filter-Sentinel) */
+  activeTab:0,selCat:'__all__',flashId:null,
+  /* FIX V48 F5: Lazy-Loading-Zähler direkt im State initialisieren */
+  logVisibleCount:100,
   stableOrder:[],sortTimer:null,drinkSortMode:'freq',
   expandedCats:new Set(),drinkExpandedCats:new Set(),catIndex:[],
   mdMode:'add',mdId:null,mrMode:'rename',mrOld:'',meEditId:null,
@@ -3314,12 +3366,15 @@ let S={
   favorites:new Set(),lang:'de',fontSize:'normal',ccm:{},dailyGoal:0,
   statPeriod:'all',statCustomFrom:'',statCustomTo:'',statUserFilter:'all',logSearchQ:'',logCatFilter:'',logDateFrom:'',logDateTo:'',logPriceMin:null,logPriceMax:null,
   statDaySort:{},statDayShow:{}, // FIX FEHLER 6: Sortierstatus persistiert
-  statOpen:{overview:true,topdrinks:true,byday:true}, // Nr.5: einklappbare Karten
+  /* FIX V48 F13: segment-Key für Reisesegment-Statistik ergänzt */
+  statOpen:{overview:true,topdrinks:true,byday:true,segment:true,portmap:true}, // Nr.5: einklappbare Karten
   limitShownToday:null,currency:'€',btnLayout:'plus-left',favCollapsed:false,top10Collapsed:false,
   stableTop10:[],top10Timer:null,
   theme:'original',themeOpen:false,conceptTheme:'kapitaensbuch', // FIX V40 B9: konzept separat tracken
   conceptFavorites:['kapitaensbuch','atelier','sonnendeck'], // Favoriten für Schnellwechsel (max. 3)
   customThemes:[], // Eigene Farbkonzepte (unbegrenzt)
+  /* FIX V48 F12: Hell-/Dunkel-Umschalter – letztes dunkles / helles Theme merken */
+  lastDarkTheme:'kapitaensbuch',lastLightTheme:'sonnendeck',
   dayEndHour:0,dayEndMinute:0,
   favOrder:[],favSortMode:false,
   headerCollapsed:false,
@@ -3422,14 +3477,16 @@ const PORT_TZ_MAP={
   'Nagasaki':540,'Fukuoka':540,'Jeju':540,'Incheon':540,
   'Nuku Hiva':-570,'Moorea':-600,'Huahine':-600,'Raiatea':-600,
   'Suva':720,'Noumea':660,'Vanuatu':660,'Port Vila':660,
-  'Darwin':570,'Broome':480,'Geraldton':480,
+  /* FIX V48 F9: 'Darwin':570 hier entfernt – bereits oben definiert */
+  'Broome':480,'Geraldton':480,
   'Lome':0,'Cotonou':60,'Tema':0,'Lomé':0,
   'Reunion':240,'La Réunion':240,'Mauritius':240,
   'Agios Nikolaos':120,'Heraklion':120,'Chania':120,
   'Limerick':-60,'Cork':-60,'Belfast':-60,
   'Reykjavik':0,'Akureyri':0,
   'Tromsø':60,'Bergen':60,'Stavanger':60,'Ålesund':60,'Geiranger':60,
-  'Tallinn':120,'Helsinki':120,'Stockholm':60,
+  /* FIX V48 F9: 'Tallinn' und 'Helsinki' hier entfernt – bereits oben definiert */
+  'Stockholm':60,
   // FIX FEHLER 9: Duplikate 'Colombo' und 'Maldives' entfernt (bereits oben als 'Colombo':330 und 'Malediven'/'Malé' definiert)
 };
 function onCurrentLocInput(val){
@@ -3627,6 +3684,32 @@ function setTimezone(mode,offsetMin){
     if(!S.tzChangeLog)S.tzChangeLog=[];
     S.tzChangeLog.push({time:new Date().toISOString(),fromOffset:oldOff,toOffset:newOff});
     if(S.tzChangeLog.length>500)S.tzChangeLog=S.tzChangeLog.slice(-500); // V34: einheitlich 500
+
+    /* FIX V48 F11: IDL-Erkennung – wenn der Offset-Sprung > 1380 min (23 h),
+       wird ein ganzer Kalendertag übersprungen (Datumsgrenze West→Ost).
+       Einen ⚓-Marker-Eintrag für den übersprungenen Tag einfügen. */
+    const diff=newOff-oldOff; // positiv = Richtung Osten
+    if(Math.abs(diff)>=1380){
+      const L=S.lang==='en';
+      // Übersprungenen Tag berechnen: aktueller App-Tag im alten Offset + 1
+      const nowUtc=new Date();
+      const oldAppD=new Date(nowUtc.getTime()+oldOff*60000);
+      const skippedD=new Date(Date.UTC(oldAppD.getUTCFullYear(),oldAppD.getUTCMonth(),oldAppD.getUTCDate()+1));
+      const skippedIso=skippedD.toISOString().slice(0,10);
+      const skippedLabel=skippedIso.split('-').reverse().join('.');
+      const markerEntry={
+        id:'idl_'+Date.now(),
+        _marker:true,
+        _idl:true,
+        name:(L?'📅 Date line crossed – '+skippedLabel+' skipped':'📅 Datumsgrenze überquert – '+skippedLabel+' übersprungen'),
+        price:0,
+        time:nowUtc.toISOString(),
+        tz:newOff,
+        location:S.currentLocation||''
+      };
+      S.log.unshift(markerEntry);
+      showToast('🗓 '+(L?'Date line crossed – '+skippedLabel+' skipped':'Datumsgrenze überquert – '+skippedLabel+' übersprungen'),'info',5000);
+    }
   }
   try{localStorage.setItem('a4_tzmode',S.tzMode);localStorage.setItem('a4_tzoffset',String(S.tzOffset));localStorage.setItem('a4_tzchangelog',JSON.stringify(S.tzChangeLog));db.config.bulkPut([{key:'tzMode',value:S.tzMode},{key:'tzOffset',value:String(S.tzOffset)},{key:'tzChangeLog',value:JSON.stringify(S.tzChangeLog)}]).catch(()=>{});}catch(e){showToast('⚠️ Speicherfehler: Bitte Backup erstellen!','error',6000);console.error(e);}
   updateClock();
@@ -7052,6 +7135,61 @@ function renderStats(){
     html+=`</div>`;
   }
 
+  /* ── V48 FEATURE 14: AUSGABEN-KARTE PRO HAFEN (visuell) ── */
+  if(lk.length>=1){
+    const totPort=lk.reduce((s,loc)=>s+lm[loc].total,0);
+    const portColors=lk.map((_,i)=>PALETTE[i%PALETTE.length]);
+    // ── Journey Strip (SVG) ──────────────────────────────────
+    const svgW=320,svgH=44;
+    const segTotalW=svgW-2;
+    let stripX=0,stripSegs='';
+    lk.forEach((loc,i)=>{
+      const w=totPort>0?Math.max(3,(lm[loc].total/totPort)*segTotalW):(segTotalW/lk.length);
+      const col=portColors[i];
+      const label=loc.length>6?loc.slice(0,6)+'…':loc;
+      stripSegs+=`<rect x="${stripX.toFixed(1)}" y="0" width="${w.toFixed(1)}" height="${svgH}" fill="${col}" opacity="0.82"><title>${loc}: ${eur(lm[loc].total)} (${(totPort>0?(lm[loc].total/totPort*100):0).toFixed(1)}%)</title></rect>`;
+      // Divider
+      if(i<lk.length-1)stripSegs+=`<line x1="${(stripX+w).toFixed(1)}" y1="0" x2="${(stripX+w).toFixed(1)}" y2="${svgH}" stroke="#00000040" stroke-width="1.5"/>`;
+      // Port-Label wenn Segment breit genug
+      if(w>28){
+        const cx=(stripX+w/2).toFixed(1);
+        const lum=luminanceHex(col);
+        const txtCol=lum>0.35?'#111111':'#ffffff';
+        stripSegs+=`<text x="${cx}" y="15" text-anchor="middle" font-family="Georgia,serif" font-size="8" fill="${txtCol}" opacity="0.9">${esc(label)}</text>`;
+        stripSegs+=`<text x="${cx}" y="29" text-anchor="middle" font-family="Georgia,serif" font-size="9" font-weight="bold" fill="${txtCol}">${(totPort>0?(lm[loc].total/totPort*100):0).toFixed(0)}%</text>`;
+        stripSegs+=`<text x="${cx}" y="${svgH-5}" text-anchor="middle" font-family="Georgia,serif" font-size="8" fill="${txtCol}" opacity="0.85">${eur(lm[loc].total).replace(' ','')}</text>`;
+      }
+      stripX+=w;
+    });
+    // ── Legende ─────────────────────────────────────────────
+    const maxLegend=Math.min(lk.length,10);
+    const legendHtml=lk.slice(0,maxLegend).map((loc,i)=>{
+      const col=portColors[i];
+      const pct=totPort>0?(lm[loc].total/totPort*100).toFixed(0)+'%':'–';
+      return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--ac-07);font-size:11px">
+        <span style="width:11px;height:11px;border-radius:3px;background:${col};flex-shrink:0;display:inline-block"></span>
+        <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tx1)">${esc(loc)}</span>
+        <span style="color:var(--tx2);flex-shrink:0;font-size:10px;min-width:28px;text-align:right">${pct}</span>
+        <span style="color:var(--tx2);flex-shrink:0;font-size:10px;min-width:18px;text-align:right">${fmtNum(lm[loc].count)}×</span>
+        <span style="font-weight:bold;color:var(--ac);flex-shrink:0;min-width:48px;text-align:right">${eur(lm[loc].total)}</span>
+      </div>`;
+    }).join('');
+    html+=`<div class="stat-card" data-sc="portmap">
+      <div class="stat-card-title">🗺️ ${L?'Port Spending Map':'Ausgaben-Karte pro Hafen'}</div>
+      <div style="font-size:10px;color:var(--tx2);margin-bottom:10px;line-height:1.5">${L?'Each segment shows one port – width proportional to spending.':'Jedes Segment = ein Hafen – Breite proportional zu den Ausgaben.'}</div>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px;overflow:hidden;margin-bottom:14px">
+        <svg viewBox="0 0 ${svgW} ${svgH}" style="width:100%;height:${svgH}px;min-width:160px;display:block" aria-label="${L?'Port spending map':'Ausgaben-Karte Häfen'}">
+          ${stripSegs}
+        </svg>
+      </div>
+      ${legendHtml}
+      ${lk.length>maxLegend?`<div style="font-size:10px;color:var(--tx2);text-align:center;margin-top:6px">+${lk.length-maxLegend} ${L?'more ports':'weitere Häfen'}</div>`:''}
+      <div style="display:flex;justify-content:flex-end;margin-top:10px">
+        <button onclick="exportVoyagePDF()" style="padding:8px 16px;background:var(--ac);color:var(--ac-fg);border:none;border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:11px;font-weight:bold;touch-action:manipulation;display:flex;align-items:center;gap:6px">📄 ${L?'Voyage PDF Report':'PDF-Reisebericht'}</button>
+      </div>
+    </div>`;
+  }
+
   /* ── V5: HAFEN-CHRONIK ── */
   if(lk.length>=2){
     // Ersten Auftritt jedes Hafens chronologisch ermitteln
@@ -7099,9 +7237,267 @@ function renderStats(){
   /* ── V34 V3: REISE-KALENDER ── */
   html+=renderVoyageCalendar(fl);
 
+  /* ── V48 FEATURE 15: PDF-Export-Button (immer sichtbar wenn Daten vorhanden) ── */
+  html+=`<div style="margin:14px 0 4px;text-align:center">
+    <button onclick="exportVoyagePDF()" style="padding:12px 24px;background:linear-gradient(135deg,var(--ac),var(--ac-deep));color:var(--ac-fg);border:none;border-radius:12px;cursor:pointer;font-family:Georgia,serif;font-size:13px;font-weight:bold;touch-action:manipulation;box-shadow:var(--shadow-gold);display:inline-flex;align-items:center;gap:8px">
+      <span style="font-size:18px">📄</span>
+      <span>${L?'Download Voyage PDF Report':'PDF-Reisebericht herunterladen'}</span>
+    </button>
+    <div style="font-size:10px;color:var(--tx2);margin-top:6px;line-height:1.5">${L?'Port timeline · Category breakdown · All entries':'Hafen-Timeline · Kategorien · Alle Einträge'}</div>
+  </div>`;
+
   pane.innerHTML=html;
   initStatCards();
 }
+
+/* ═══ FEATURE 15: PDF-REISEBERICHT MIT HAFEN-TIMELINE (V48) ═══════════ */
+/*
+ * Lädt jsPDF dynamisch von cdnjs und erzeugt einen mehrsprachigen
+ * Reisebericht mit Hafen-Timeline, Ausgaben-Übersicht und Kategorie-
+ * auswertung. Komplett offline nach einmaligem Laden der Bibliothek.
+ */
+function exportVoyagePDF(){
+  const L=S.lang==='en';
+  showToast((L?'⏳ Preparing PDF…':'⏳ PDF wird vorbereitet…'),'info',3000);
+
+  // jsPDF dynamisch laden (einmalig, dann gecacht im Scope)
+  function _withJsPDF(cb){
+    if(window.jspdf&&window.jspdf.jsPDF){cb(window.jspdf.jsPDF);return;}
+    const script=document.createElement('script');
+    script.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    script.onload=function(){cb(window.jspdf.jsPDF);};
+    script.onerror=function(){showToast((L?'⚠️ PDF library could not be loaded. Check internet connection.':'⚠️ PDF-Bibliothek konnte nicht geladen werden. Internetverbindung prüfen.'),'error',6000);};
+    document.head.appendChild(script);
+  }
+
+  _withJsPDF(function(JsPDF){
+    try{
+      const doc=new JsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+      const PW=210,PH=297,ML=16,MR=16,MT=20;
+      const CW=PW-ML-MR; // nutzbare Breite
+
+      // ── Farbpalette für PDF ──────────────────────────────────
+      const GOLD=[181,142,60];
+      const NAVY=[6,16,30];
+      const TX1=[100,130,160];
+      const TX2=[140,160,180];
+      const BG=[245,248,252];
+
+      // ── Hilfsfunktionen ─────────────────────────────────────
+      function setFont(style,size,r,g,b){doc.setFont('helvetica',style);doc.setFontSize(size);doc.setTextColor(r||0,g||0,b||0);}
+      function line(y,r,g,b,lw){doc.setDrawColor(r||181,g||142,b||60);doc.setLineWidth(lw||0.3);doc.line(ML,y,PW-MR,y);}
+      function rect(x,y,w,h,r,g,b,filled){doc.setFillColor(r||6,g||16,b||30);if(filled)doc.rect(x,y,w,h,'F');else{doc.setDrawColor(r||181,g||142,b||60);doc.rect(x,y,w,h,'S');}}
+      let yPos=MT;
+      function checkPage(need){if(yPos+need>PH-14){doc.addPage();yPos=MT;}}
+
+      // Datum-Formatter
+      function fmtDate(iso){
+        try{const d=new Date(iso);return d.toLocaleDateString(L?'en-US':'de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});}catch(e){return iso||'';}
+      }
+      function fmtCurrency(v){return parseFloat(v||0).toFixed(2)+' '+(S.currency||'€');}
+
+      // ── SEITE 1: TITELSEITE ─────────────────────────────────
+      // Header-Banner
+      doc.setFillColor(...NAVY);
+      doc.rect(0,0,PW,42,'F');
+      // Goldlinie
+      doc.setDrawColor(...GOLD);doc.setLineWidth(0.8);doc.line(0,42,PW,42);
+      // Titel
+      setFont('bold',22,...GOLD);
+      doc.text(S.appTitle1||'Ship-Sips',PW/2,18,{align:'center'});
+      setFont('normal',11,...TX1);
+      doc.text(S.appTitle2||'Meine Reise',PW/2,26,{align:'center'});
+      setFont('normal',9,...TX2);
+      doc.text((L?'Voyage Report':'Reisebericht')+' · V48',PW/2,33,{align:'center'});
+
+      yPos=52;
+
+      // Gesamtübersicht
+      const allLog=S.log.filter(e=>!e._marker&&(e.price||0)>0);
+      const totalAmt=allLog.reduce((s,e)=>s+(e.price||0),0);
+      const dates=allLog.map(e=>new Date(e.time).getTime()).filter(Boolean);
+      const firstDate=dates.length?fmtDate(new Date(Math.min(...dates)).toISOString()):'-';
+      const lastDate=dates.length?fmtDate(new Date(Math.max(...dates)).toISOString()):'-';
+      const totalDays=[...new Set(allLog.map(e=>entryLogicalDayStr(e)))].length;
+      const totalUsers=[...new Set(allLog.map(e=>e.userId).filter(Boolean))];
+
+      // Übersichtsbox
+      doc.setFillColor(...BG);doc.rect(ML,yPos,CW,52,'F');
+      doc.setDrawColor(...GOLD);doc.setLineWidth(0.3);doc.rect(ML,yPos,CW,52,'S');
+      doc.setFillColor(...GOLD);doc.rect(ML,yPos,3,52,'F');
+
+      setFont('bold',10,...NAVY);doc.text(L?'Trip Summary':'Reise-Übersicht',ML+6,yPos+8);
+      doc.setDrawColor(...GOLD);doc.setLineWidth(0.2);doc.line(ML+6,yPos+10,ML+CW-6,yPos+10);
+
+      const rows=[
+        [L?'Period':'Zeitraum', firstDate+' – '+lastDate],
+        [L?'Total Spending':'Gesamtausgaben', fmtCurrency(totalAmt)],
+        [L?'Entries':'Einträge', String(allLog.length)],
+        [L?'Days with entries':'Tage mit Einträgen', String(totalDays)],
+        [L?'Daily average':'Tagesdurchschnitt', fmtCurrency(totalDays?totalAmt/totalDays:0)],
+        [L?'Travellers':'Reisende', String(totalUsers.length||1)],
+      ];
+      rows.forEach((r,i)=>{
+        const ry=yPos+16+i*5.8;
+        setFont('normal',9,...TX1);doc.text(r[0]+':',ML+6,ry);
+        setFont('bold',9,...NAVY);doc.text(r[1],ML+CW-6,ry,{align:'right'});
+      });
+      yPos+=60;
+
+      // Nutzer-Budgets
+      if(S.users&&S.users.length>1){
+        checkPage(40);
+        setFont('bold',10,...NAVY);doc.text(L?'Spending per Traveller':'Ausgaben pro Reisenden',ML,yPos);
+        yPos+=5;line(yPos,...GOLD,0.3);yPos+=4;
+        S.users.forEach(u=>{
+          const uTotal=allLog.filter(e=>e.userId===u.id).reduce((s,e)=>s+(e.price||0),0);
+          if(uTotal===0)return;
+          checkPage(8);
+          setFont('normal',9,...TX1);doc.text('● '+u.name,ML,yPos);
+          setFont('bold',9,...NAVY);doc.text(fmtCurrency(uTotal),PW-MR,yPos,{align:'right'});
+          yPos+=6;
+        });
+        yPos+=4;
+      }
+
+      // ── SEITE 2+: HAFEN-TIMELINE ────────────────────────────
+      // Häfen chronologisch ermitteln
+      const portFirst={};
+      allLog.forEach(e=>{
+        if(e.location&&e.location.trim()){
+          const loc=e.location.trim();
+          if(!portFirst[loc]||new Date(e.time)<new Date(portFirst[loc].time))
+            portFirst[loc]={time:e.time,tz:entryTz(e)};
+        }
+      });
+      const portChron=Object.keys(portFirst).sort((a,b)=>new Date(portFirst[a].time)-new Date(portFirst[b].time));
+
+      if(portChron.length){
+        // Hafen-Ausgaben aufbauen
+        const portStats={};
+        allLog.forEach(e=>{
+          const loc=(e.location||'').trim();
+          if(!loc)return;
+          if(!portStats[loc])portStats[loc]={count:0,total:0,byUser:{},byCat:{}};
+          portStats[loc].count++;
+          portStats[loc].total+=(e.price||0);
+          const uid=e.userId||'?';
+          portStats[loc].byUser[uid]=(portStats[loc].byUser[uid]||0)+(e.price||0);
+          const d=S.drinks.find(x=>x.id===e.drinkId);
+          const cat=d?d.cat:(L?'Other':'Sonstiges');
+          portStats[loc].byCat[cat]=(portStats[loc].byCat[cat]||0)+(e.price||0);
+        });
+
+        checkPage(20);
+        // Abschnittsheader
+        doc.setFillColor(...NAVY);doc.rect(ML,yPos,CW,9,'F');
+        setFont('bold',10,255,255,255);
+        doc.text((L?'⚓ Port Timeline (Chronological)':'⚓ Hafen-Timeline (Chronologisch)'),ML+3,yPos+6.3);
+        yPos+=13;
+
+        portChron.forEach((loc,idx)=>{
+          const ps=portStats[loc];
+          if(!ps)return;
+          checkPage(28);
+
+          // Hafen-Header
+          const fy=portFirst[loc];
+          const dateStr=fmtDate(fy.time);
+          doc.setFillColor(BG[0],BG[1],BG[2]);doc.rect(ML,yPos,CW,8,'F');
+          doc.setFillColor(...GOLD);doc.rect(ML,yPos,2.5,8,'F');
+          setFont('bold',9,...NAVY);
+          doc.text(`${idx+1}. ${loc}`,ML+5,yPos+5.3);
+          setFont('normal',8,...TX1);
+          doc.text(dateStr,PW-MR,yPos+5.3,{align:'right'});
+          yPos+=10;
+
+          // Ausgaben-Zeile
+          setFont('normal',8,...TX1);doc.text(L?'Spending:':'Ausgaben:',ML+5,yPos);
+          setFont('bold',9,...NAVY);doc.text(fmtCurrency(ps.total),ML+30,yPos);
+          setFont('normal',8,...TX2);doc.text('  '+fmtNum(ps.count)+'×',ML+30+doc.getTextWidth(fmtCurrency(ps.total)),yPos);
+          yPos+=5;
+
+          // Top-Kategorie
+          const topCat=Object.entries(ps.byCat).sort((a,b)=>b[1]-a[1]).slice(0,3);
+          if(topCat.length){
+            setFont('normal',7.5,...TX2);
+            doc.text((L?'Top: ':'Top: ')+topCat.map(([c,v])=>`${c} ${fmtCurrency(v)}`).join(' · '),ML+5,yPos);
+            yPos+=5;
+          }
+
+          // Nutzer-Aufteilung (wenn mehrere)
+          const usrs=Object.entries(ps.byUser).filter(([,v])=>v>0);
+          if(usrs.length>1){
+            const uLine=usrs.map(([uid,v])=>{const u=S.users.find(x=>x.id===uid);return (u?u.name:uid)+': '+fmtCurrency(v);}).join('  ');
+            setFont('normal',7,...TX2);
+            const wrapped=doc.splitTextToSize(uLine,CW-8);
+            doc.text(wrapped,ML+5,yPos);
+            yPos+=wrapped.length*4;
+          }
+
+          // Dünne Trennlinie
+          doc.setDrawColor(180,190,200);doc.setLineWidth(0.15);doc.line(ML+4,yPos+1,PW-MR-4,yPos+1);
+          yPos+=5;
+        });
+      }
+
+      // ── KATEGORIE-AUSWERTUNG ────────────────────────────────
+      const catMap={};
+      allLog.forEach(e=>{const d=S.drinks.find(x=>x.id===e.drinkId);const cat=d?d.cat:(L?'Other':'Sonstiges');if(!catMap[cat])catMap[cat]={count:0,total:0};catMap[cat].count++;catMap[cat].total+=(e.price||0);});
+      const sortedCats=Object.entries(catMap).sort((a,b)=>b[1].total-a[1].total);
+      if(sortedCats.length){
+        checkPage(30);
+        doc.setFillColor(...NAVY);doc.rect(ML,yPos,CW,9,'F');
+        setFont('bold',10,255,255,255);
+        doc.text(L?'Spending by Category':'Ausgaben nach Kategorie',ML+3,yPos+6.3);
+        yPos+=13;
+        sortedCats.forEach(([cat,st])=>{
+          checkPage(8);
+          const pct=totalAmt>0?(st.total/totalAmt*100).toFixed(1):'0.0';
+          setFont('normal',9,...TX1);doc.text(cat,ML+3,yPos);
+          setFont('bold',9,...NAVY);doc.text(fmtCurrency(st.total),PW-MR,yPos,{align:'right'});
+          setFont('normal',8,...TX2);doc.text('('+pct+'%  '+fmtNum(st.count)+'×)',PW-MR-30,yPos);
+          // Mini-Balken
+          const barW=Math.max(1,(st.total/totalAmt)*50);
+          doc.setFillColor(...GOLD);doc.rect(ML+3,yPos+1.5,barW,1.8,'F');
+          yPos+=6.5;
+        });
+      }
+
+      // ── FOOTER auf jeder Seite ───────────────────────────────
+      const pageCount=doc.getNumberOfPages();
+      for(let p=1;p<=pageCount;p++){
+        doc.setPage(p);
+        doc.setDrawColor(...GOLD);doc.setLineWidth(0.2);doc.line(ML,PH-10,PW-MR,PH-10);
+        setFont('normal',7,...TX2);
+        doc.text((S.appTitle1||'Ship-Sips')+' · '+new Date().toLocaleDateString(L?'en-US':'de-DE'),ML,PH-6);
+        doc.text(p+'/'+pageCount,PW-MR,PH-6,{align:'right'});
+      }
+
+      // ── DATEI SPEICHERN ─────────────────────────────────────
+      const fname=(S.appTitle1||'Ship-Sips').replace(/[^a-z0-9]/gi,'_')+'_Reisebericht_'+new Date().toISOString().slice(0,10)+'.pdf';
+      const pdfBlob=doc.output('blob');
+      if(navigator.share&&navigator.canShare&&navigator.canShare({files:[new File([pdfBlob],fname,{type:'application/pdf'})]})){
+        navigator.share({files:[new File([pdfBlob],fname,{type:'application/pdf'})],title:fname}).catch(()=>_pdfDownloadFallback(doc,fname));
+      }else{
+        _pdfDownloadFallback(doc,fname);
+      }
+      showToast('📄 '+(L?'PDF report ready!':'PDF-Reisebericht fertig!'),'info',3500);
+    }catch(err){
+      console.error('[PDF]',err);
+      showToast((L?'⚠️ PDF error: ':'⚠️ PDF-Fehler: ')+err.message,'error',6000);
+    }
+  });
+}
+function _pdfDownloadFallback(doc,fname){
+  try{
+    const url=URL.createObjectURL(doc.output('blob'));
+    const a=document.createElement('a');a.href=url;a.download=fname;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }catch(e){doc.save(fname);}
+}
+/* ════════════════════════════════════════════════════════════════ */
 
 /* ═══ VERWALTUNG / SETTINGS TAB ══════════════════════════════ */
 
@@ -8776,7 +9172,7 @@ function renderHelp(){
 
     <div class="hlp-card">
       <div class="hlp-card-title">💽 ${h('Speicherlimits','Storage limits')}</div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('Maximaler Speicher','Maximum storage')}</span><span>${h('Alle Einträge werden in IndexedDB gespeichert – kein festes Limit. iOS löscht diese Daten nicht automatisch.','All entries are stored in IndexedDB – no fixed limit. iOS does not delete this data automatically.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('Maximaler Speicher','Maximum storage')}</span><span>${h('Alle Einträge werden primär in <strong>localStorage</strong> gespeichert. LocalStorage kann bei sehr niedrigem Gerätespeicher durch iOS gelöscht werden – <strong>regelmäßige Backups sind daher essenziell!</strong> Die Icon-Library wird zusätzlich in IndexedDB gesichert.','All entries are stored primarily in <strong>localStorage</strong>. LocalStorage can be deleted by iOS under very low device storage – <strong>regular backups are therefore essential!</strong> The icon library is additionally backed up in IndexedDB.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('Hartes Limit','Hard limit')}</span><span>${h('Maximale Anzahl aktiver Einträge: <strong>30.000</strong>. Bei Annäherung erscheint eine Warnung. Abhilfe: Backup erstellen, dann Reset.','Maximum number of active entries: <strong>30,000</strong>. A warning appears when approaching. Solution: create backup, then reset.')}</span></div>
     </div>
 
@@ -11403,6 +11799,18 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
   function _tryImportFromURL(){
     try{
       var p=new URLSearchParams(window.location.search);
+      /* FIX V48 F8: Manifest-Shortcuts ?action=backup / ?action=add auswerten */
+      var action=p.get('action');
+      if(action==='backup'){
+        setTimeout(function(){try{exportBackup();}catch(e){}},900);
+        try{window.history.replaceState({},'',window.location.pathname);}catch(e4){}
+        return;
+      }
+      if(action==='add'){
+        setTimeout(function(){try{switchTab(0);}catch(e){}},400);
+        try{window.history.replaceState({},'',window.location.pathname);}catch(e4){}
+        return;
+      }
       var raw=p.get('import')||p.get('data');
       if(!raw)return;
       var decoded=decodeURIComponent(raw);
@@ -11429,12 +11837,14 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
               var data=JSON.parse(text);
               // Sync-Paket
               if(data&&data.type==='sync_package'&&Array.isArray(data.log)){
-                setTimeout(function(d){handleIncomingSyncPackage(d);}(data),700);
+                /* FIX V48 F1: IIFE lieferte undefined an setTimeout – jetzt closure */
+                (function(d){setTimeout(function(){handleIncomingSyncPackage(d);},700);})(data);
                 break;
               }
               // Backup-Datei
               if(data&&(data.version||Array.isArray(data.log))){
-                setTimeout(function(d){window._handleImportData(d);}(data),700);
+                /* FIX V48 F1: IIFE lieferte undefined an setTimeout – jetzt closure */
+                (function(d){setTimeout(function(){window._handleImportData(d);},700);})(data);
                 break;
               }
             }catch(e){try{showToast('⚠️ Datei konnte nicht gelesen werden','error',4000);}catch(e2){}}

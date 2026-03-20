@@ -1,15 +1,18 @@
 /* ═══════════════════════════════════════════════════════════════════
    sw.js – Service Worker für Ship-Sips PWA
    ─────────────────────────────────────────────────────────────────
-   Cache-Version ship-sips-v2:
-   App umbenannt zu „Ship-Sips", neuer Cache-Bust.
+   Cache-Version ship-sips-v48:
+   FIX V48 F7: manifest.json in ASSETS ergänzt (war zuvor nicht
+   gecacht – führte im Offline-Betrieb zu fehlender Manifest-Datei).
+   Cache-Name an App-Version angeglichen.
    skipWaiting() bleibt aktiv damit der neue Cache sofort greift.
    ═══════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'ship-sips-v2';
+const CACHE_NAME = 'ship-sips-v48';
 
 const ASSETS = [
   './index.html',
+  './manifest.json',
   './icon-192.png',
   './icon-512.png'
 ];
