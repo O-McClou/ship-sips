@@ -5478,6 +5478,8 @@ function openUserManagement(){
     :'ℹ️ <strong>Nutzer 1–4 sind feste Plätze</strong> (immer Position 1, 2, 3 und 4). Ihre Namen und Farben können frei geändert werden und erscheinen überall in der App.<br>⚠️ <strong>Beim Backup-Import werden die Namen der Plätze 1–4 nicht überschrieben.</strong> Protokolleinträge werden der richtigen Position zugeordnet. Zusätzliche Nutzer aus dem Backup werden ergänzt.';
   renderUserProfileList();
   document.getElementById('userOv').className='ov show-bottom';
+  // Setup-Assistent-Banner verstecken damit Speichern-Button nicht verdeckt wird
+  try{var _swzB=document.getElementById('swzBanner');if(_swzB)_swzB.classList.add('swz-paused');}catch(e){}
 }
 function renderUserProfileList(){
   const el=document.getElementById('userProfileList');const addBtn=document.getElementById('addUserBtnWrap');
@@ -5523,7 +5525,11 @@ function confirmDeleteUser(i){
 }
 function deleteUser(i){const uid=S.users[i].id;if(S.users.length<=1){showToast('Mindestens 1 Nutzer muss vorhanden sein.','error');return;}S.users.splice(i,1);if(S.activeUserId===uid)S.activeUserId=S.users[0].id;renderUserProfileList();}
 function saveUsers(){saveState();closeUserModal();renderActiveUserBar();updateHeaderUserDot();renderLog();}
-function closeUserModal(){document.getElementById('userOv').className='ov';}
+function closeUserModal(){
+  document.getElementById('userOv').className='ov';
+  // Setup-Assistent-Banner wieder einblenden
+  try{var _swzB=document.getElementById('swzBanner');if(_swzB)_swzB.classList.remove('swz-paused');}catch(e){}
+}
 function openUserSwitcher(){
   if(!S.users||S.users.length<=1)return;
   const el=document.getElementById('userSwitchList');
@@ -10795,6 +10801,7 @@ setTimeout(()=>checkPwaBanner(),3500);
     // Banner
     '#swzBanner{position:fixed;left:0;right:0;bottom:0;z-index:490;background:var(--bg2);border-top:1px solid var(--ac-40);border-radius:14px 14px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.42);padding:14px 18px max(18px,env(safe-area-inset-bottom,18px));transform:translateY(110%);transition:transform .35s cubic-bezier(.22,.8,.36,1)}'+
     '#swzBanner.show{transform:translateY(0)}'+
+    '#swzBanner.swz-paused{transform:translateY(110%)!important;pointer-events:none}'+
     '#swzBanner .swz-meta{font-size:11px;color:var(--tx2);display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}'+
     '#swzBanner .swz-prog{display:flex;gap:4px;align-items:center}'+
     '#swzBanner .swz-dot{width:6px;height:6px;border-radius:50%;background:var(--ac-27);transition:background .25s}'+
@@ -10902,15 +10909,15 @@ function _swzDefs(){
     // 4 – App benennen
     {
       title: L?'\u270F\uFE0F Name Your App':'\u270F\uFE0F App benennen',
-      desc: L?'Give your app a personal name \u2013 e.\u00A0g. the name of your ship or voyage. Tap directly on the <strong>title at the top</strong> of the header (it\'s highlighted for you now). You can also set a subtitle such as the voyage name.'
-           :'Gib deiner App einen pers\u00F6nlichen Namen \u2013 z.\u00A0B. den Namen deines Schiffs oder deiner Reise. Tippe dazu direkt auf den <strong>Titel oben</strong> in der Kopfzeile (er wird jetzt f\u00FCr dich markiert). Du kannst auch einen Untertitel vergeben, z.\u00A0B. den Namen der Reise.',
+      desc: L?'Give your app a personal name \u2013 e.\u00A0g. the name of your ship or voyage. The header is now <strong>open above</strong> \u2013 tap directly on the <strong>blinking title</strong> to edit it. You can also set a subtitle. Done? Just tap somewhere else to save.'
+           :'Gib deiner App einen pers\u00F6nlichen Namen \u2013 z.\u00A0B. den Namen deines Schiffs oder deiner Reise. Die Kopfzeile ist jetzt <strong>oben aufgeklappt</strong> \u2013 tippe direkt auf den <strong>blinkenden Titel</strong>, um ihn zu \u00e4ndern. Du kannst auch einen Untertitel vergeben. Fertig? Einfach daneben tippen, um zu speichern.',
       navKey:null, navAnchor:null, navScroll:null, navLogo:true
     },
     // 5 – Reisende
     {
       title: L?'\uD83D\uDC65 Enter Travellers':'\uD83D\uDC65 Reisende eingeben',
-      desc: L?'Replace \u201cPerson 1\u201d\u2013\u201cPerson 4\u201d with the real names of your travel companions. You can rename, disable or add users, and assign individual colours and budgets. Settings are directly here under <strong>User Profiles</strong>.'
-           :'Ersetze \u201EPerson 1\u201C bis \u201EPerson 4\u201C durch die echten Namen deiner Mitreisenden. Du kannst Personen umbenennen, deaktivieren oder neue hinzuf\u00FCgen, sowie individuelle Farben und Budgets vergeben. Die Einstellungen findest du direkt hier unter <strong>Nutzer-Profile</strong>.',
+      desc: L?'Replace \u201cPerson 1\u201d\u2013\u201cPerson 4\u201d with the real names of your travel companions. Tap <strong>Manage users</strong> to open the editor \u2013 enter names and colours, then tap <strong>\u2713 Save &amp; Close</strong> at the bottom to confirm. You can add budgets and extra users anytime.'
+           :'Ersetze \u201EPerson 1\u201C bis \u201EPerson 4\u201C durch die echten Namen deiner Mitreisenden. Tippe auf <strong>Nutzer verwalten</strong>, um den Editor zu \u00f6ffnen \u2013 Namen und Farben eingeben, dann unten auf <strong>\u2713 Speichern &amp; Schlie\u00dfen</strong> tippen. Farben, Budgets und weitere Personen kannst du jederzeit erg\u00e4nzen.',
       navKey:'users', navAnchor:'vw-users', navScroll:null
     },
     // 6 – Getränkekarte
@@ -10988,6 +10995,17 @@ function _swzShow(step){
 
   setTimeout(function(){_swzNavigate(step);},80);
   setTimeout(function(){banner.classList.add('show');},40);
+
+  // Genereller Observer: Banner verstecken wenn irgendein .ov-Overlay öffnet
+  if(!window._swzOvObserver){
+    window._swzOvObserver=new MutationObserver(function(){
+      var b=document.getElementById('swzBanner');
+      if(!b)return;
+      var anyOpen=document.querySelector('.ov.show-bottom,.ov.show-center,.ov.show-top,.ov.show');
+      if(anyOpen){b.classList.add('swz-paused');}else{b.classList.remove('swz-paused');}
+    });
+    window._swzOvObserver.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']});
+  }
 }
 
 // ── Navigation zur passenden Stelle ───────────────────────────
@@ -11053,9 +11071,11 @@ function _swzNavigate(step){
     else if(step===3){
       openSec('design','vw-design');
     }
-    // Step 4: App benennen → Tab 0, Logo blinkt
+    // Step 4: App benennen → Tab 0, Header aufklappen, Logo blinkt
     else if(step===4){
       try{if(typeof switchTab==='function')switchTab(0);}catch(e){}
+      // Header aufklappen, damit Titel sichtbar und tippbar ist
+      try{if(typeof S!=='undefined'&&S.headerCollapsed&&typeof toggleHeader==='function'){S.headerCollapsed=false;applyHeaderCollapse();}}catch(e){}
       setTimeout(function(){
         try{
           var logo=document.getElementById('logoMain');
@@ -11108,6 +11128,8 @@ function _swzFinish(){
       setTimeout(function(){try{if(banner.parentNode)banner.parentNode.removeChild(banner);}catch(e){}},420);
     }
   }catch(e){}
+  // MutationObserver aufräumen
+  try{if(window._swzOvObserver){window._swzOvObserver.disconnect();window._swzOvObserver=null;}}catch(e){}
   try{if(typeof switchTab==='function')switchTab(0);}catch(e){}
   setTimeout(function(){
     try{
