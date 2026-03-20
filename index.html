@@ -1351,11 +1351,11 @@ details.hlp-acc summary:active{opacity:.75}
     </div>
     <div style="height:5px"></div>
     <div class="tabs">
-      <button class="tab on" id="t0" onclick="switchTab(0)"><span class="tab-icon">🍹</span><span class="tab-label">Getränke</span></button>
-      <button class="tab"    id="t1" onclick="switchTab(1)"><span class="tab-icon">📋</span><span class="tab-label">Protokoll</span></button>
-      <button class="tab"    id="t2" onclick="switchTab(2)"><span class="tab-icon">📊</span><span class="tab-label">Statistik</span></button>
-      <button class="tab"    id="t3" onclick="switchTab(3)" style="position:relative"><span class="tab-icon">⚙️</span><span class="tab-label">Verwaltung</span><div id="admBadge" style="display:none;position:absolute;width:8px;height:8px;border-radius:50%;background:#E53935;top:6px;right:6px;pointer-events:none"></div></button>
-      <button class="tab"    id="t4" onclick="switchTab(4)"><span class="tab-icon">❓</span><span class="tab-label">Hilfe</span></button>
+      <button class="tab on" id="t0" onclick="switchTab(0)" aria-label="Tab: Getränke"><!-- [PUNKT-F] --><span class="tab-icon">🍹</span><span class="tab-label">Getränke</span></button>
+      <button class="tab"    id="t1" onclick="switchTab(1)" aria-label="Tab: Protokoll"><!-- [PUNKT-F] --><span class="tab-icon">📋</span><span class="tab-label">Protokoll</span></button>
+      <button class="tab"    id="t2" onclick="switchTab(2)" aria-label="Tab: Statistik"><!-- [PUNKT-F] --><span class="tab-icon">📊</span><span class="tab-label">Statistik</span></button>
+      <button class="tab"    id="t3" onclick="switchTab(3)" aria-label="Tab: Verwaltung" style="position:relative"><!-- [PUNKT-F] --><span class="tab-icon">⚙️</span><span class="tab-label">Verwaltung</span><div id="admBadge" style="display:none;position:absolute;width:8px;height:8px;border-radius:50%;background:#E53935;top:6px;right:6px;pointer-events:none"></div></button>
+      <button class="tab"    id="t4" onclick="switchTab(4)" aria-label="Tab: Hilfe"><!-- [PUNKT-F] --><span class="tab-icon">❓</span><span class="tab-label">Hilfe</span></button>
     </div>
   </div>
   <div class="hdr-toggle" id="hdrHandle">
@@ -1409,7 +1409,7 @@ details.hlp-acc summary:active{opacity:.75}
   <div id="storageBanner" style="display:none;margin:6px 14px 0;padding:10px 12px;background:#2a1000;border:1px solid #dd660055;border-radius:10px;align-items:center;gap:10px;font-size:12px;color:#dd8833">
     <span style="font-size:18px;flex-shrink:0">💾</span>
     <span id="storageBannerMsg" style="flex:1;line-height:1.5"></span>
-    <button onclick="exportBackup();hideStoWarn()" style="flex-shrink:0;padding:5px 10px;background:#dd663322;border:1px solid #dd6633aa;border-radius:7px;color:#dd8833;cursor:pointer;font-size:11px;font-family:inherit">Backup jetzt</button>
+    <button onclick="exportBackup();hideStoWarn()" style="flex-shrink:0;padding:5px 10px;background:#dd663322;border:1px solid #dd6633aa;border-radius:7px;color:#dd8833;cursor:pointer;font-size:11px;font-family:inherit" aria-label="Backup exportieren">Backup jetzt</button><!-- [PUNKT-F] -->
   </div>
   <!-- V2: Aktueller Hafen/Ort wurde in den Kopfbereich verschoben -->
   <div id="limitBanner" style="display:none" class="limit-banner"><span style="font-size:18px">🚨</span><span id="limitBannerText"></span></div>
@@ -1442,7 +1442,7 @@ details.hlp-acc summary:active{opacity:.75}
       <div class="log-hdr-btns">
         <button id="logFilterToggleBtn" onclick="toggleLogFilterPanel()" class="log-multisel-btn">🔍 Filter ▾</button>
         <div style="position:relative;display:inline-block">
-          <button id="logMoreBtn" onclick="toggleLogMoreMenu(event)" class="log-multisel-btn" style="font-size:16px;padding:7px 11px;line-height:1;letter-spacing:0">⋯</button>
+          <button id="logMoreBtn" onclick="toggleLogMoreMenu(event)" class="log-multisel-btn" style="font-size:16px;padding:7px 11px;line-height:1;letter-spacing:0" aria-label="Weitere Optionen">⋯</button><!-- [PUNKT-F] -->
           <div id="logMoreMenu" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--bg2);border:1px solid var(--ac-27);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.2);min-width:190px;z-index:200;overflow:hidden">
             <button id="logAddBtn" onclick="openAddEntry();closeLogMoreMenu()" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;font-family:Georgia,serif;font-size:14px;font-weight:bold;color:var(--ac);cursor:pointer;background:var(--ac-07);border:none;border-bottom:2px solid var(--ac-27);text-align:left;touch-action:manipulation;-webkit-user-select:none;box-sizing:border-box">➕ Eintrag hinzufügen</button>
             <button onclick="toggleLogMultiSelect();closeLogMoreMenu()" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;font-family:Georgia,serif;font-size:13px;color:var(--tx0);cursor:pointer;background:transparent;border:none;border-bottom:1px solid var(--ac-07);text-align:left;touch-action:manipulation;-webkit-user-select:none;box-sizing:border-box">☑ Mehrfach auswählen</button>
@@ -1639,7 +1639,7 @@ details.hlp-acc summary:active{opacity:.75}
 <div class="msel-bar" id="mselBar" style="display:none">
   <span class="msel-bar-cnt" id="mselBarCnt">0 ausgewählt</span>
   <button class="msel-bar-all" onclick="mselSelectAll()">Alle</button>
-  <button class="msel-bar-edit" onclick="openMultiEdit()" disabled>✏️ Bearbeiten</button>
+  <button class="msel-bar-edit" onclick="openMultiEdit()" disabled aria-label="Ausgewählte bearbeiten">✏️ Bearbeiten</button><!-- [PUNKT-F] -->
   <button class="msel-bar-del" onclick="mselDeleteSelected()" disabled aria-label="Ausgewählte löschen" title="Löschen">🗑</button>
   <button class="msel-bar-cancel" onclick="toggleLogMultiSelect()" aria-label="Mehrfachauswahl beenden" title="Abbrechen">✕</button>
 </div>
@@ -3187,7 +3187,7 @@ function showThemeCodeModal(label,code,isBundle){
   sheet.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div style="font-size:15px;font-weight:bold;color:var(--ac)">📤 ${isBundle?(L?'Export All Concepts':'Alle Konzepte exportieren'):(L?'Export Concept':'Konzept exportieren')}</div>
-      <button onclick="document.getElementById('themeCodeModalOv').className='ov'" style="background:transparent;border:none;color:var(--tx2);font-size:22px;cursor:pointer;padding:0 4px;line-height:1">✕</button>
+      <button onclick="document.getElementById('themeCodeModalOv').className='ov'" style="background:transparent;border:none;color:var(--tx2);font-size:22px;cursor:pointer;padding:0 4px;line-height:1" aria-label="Schließen">✕</button><!-- [PUNKT-F] -->
     </div>
     <div style="font-size:11px;color:var(--tx2);margin-bottom:8px">${isBundle?(L?'Bundle code for all custom concepts':'Bundle-Code für alle eigenen Konzepte'):(L?'Code for concept:':'Code für Konzept:')} <strong style="color:var(--tx0)">${esc(label)}</strong></div>
     <div style="font-size:11px;color:var(--tx2);margin-bottom:10px;line-height:1.5">${L?'Tap the code field → hold → Select All → Copy.':'Code-Feld antippen → gedrückt halten → Alles auswählen → Kopieren.'}</div>
@@ -3248,7 +3248,7 @@ function importCustomTheme(){
   sheet.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div style="font-size:15px;font-weight:bold;color:var(--ac)">📥 ${L?'Import Concept':'Konzept importieren'}</div>
-      <button onclick="document.getElementById('themeCodeModalOv').className='ov'" style="background:transparent;border:none;color:var(--tx2);font-size:22px;cursor:pointer;padding:0 4px;line-height:1">✕</button>
+      <button onclick="document.getElementById('themeCodeModalOv').className='ov'" style="background:transparent;border:none;color:var(--tx2);font-size:22px;cursor:pointer;padding:0 4px;line-height:1" aria-label="Schließen">✕</button><!-- [PUNKT-F] -->
     </div>
     <div style="font-size:12px;color:var(--tx2);margin-bottom:10px;line-height:1.6">${L?'Paste the export code below (single concept or bundle):':'Export-Code hier einfügen (einzelnes Konzept oder Bundle):'}</div>
     <textarea id="themeImportTA" placeholder="${L?'Paste code here…':'Code hier einfügen…'}" style="width:100%;height:110px;background:var(--bg3);border:2px solid var(--ac-27);border-radius:10px;color:var(--tx1);font-family:monospace;font-size:11px;padding:10px;resize:none;outline:none;box-sizing:border-box;-webkit-appearance:none;word-break:break-all" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
@@ -4099,15 +4099,75 @@ function checkFutureEntries(){
    entfernt – App nutzt seit V46 IndexedDB (kein 5-MB-Limit mehr). */
 function hideStoWarn(){const b=document.getElementById('storageBanner');if(b)b.style.display='none';}
 function checkBackupReminder(){
+  // [PUNKT-G] Erweiterte Backup-Erinnerungslogik mit Dringlichkeitsmodus
   if(S.log.length<30){updateAdmBadge();return;}
   const warnKey='a4_bkp_warn_day';
   try{if(localStorage.getItem(warnKey)===logicalTodayStr()){updateAdmBadge();return;}}catch(e){}
   if(S.lastBackupDate&&logicalDayStr(S.lastBackupDate)===logicalTodayStr()){updateAdmBadge();return;}
   const hoursSince=S.lastBackupDate?(Date.now()-new Date(S.lastBackupDate).getTime())/3600000:9999;
   if(hoursSince<=72){updateAdmBadge();return;}
-  showToast('💾 Backup empfohlen! '+fmtNum(S.log.length)+' Einträge.','warn',6000);
-  try{localStorage.setItem(warnKey,logicalTodayStr());}catch(e){}
+
+  // [PUNKT-G] Dringlichkeitsprüfung: >= 48h UND > 10 neue Einträge
+  const entriesAtLastBackup=parseInt(localStorage.getItem('a4_entriesAtLastBackup')||'0',10)||0;
+  const newEntriesSinceBackup=Math.max(0,S.log.length-entriesAtLastBackup);
+  const isUrgent=hoursSince>=48&&newEntriesSinceBackup>10;
+
+  if(isUrgent){
+    // [PUNKT-G] Dringlichkeitsmodus: nicht-automatisch-schließbarer Dialog
+    showUrgentBackupDialog();
+  }else{
+    // [PUNKT-G] Normaler Modus: Toast wie bisher
+    showToast('💾 Backup empfohlen! '+fmtNum(S.log.length)+' Einträge.','warn',6000);
+    try{localStorage.setItem(warnKey,logicalTodayStr());}catch(e){}
+  }
   updateAdmBadge();
+}
+
+// [PUNKT-G] Dringlichkeits-Dialog anzeigen (kein Auto-Close, kein Backdrop-Dismiss, kein ×)
+function showUrgentBackupDialog(){
+  if(document.getElementById('urgentBackupDialog'))return; // bereits sichtbar
+  const L=S.lang==='en';
+  const ov=document.createElement('div');
+  ov.id='urgentBackupDialog';
+  ov.style.cssText='position:fixed;inset:0;z-index:19999;background:rgba(0,0,0,0.72);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;touch-action:none;';
+  // Kein Klick auf Backdrop schließt den Dialog:
+  ov.addEventListener('click',function(e){e.stopPropagation();});
+  const box=document.createElement('div');
+  box.style.cssText='background:var(--bg2);border:2px solid #dd6633;border-radius:16px;padding:24px 20px 20px;max-width:340px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.6);display:flex;flex-direction:column;gap:16px;box-sizing:border-box;';
+  box.innerHTML=`
+    <div style="font-size:28px;text-align:center">💾</div>
+    <div style="font-size:15px;font-weight:bold;color:#dd8833;text-align:center;line-height:1.4">
+      ${L?'No backup for 2+ days – please back up now!':'Kein Backup seit 2+ Tagen – bitte jetzt sichern!'}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button id="urgentBkpNowBtn"
+        style="width:100%;padding:14px;background:var(--ac);border:none;border-radius:10px;color:var(--ac-fg);font-family:Georgia,serif;font-size:15px;font-weight:bold;cursor:pointer;touch-action:manipulation">
+        ${L?'Back up now':'Backup jetzt erstellen'}
+      </button>
+      <button id="urgentBkpLaterBtn"
+        style="width:100%;padding:12px;background:transparent;border:1px solid var(--ac-27);border-radius:10px;color:var(--tx2);font-family:Georgia,serif;font-size:13px;cursor:pointer;touch-action:manipulation">
+        ${L?'Remind me later (1h)':'Später erinnern (1h)'}
+      </button>
+    </div>`;
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+  // [PUNKT-G] "Backup jetzt erstellen" → normalen Backup-Download auslösen + Dialog schließen
+  document.getElementById('urgentBkpNowBtn').addEventListener('click',function(){
+    ov.remove();
+    exportBackup();
+  });
+  // [PUNKT-G] "Später erinnern (1h)" → Dialog schließen, Timer auf 1h setzen
+  document.getElementById('urgentBkpLaterBtn').addEventListener('click',function(){
+    ov.remove();
+    const warnKey='a4_bkp_warn_day';
+    // Hinweis für 1h unterdrücken: Key auf heute setzen (verhindert erneutes Zeigen in dieser Session)
+    try{localStorage.setItem(warnKey,logicalTodayStr());}catch(e){}
+    // Nach 1h erneut prüfen
+    setTimeout(function(){
+      try{localStorage.removeItem('a4_bkp_warn_day');}catch(e){}
+      checkBackupReminder();
+    },3600000);
+  });
 }
 function updateAdmBadge(){
   const badge=document.getElementById('admBadge');if(!badge)return;
@@ -4156,7 +4216,7 @@ async function checkInternalBackupReminder(){
       'box-shadow:0 4px 20px rgba(0,0,0,0.55);cursor:pointer;touch-action:manipulation;'+
       'animation:fadeInUp .3s ease';
     banner.innerHTML=`<span style="flex:1">${esc(msg)}</span>
-      <button onclick="event.stopPropagation();document.getElementById('internalBkpReminderBanner')?.remove()" style="background:transparent;border:none;color:var(--tx2);font-size:16px;cursor:pointer;padding:0;line-height:1;touch-action:manipulation">✕</button>`;
+      <button onclick="event.stopPropagation();document.getElementById('internalBkpReminderBanner')?.remove()" style="background:transparent;border:none;color:var(--tx2);font-size:16px;cursor:pointer;padding:0;line-height:1;touch-action:manipulation" aria-label="Schließen">✕</button><!-- [PUNKT-F] -->`;
     banner.onclick=function(){
       banner.remove();
       switchTab(3); // Verwaltung öffnen
@@ -4674,7 +4734,7 @@ async function renderInternalBackups(){
           <div style="font-size:10px;color:var(--tx2)">${esc(ds)} · ${b.size_kb||'?'} KB</div>
         </div>
         <button onclick="internalRestoreById(${b.id})" style="padding:5px 9px;font-size:11px;background:var(--ac-13);border:1px solid var(--ac-27);border-radius:6px;color:var(--ac);cursor:pointer;font-family:Georgia,serif;white-space:nowrap;touch-action:manipulation">🔄 ${L?'Restore':'Wiederherstellen'}</button>
-        <button onclick="internalDeleteById(${b.id})" style="padding:5px 7px;font-size:14px;background:transparent;border:none;color:var(--col-err);cursor:pointer;touch-action:manipulation">🗑️</button>
+        <button onclick="internalDeleteById(${b.id})" style="padding:5px 7px;font-size:14px;background:transparent;border:none;color:var(--col-err);cursor:pointer;touch-action:manipulation" aria-label="Backup löschen">🗑️</button><!-- [PUNKT-F] -->
       </div>`;
     }).join('');
     const summary=document.getElementById('internalBackupsSummary');
@@ -5434,7 +5494,7 @@ function renderUserProfileList(){
         ${isFixed?`<div style="font-size:9px;color:var(--tx2);margin-top:2px">📌 Fester Platz ${i+1} · Name bleibt bei Import erhalten</div>`:''}
       </div>
       <button onclick="setActiveUser('${u.id}');renderUserProfileList()" style="padding:6px 10px;background:${u.id===S.activeUserId?u.color:'var(--bg2)'};color:${u.id===S.activeUserId?'var(--bg)':'var(--tx1)'};border:1px solid ${u.color}44;border-radius:7px;font-size:11px;cursor:pointer;flex-shrink:0;font-family:Georgia,serif">${u.id===S.activeUserId?'✓ Aktiv':'Aktiv'}</button>
-      ${S.users.length>1&&!isFixed?`<button onclick="confirmDeleteUser(${i})" style="padding:6px 8px;background:transparent;border:none;color:#e05555;cursor:pointer;font-size:16px;flex-shrink:0" title="Nutzer löschen">🗑</button>`:''}
+      ${S.users.length>1&&!isFixed?`<button onclick="confirmDeleteUser(${i})" style="padding:6px 8px;background:transparent;border:none;color:#e05555;cursor:pointer;font-size:16px;flex-shrink:0" title="Nutzer löschen" aria-label="Nutzer löschen">🗑</button><!-- [PUNKT-F] -->`:''}<!-- [PUNKT-F] -->
     </div>`;
   }).join('');
   if(addBtn)addBtn.innerHTML=`<button onclick="addUser()" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;background:var(--bg2);border:1px dashed var(--ac-27);border-radius:10px;cursor:pointer;color:var(--tx1);font-size:13px;font-family:Georgia,serif;margin-top:4px">${S.lang==='en'?'＋ Add another user':'＋ Weiteren Nutzer hinzufügen'}</button>`;
@@ -6339,7 +6399,7 @@ function buildLogRowHtml(e,extraClass,catBadge){
   if(S.logMultiSelect){
     return `<div class="msel-wrap" data-mselid="${esc(e.id)}"><div class="logrow${extraClass?' '+extraClass:''}${sel?' msel-on':''}" data-rid="${esc(e.id)}"><div class="logrow-top"><div class="msel-cb${sel?' on':''}" style="margin-right:6px">${sel?'✓':''}</div><div class="logname">${esc(e.name)}${catHtml?' '+catHtml:''}</div><div style="display:flex;align-items:center;gap:6px;flex-shrink:0">${userBadgeHtml(e.userId)}<div class="logpbig" style="display:flex;align-items:center;gap:3px">${eur(e.price||0)}${_inclDot}</div></div></div><div class="logtime">🕐 ${fmtEntryTime(e)} <span style="font-size:10px;color:var(--tx2);margin-left:5px">(${appOffsetLabel(eTz)})</span></div>${e.location?`<div class="lognote" style="color:var(--ac)">⚓ ${esc(e.location)}</div>`:''}${_isRouteOverridden(e)?`<div class="lognote" style="color:#e0a055;font-size:10px">✏️ ${S.lang==='en'?'Route changed':'Route wurde geändert'}</div>`:''}${e.note?`<div class="lognote">${esc(e.note)}</div>`:''}</div></div>`;
   }
-  return `<div class="swipe-wrap" data-swid="${esc(e.id)}"><div class="swipe-edit-bg"><span style="font-size:20px">✏️</span><span>${S.lang==='en'?'EDIT':'BEARBEITEN'}</span></div><div class="swipe-del-bg"><span style="font-size:20px">🗑</span><span>${S.lang==='en'?'DELETE':'LÖSCHEN'}</span></div><div class="swipe-strip swipe-strip-left"></div><div class="swipe-strip swipe-strip-right"></div><div class="logrow${extraClass?' '+extraClass:''}" data-rid="${esc(e.id)}"><div class="logrow-top"><div class="logname">${esc(e.name)}${catHtml?' '+catHtml:''}</div><div style="display:flex;align-items:center;gap:4px;flex-shrink:0">${userBadgeHtml(e.userId)}<div class="logpbig" style="display:flex;align-items:center;gap:3px">${eur(e.price||0)}${_inclDot}</div><button class="log-ctx-btn" onclick="showLogCtxMenu(event,'${esc(e.id)}')" title="${S.lang==='en'?'More options':'Mehr Optionen'}">⋯</button></div></div><div class="logtime">🕐 ${fmtEntryTime(e)} <span style="font-size:10px;color:var(--tx2);margin-left:5px">(${appOffsetLabel(eTz)})</span></div>${e.location?`<div class="lognote" style="color:var(--ac)">⚓ ${esc(e.location)}</div>`:''}${_isRouteOverridden(e)?`<div class="lognote" style="color:#e0a055;font-size:10px">✏️ ${S.lang==='en'?'Route changed':'Route wurde geändert'}</div>`:''}<div class="lognote lognote-tap" onclick="openInlineNoteEdit(event,'${esc(e.id)}')" title="${S.lang==='en'?'Tap to edit note':'Notiz bearbeiten'}" style="cursor:pointer;min-height:16px;-webkit-user-select:none;user-select:none">${e.note?esc(e.note):`<span style="color:var(--tx2);font-size:10px;opacity:.55">${S.lang==='en'?'+ note':'+ Notiz'}</span>`}</div></div></div>`;
+  return `<div class="swipe-wrap" data-swid="${esc(e.id)}"><div class="swipe-edit-bg"><span style="font-size:20px">✏️</span><span>${S.lang==='en'?'EDIT':'BEARBEITEN'}</span></div><div class="swipe-del-bg"><span style="font-size:20px">🗑</span><span>${S.lang==='en'?'DELETE':'LÖSCHEN'}</span></div><div class="swipe-strip swipe-strip-left"></div><div class="swipe-strip swipe-strip-right"></div><div class="logrow${extraClass?' '+extraClass:''}" data-rid="${esc(e.id)}"><div class="logrow-top"><div class="logname">${esc(e.name)}${catHtml?' '+catHtml:''}</div><div style="display:flex;align-items:center;gap:4px;flex-shrink:0">${userBadgeHtml(e.userId)}<div class="logpbig" style="display:flex;align-items:center;gap:3px">${eur(e.price||0)}${_inclDot}</div><button class="log-ctx-btn" onclick="showLogCtxMenu(event,'${esc(e.id)}')" title="${S.lang==='en'?'More options':'Mehr Optionen'}" aria-label="${S.lang==='en'?'More options':'Mehr Optionen'}">⋯</button><!-- [PUNKT-F] --></div></div><div class="logtime">🕐 ${fmtEntryTime(e)} <span style="font-size:10px;color:var(--tx2);margin-left:5px">(${appOffsetLabel(eTz)})</span></div>${e.location?`<div class="lognote" style="color:var(--ac)">⚓ ${esc(e.location)}</div>`:''}${_isRouteOverridden(e)?`<div class="lognote" style="color:#e0a055;font-size:10px">✏️ ${S.lang==='en'?'Route changed':'Route wurde geändert'}</div>`:''}<div class="lognote lognote-tap" onclick="openInlineNoteEdit(event,'${esc(e.id)}')" title="${S.lang==='en'?'Tap to edit note':'Notiz bearbeiten'}" style="cursor:pointer;min-height:16px;-webkit-user-select:none;user-select:none">${e.note?esc(e.note):`<span style="color:var(--tx2);font-size:10px;opacity:.55">${S.lang==='en'?'+ note':'+ Notiz'}</span>`}</div></div></div>`;
 }
 function renderLogCatFilter(){
   const lcs=document.getElementById('logCatScroll');if(!lcs)return;
@@ -7105,7 +7165,7 @@ function renderVerwaltung(){
   let catHtml='';
   S.catIndex.forEach((cat,ci)=>{
     const ds=S.drinks.filter(d=>d.cat===cat),isO=S.expandedCats.has(cat),col=catColor(cat);
-    catHtml+=`<div class="catblock"><div class="cathdr" data-tc="${ci}" style="border-left-color:${col}"><span class="cathdr-name"><span class="cdot" style="background:${col}"></span>${esc(cat)}</span><span class="cathdr-cnt">${ds.length} ${T('cat.drinks')}</span><span class="cathdr-arr${isO?' open':''}">&#9658;</span></div><div class="catbody${isO?' open':''}"><div class="cat-actions"><button class="cab cab-r" data-rc="${ci}">${T('cat.rename.btn')}</button><button class="cab cab-d" data-dc="${ci}">${T('cat.del.btn')}</button></div>${ds.map(d=>{const dcol=catColor(d.cat);return`<div class="drinkitem"><span class="di-name">${esc(d.name)}</span><span class="di-price">${eur(d.price)}</span><button class="di-incl" onclick="toggleIncluded('${esc(d.id)}')" title="${d.included?(L?'Included – click to remove':'Inklusive – zum Entfernen tippen'):(L?'Not included – click to set':'Nicht inklusive – zum Aktivieren tippen')}"><span class="incl-dot ${d.included?'filled':'outline'}" style="${d.included?`background:${dcol};width:12px;height:12px`:`color:${dcol};width:12px;height:12px`}"></span></button><button class="di-btn di-e" data-ed="${esc(d.id)}">&#9999;&#65039;</button><button class="di-btn di-d" data-dd="${esc(d.id)}">&#128465;</button></div>`;}).join('')}<button class="add-drink-row" data-ad="${ci}">&#65291; ${T('modal.drink.add').replace('Add ','').replace('Getr\xe4nk h','H')}</button></div></div>`;
+    catHtml+=`<div class="catblock"><div class="cathdr" data-tc="${ci}" style="border-left-color:${col}"><span class="cathdr-name"><span class="cdot" style="background:${col}"></span>${esc(cat)}</span><span class="cathdr-cnt">${ds.length} ${T('cat.drinks')}</span><span class="cathdr-arr${isO?' open':''}">&#9658;</span></div><div class="catbody${isO?' open':''}"><div class="cat-actions"><button class="cab cab-r" data-rc="${ci}">${T('cat.rename.btn')}</button><button class="cab cab-d" data-dc="${ci}">${T('cat.del.btn')}</button></div>${ds.map(d=>{const dcol=catColor(d.cat);return`<div class="drinkitem"><span class="di-name">${esc(d.name)}</span><span class="di-price">${eur(d.price)}</span><button class="di-incl" onclick="toggleIncluded('${esc(d.id)}')" title="${d.included?(L?'Included – click to remove':'Inklusive – zum Entfernen tippen'):(L?'Not included – click to set':'Nicht inklusive – zum Aktivieren tippen')}"><span class="incl-dot ${d.included?'filled':'outline'}" style="${d.included?`background:${dcol};width:12px;height:12px`:`color:${dcol};width:12px;height:12px`}"></span></button><button class="di-btn di-e" data-ed="${esc(d.id)}" aria-label=\"Bearbeiten\">&#9999;&#65039;</button><!-- [PUNKT-F] --><button class="di-btn di-d" data-dd="${esc(d.id)}" aria-label=\"Getränk löschen\">&#128465;</button><!-- [PUNKT-F] --></div>`;}).join('')}<button class="add-drink-row" data-ad="${ci}">&#65291; ${T('modal.drink.add').replace('Add ','').replace('Getr\xe4nk h','H')}</button></div></div>`;
   });
 
   /* ── TZ_OFFSETS ─────────────────────────────────── */
@@ -8960,7 +9020,10 @@ serviceCharge:S.serviceCharge||0,customThemes:S.customThemes||[],btnLayout:S.btn
   const _fname='Backup_'+nm+'_'+dateStr.replace(/[/.]/g,'-')+_bfTag+'.json';
   const _json=JSON.stringify(data,null,2);
   shareOrDownload(_json,_fname,'application/json');
-  S.lastBackupDate=new Date().toISOString();saveStateDebounced();}
+  S.lastBackupDate=new Date().toISOString();saveStateDebounced();
+  // [PUNKT-G] Eintragsanzahl zum Zeitpunkt des Backups sichern
+  try{localStorage.setItem('a4_entriesAtLastBackup',String(S.log.length));}catch(e){}
+}
 /* ═══════════════════════════════════════════════════════════════════
    V46: Smart Merge – Protokoll teilen ohne Einstellungen zu überschreiben
    Jeder Eintrag hat eine eindeutige uid. Beim Import werden nur
@@ -10027,7 +10090,7 @@ function renderRouteEditorBody(){
           title="Datum antippen zum Ändern">
         <span class="route-entry-wd" style="font-size:10px;color:${isToday?'var(--ac)':'var(--tx2)'};flex-shrink:0">${wochentag}${isToday?' ⭐':isDup?' ⚠️':''}</span>
         <div class="route-entry-actions">
-          <button class="route-del-btn" onclick="deleteRouteRow(${i})" title="Tag löschen">🗑</button>
+          <button class="route-del-btn" onclick="deleteRouteRow(${i})" title="Tag löschen" aria-label="Tag löschen">🗑</button><!-- [PUNKT-F] -->
         </div>
       </div>
       <div class="route-entry-body">
