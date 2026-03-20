@@ -4436,6 +4436,7 @@ function openTitleEdit(){
   // Icon preview
   updateTitleIconPreview();
   document.getElementById('titleOv').className='ov show-bottom';
+  try{_swzPause();}catch(e){}
 }
 function saveTitleEdit(){
   const l1=document.getElementById('titleLine1').value.trim(),l2=document.getElementById('titleLine2').value.trim();
@@ -4443,7 +4444,7 @@ function saveTitleEdit(){
   S.appTitle1=l1;S.appTitle2=l2;
   saveState();applyTitle();closeTitleEdit();
 }
-function closeTitleEdit(){document.getElementById('titleOv').className='ov';}
+function closeTitleEdit(){document.getElementById('titleOv').className='ov';try{_swzResume();}catch(e){}}
 
 /* ═══ LANGUAGE ══════════════════════════════════════════════ */
 function setLang(l){S.lang=l;document.getElementById('htmlRoot').lang=l;saveState();applyLang();renderDrinks(false);if(S.activeTab===1)renderLog();else if(S.activeTab===2)renderStats();else if(S.activeTab===3)renderVerwaltung();else if(S.activeTab===4)renderHelp();}
@@ -5479,7 +5480,7 @@ function openUserManagement(){
   renderUserProfileList();
   document.getElementById('userOv').className='ov show-bottom';
   // Setup-Assistent-Banner verstecken damit Speichern-Button nicht verdeckt wird
-  try{var _swzB=document.getElementById('swzBanner');if(_swzB)_swzB.classList.add('swz-paused');}catch(e){}
+  try{_swzPause();}catch(e){}
 }
 function renderUserProfileList(){
   const el=document.getElementById('userProfileList');const addBtn=document.getElementById('addUserBtnWrap');
@@ -5528,7 +5529,7 @@ function saveUsers(){saveState();closeUserModal();renderActiveUserBar();updateHe
 function closeUserModal(){
   document.getElementById('userOv').className='ov';
   // Setup-Assistent-Banner wieder einblenden
-  try{var _swzB=document.getElementById('swzBanner');if(_swzB)_swzB.classList.remove('swz-paused');}catch(e){}
+  try{_swzResume();}catch(e){}
 }
 function openUserSwitcher(){
   if(!S.users||S.users.length<=1)return;
@@ -9974,6 +9975,7 @@ function openTzWiz(){
   const sel=document.getElementById('tzWizSel');
   if(sel)sel.innerHTML=buildMeTzSel(cur);
   document.getElementById('tzWizOv').className='ov show-bottom';
+  try{_swzPause();}catch(e){}
 }
 function tzWizFromPort(el){
   const off=parseInt(el.value);
@@ -10010,7 +10012,7 @@ function applyTzWiz(){
   // V34 V1: Datumsgrenzprüfung nach TZ-Wechsel
   if(oldOff!==off)checkDatelineCrossing(oldOff,off);
 }
-function closeTzWiz(){document.getElementById('tzWizOv').className='ov';_tzWizSelOff=null;}
+function closeTzWiz(){document.getElementById('tzWizOv').className='ov';_tzWizSelOff=null;try{_swzResume();}catch(e){}}
 
 /* ═══════════════════════════════════════════════════════════════
    REISEROUTE – Import / Export / Editor
@@ -10837,6 +10839,10 @@ setTimeout(function(){
 },1500);
 
 // ── Willkommens-Modal ──────────────────────────────────────────
+// Hilfsfunktionen: Setup-Banner bei Overlays pausieren/fortsetzen
+function _swzPause(){try{var b=document.getElementById('swzBanner');if(b)b.classList.add('swz-paused');}catch(e){}}
+function _swzResume(){try{var b=document.getElementById('swzBanner');if(b)b.classList.remove('swz-paused');}catch(e){}}
+
 function _swzShowWelcome(){
   try{
     var ov=document.createElement('div');
@@ -10995,17 +11001,6 @@ function _swzShow(step){
 
   setTimeout(function(){_swzNavigate(step);},80);
   setTimeout(function(){banner.classList.add('show');},40);
-
-  // Genereller Observer: Banner verstecken wenn irgendein .ov-Overlay öffnet
-  if(!window._swzOvObserver){
-    window._swzOvObserver=new MutationObserver(function(){
-      var b=document.getElementById('swzBanner');
-      if(!b)return;
-      var anyOpen=document.querySelector('.ov.show-bottom,.ov.show-center,.ov.show-top,.ov.show');
-      if(anyOpen){b.classList.add('swz-paused');}else{b.classList.remove('swz-paused');}
-    });
-    window._swzOvObserver.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']});
-  }
 }
 
 // ── Navigation zur passenden Stelle ───────────────────────────
@@ -11128,7 +11123,7 @@ function _swzFinish(){
       setTimeout(function(){try{if(banner.parentNode)banner.parentNode.removeChild(banner);}catch(e){}},420);
     }
   }catch(e){}
-  // MutationObserver aufräumen
+  // MutationObserver aufräumen (Fallback, falls noch gesetzt)
   try{if(window._swzOvObserver){window._swzOvObserver.disconnect();window._swzOvObserver=null;}}catch(e){}
   try{if(typeof switchTab==='function')switchTab(0);}catch(e){}
   setTimeout(function(){
