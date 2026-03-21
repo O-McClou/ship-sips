@@ -456,7 +456,11 @@ body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;
 .goal-bar-track{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
 .goal-bar-fill{height:100%;border-radius:2px;transition:width .5s ease,background .5s ease;background:linear-gradient(to right,var(--ac-deep),var(--ac))}
 /* Tabs: fixierte Bottom-Nav (iOS-konform, Daumen-erreichbar) */
-.tabs{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:200;display:flex;border-top:1px solid var(--ac-20);background:var(--bg);padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -3px 18px rgba(0,0,0,0.45)}
+/* flex-wrap:wrap + ::after-Safe-Area-Fill: robusteste Methode für iPhone-Rundungen.
+   Der ::after-Block (width:100%) bricht in neue Zeile um und füllt den
+   Home-Indicator-Bereich mit dem Tab-Bar-Hintergrund – kein Spalt am Rand. */
+.tabs{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:200;display:flex;flex-wrap:wrap;border-top:1px solid var(--ac-20);background:var(--bg);box-shadow:0 -3px 18px rgba(0,0,0,0.45)}
+.tabs::after{content:'';display:block;width:100%;height:env(safe-area-inset-bottom,0px)}
 .tab{flex:1;padding:10px 0 14px;background:transparent;color:var(--tx2);border:none;cursor:pointer;font-family:Georgia,serif;font-size:9px;letter-spacing:0.5px;transition:color .2s,background .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;-webkit-user-select:none;touch-action:manipulation;position:relative}
 .tab.on{background:var(--ac-07);color:var(--ac);font-weight:bold}
 .tab.on::after{content:'';position:absolute;top:0;left:25%;right:25%;height:2px;background:var(--ac);border-radius:0 0 2px 2px}
