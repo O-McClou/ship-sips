@@ -1042,6 +1042,39 @@ html .fav-section .drow.fl{background:rgba(255,255,255,0.07);border-left-color:v
   flex-shrink:0;line-height:1.4;
 }
 .fav-sort-btn.active{background:var(--ac-13);color:var(--ac);border-color:var(--ac-40)}
+/* ── Favorites Tile-View Toggle Button ─────────────────────── */
+.fav-tile-btn{
+  background:transparent;border:1px solid var(--ac-27);border-radius:12px;
+  color:var(--tx2);font-family:Georgia,serif;font-size:13px;cursor:pointer;
+  padding:2px 8px;margin-left:4px;white-space:nowrap;touch-action:manipulation;
+  flex-shrink:0;line-height:1.4;
+}
+.fav-tile-btn.active{background:var(--ac-13);color:var(--ac);border-color:var(--ac-40)}
+/* ── Favorites Tile Grid ────────────────────────────────────── */
+.fav-tile-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:2px 0 6px}
+html .fav-tile-grid .drow-wrap{margin-bottom:0}
+html .fav-tile-grid .drow.fav-tile{
+  flex-direction:column;align-items:flex-start;gap:6px;
+  padding:10px 10px 9px;min-height:70px;cursor:pointer;
+  justify-content:space-between;
+  border-radius:10px!important;
+  background:rgba(255,255,255,0.04)!important;
+  border:1px solid rgba(255,255,255,0.07)!important;
+  border-left:4px solid var(--ac-13)!important;
+}
+html .fav-tile-grid .drow.fav-tile.has{
+  background:rgba(255,255,255,0.07)!important;
+  border-left-color:var(--ac)!important;
+  box-shadow:none!important;
+}
+html .fav-tile-grid .drow.fav-tile.fl{
+  background:rgba(255,255,255,0.10)!important;
+  border-left-color:var(--ac)!important;
+}
+html .fav-tile-grid .drow.fav-tile:active{opacity:.7;transform:scale(0.96)}
+.fav-tile-name{font-size:12px;font-weight:bold;color:var(--tx1);line-height:1.35;word-break:break-word}
+.fav-tile-name.on{color:var(--tx0)}
+.fav-tile-meta{display:flex;align-items:center;gap:4px;width:100%}
 .fav-sort-item{display:flex;align-items:center;gap:0;margin-bottom:3px;position:relative;transition:opacity .15s}
 .fav-sort-item.fav-dragging{opacity:.45;background:var(--ac-09);border-radius:10px}
 .fav-sort-item.fav-drag-over-top::before{content:'';display:block;position:absolute;top:-2px;left:8px;right:8px;height:3px;background:var(--ac);border-radius:2px;pointer-events:none;z-index:10}
@@ -3344,7 +3377,7 @@ let S={
   /* FIX V48 F12: Hell-/Dunkel-Umschalter – letztes dunkles / helles Theme merken */
   lastDarkTheme:'kapitaensbuch',lastLightTheme:'sonnendeck',
   dayEndHour:0,dayEndMinute:0,
-  favOrder:[],favSortMode:false,
+  favOrder:[],favSortMode:false,favTileMode:false,
   headerCollapsed:false,
   tzMode:"auto",tzOffset:0,tzChangeLog:[],
   // User profiles – 4 fixed slots (u1–u4 are permanent positions)
@@ -5244,13 +5277,28 @@ function drinkRow(d,rankIdx,showCat){
 
 let _lastDrinksHash='';
 let _renderDrinksTimer=null;
+function toggleFavTileMode(){S.favTileMode=!S.favTileMode;if(S.favTileMode)S.favSortMode=false;saveState();renderDrinks(false);}
+function drinkTile(d){
+  const c=S.counts[d.id]||0,has=c>0,fl=S.flashId===d.id;
+  const col=catColor(d.cat);
+  const plusRight=S.btnLayout==='plus-right';
+  const swSide=plusRight?'left':'right';
+  const undoLbl=S.lang==='en'?'UNDO':'UNDO';
+  return `<div class="drow-wrap" data-dswid="${esc(d.id)}" data-has="${has?'1':''}" data-swside="${swSide}" data-fav-tile="1"><div class="drow-swipe-bg"><span style="font-size:22px">↩</span><div style="font-size:10px;letter-spacing:.5px;margin-top:2px">${undoLbl}</div></div><div class="drow-strip"></div><div class="drow fav-tile${has?' has':''}${fl?' fl':''}" style="border-left-color:${col}" data-tile-plus="${esc(d.id)}">
+    <div class="fav-tile-name${has?' on':''}">${esc(d.name)}</div>
+    <div class="fav-tile-meta">
+      <div class="dprice" style="flex:1">${eur(d.price)}<span class="incl-dot ${d.included?'filled':'outline'}" style="${d.included?`background:${AI_COLOR};width:7px;height:7px`:`color:${col};width:7px;height:7px`}"></span></div>
+      ${has?`<div class="dnum nz" style="font-size:18px;min-width:20px;text-align:right">${c}</div>`:`<div class="dnum z" style="font-size:18px;min-width:20px;text-align:right;color:var(--tx4)">0</div>`}
+    </div>
+  </div></div>`;
+}
 function renderDrinksDebounced(full){
   if(_renderDrinksTimer)clearTimeout(_renderDrinksTimer);
   _renderDrinksTimer=setTimeout(()=>renderDrinks(full),30);
 }
 function renderDrinks(forceSort){
   // 12.2: Skip re-render if nothing visually changed
-  const hash=JSON.stringify([S.drinks.length,S.catFilter,S.fz,S.lang,JSON.stringify([...S.favorites]),S.btnLayout,JSON.stringify(S.counts),S.favCollapsed,S.top10Collapsed,S.favSortMode,JSON.stringify(S.favOrder),JSON.stringify([...S.drinkExpandedCats]),S.selCat,S.drinks.filter(d=>d.included).length]);
+  const hash=JSON.stringify([S.drinks.length,S.catFilter,S.fz,S.lang,JSON.stringify([...S.favorites]),S.btnLayout,JSON.stringify(S.counts),S.favCollapsed,S.top10Collapsed,S.favSortMode,S.favTileMode,JSON.stringify(S.favOrder),JSON.stringify([...S.drinkExpandedCats]),S.selCat,S.drinks.filter(d=>d.included).length]);
   if(!forceSort&&hash===_lastDrinksHash){return;}
   _lastDrinksHash=hash;
   // Scroll-Position aus dem echten Scroll-Container (#p0) retten
@@ -5284,13 +5332,23 @@ function renderDrinks(forceSort){
     const arr=S.favCollapsed?'▶':'▼';
     const sortLbl=S.lang==='en'?'Sort':'Sortieren';
     const sortActive=S.favSortMode;
-    favTitleEl.innerHTML=`<span style="cursor:pointer;display:flex;align-items:center;gap:5px;flex:1" data-fav-toggle="1"><span>${arr}</span><span>${T('fav.title')}</span></span><button class="fav-sort-btn${sortActive?' active':''}" onclick="event.stopPropagation();toggleFavSortMode()">⇅ ${sortLbl}</button>`;
+    const tileActive=S.favTileMode;
+    const tileLbl=tileActive?'☰':'⊞';
+    favTitleEl.innerHTML=`<span style="cursor:pointer;display:flex;align-items:center;gap:5px;flex:1" data-fav-toggle="1"><span>${arr}</span><span>${T('fav.title')}</span></span><button class="fav-sort-btn${sortActive?' active':''}" onclick="event.stopPropagation();toggleFavSortMode()">⇅ ${sortLbl}</button><button class="fav-tile-btn${tileActive?' active':''}" onclick="event.stopPropagation();toggleFavTileMode()" title="${S.lang==='en'?(tileActive?'List view':'Tile view'):(tileActive?'Listenansicht':'Kachelansicht')}">${tileLbl}</button>`;
     favListEl.style.display=S.favCollapsed?'none':'';
     if(!S.favCollapsed){
       if(S.favSortMode){
+        favListEl.className='dlist';
+        favListEl.style.padding='0';
         favListEl.innerHTML=favFiltered.map(d=>`<div class="fav-sort-item" data-favid="${esc(d.id)}"><div class="fav-drag-handle" data-drag="${esc(d.id)}">⠿</div><div style="flex:1;min-width:0">${drinkRow(d,-1,true)}</div></div>`).join('');
         initFavDrag();
+      }else if(S.favTileMode){
+        favListEl.className='fav-tile-grid';
+        favListEl.style.padding='';
+        favListEl.innerHTML=favFiltered.map(d=>drinkTile(d)).join('');
       }else{
+        favListEl.className='dlist';
+        favListEl.style.padding='0';
         favListEl.innerHTML=favFiltered.map(d=>drinkRow(d,-1,true)).join('');
       }
     }
@@ -5326,9 +5384,12 @@ function renderDrinks(forceSort){
 function handleDrinkClick(e){
   const t=e.target;
   // Favoriten-Titel: nur über data-Attribut, kein onclick → kein Doppel-Auslösen
-  if(t.closest('[data-fav-toggle]')&&!t.closest('.fav-sort-btn')){e.preventDefault();toggleFavSection();return;}
+  if(t.closest('[data-fav-toggle]')&&!t.closest('.fav-sort-btn')&&!t.closest('.fav-tile-btn')){e.preventDefault();toggleFavSection();return;}
   // Top10-Titel
   if(t.closest('[data-top10-toggle]')){e.preventDefault();toggleTop10Section();return;}
+  // Kachel-Tipp: Getränk hinzufügen (nicht wenn Swipe läuft)
+  const tile=t.closest('[data-tile-plus]');
+  if(tile&&!t.closest('[data-fav]')&&!t.closest('[data-plus]')&&!t.closest('[data-minus]')){tapPlus(tile.dataset.tilePlus);return;}
   const fav=t.closest('[data-fav]'),plus=t.closest('[data-plus]'),minus=t.closest('[data-minus]'),hdr=t.closest('[data-dc]');
   if(fav&&!plus&&!minus){toggleFav(fav.dataset.fav);return;}
   if(hdr&&!fav&&!plus&&!minus){e.preventDefault();const ci=parseInt(hdr.dataset.dc),cat=allCats()[ci];if(cat!==undefined){S.drinkExpandedCats.has(cat)?S.drinkExpandedCats.delete(cat):S.drinkExpandedCats.add(cat);renderDrinks(false);}return;}
@@ -5346,9 +5407,12 @@ function handleDrinkClick(e){
     const tc=e.changedTouches[0];
     if(tc&&(Math.abs(tc.clientY-_tY)>10||Math.abs(tc.clientX-_tX)>10))return;
     // Favoriten-Toggle
-    if(t.closest('[data-fav-toggle]')&&!t.closest('.fav-sort-btn')){e.preventDefault();toggleFavSection();return;}
+    if(t.closest('[data-fav-toggle]')&&!t.closest('.fav-sort-btn')&&!t.closest('.fav-tile-btn')){e.preventDefault();toggleFavSection();return;}
     // Top10-Toggle
     if(t.closest('[data-top10-toggle]')){e.preventDefault();toggleTop10Section();return;}
+    // Kachel-Tipp
+    const tile=t.closest('[data-tile-plus]');
+    if(tile&&!t.closest('[data-fav]')&&!t.closest('[data-plus]')&&!t.closest('[data-minus]')){e.preventDefault();tapPlus(tile.dataset.tilePlus);return;}
     const hdr=t.closest('[data-dc]');
     if(hdr&&!t.closest('[data-fav]')&&!t.closest('[data-plus]')&&!t.closest('[data-minus]')){
       e.preventDefault();
@@ -8589,10 +8653,11 @@ function renderHelp(){
 
     <div class="hlp-card">
       <div class="hlp-card-title">★ ${h('Favoriten','Favourites')}</div>
-      <div class="hlp-row"><span class="hlp-badge gold">★ ${h('Stern-Symbol','Star icon')}</span><span>${h('Das Stern-Symbol an einem Getränke-Button tippen → das Getränk erscheint dauerhaft im <strong>★ Favoriten</strong>-Bereich ganz oben (goldener Rahmen). Erneut tippen → aus Favoriten entfernen.','Tap the star icon on a drink button → the drink permanently appears in the gold-bordered <strong>★ Favourites</strong> section at the top. Tap again → remove from favourites.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge gold">★ ${h('Stern-Symbol','Star icon')}</span><span>${h('Das Stern-Symbol (☆/★) an einem Getränke-Button tippen → das Getränk erscheint dauerhaft im <strong>★ Favoriten</strong>-Bereich ganz oben. Erneut tippen → aus Favoriten entfernen.','Tap the star icon (☆/★) on a drink button → the drink permanently appears in the <strong>★ Favourites</strong> section at the top. Tap again → remove from favourites.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">▶/▼ ${h('Ein-/Ausklappen','Expand/Collapse')}</span><span>${h('Den Titel <strong>★ Favoriten</strong> antippen → Bereich ein- oder ausklappen. Zustand wird gespeichert und bleibt nach Neustart erhalten.','Tap the <strong>★ Favourites</strong> title → expand or collapse the section. State is saved and persists after restart.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge gold">⇅ ${h('Reihenfolge sortieren','Sort order')}</span><span>${h('Schaltfläche <strong>⇅ Sortieren</strong> neben dem Favoriten-Titel antippen → Sortiermodus aktiv. An jedem Favorit erscheint ein <strong>≡ Anfasser</strong> am linken Rand. Den Anfasser gedrückt halten und nach oben oder unten ziehen → Reihenfolge ändern. Schaltfläche erneut tippen → Sortiermodus beenden. Reihenfolge wird automatisch gespeichert.','Tap <strong>⇅ Sort</strong> next to the Favourites title → sort mode active. Each favourite shows a <strong>≡ handle</strong> on the left. Hold and drag the handle up or down → reorder. Tap button again → exit sort mode. Order is automatically saved.')}</span></div>
-      <div class="hlp-tip">💡 ${h('Empfehlung: Die Getränke, die am häufigsten bestellt werden, als Favoriten markieren. So sind sie immer sofort sichtbar, auch wenn die Getränkeliste lang ist.','Recommendation: mark the most frequently ordered drinks as favourites. They are then always instantly visible, even when the drink list is long.')}</div>
+      <div class="hlp-row"><span class="hlp-badge gold">⊞ ${h('Kachelansicht','Tile view')}</span><span>${h('Schaltfläche <strong>⊞</strong> rechts neben <strong>⇅ Sortieren</strong> antippen → wechselt zwischen <strong>Listen- und Kachelansicht</strong>. In der Kachelansicht werden 2 Favoriten nebeneinander dargestellt. <strong>Antippen der Kachel</strong> erfasst das Getränk sofort (kein +−Button nötig). <strong>Wischen</strong> auf einer Kachel funktioniert wie in der Listenansicht: nach links wischen → letzten Eintrag rückgängig machen (nur wenn Zähler > 0). Das Symbol wechselt zu ☰ um zurück zur Listenansicht zu schalten.','Tap the <strong>⊞</strong> button to the right of <strong>⇅ Sort</strong> → toggles between <strong>list and tile view</strong>. In tile view, 2 favourites are shown side by side. <strong>Tap a tile</strong> to record the drink immediately (no +/− button needed). <strong>Swiping</strong> a tile works like in list view: swipe left → undo last entry (only when counter > 0). The icon changes to ☰ to switch back to list view.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge gold">⇅ ${h('Reihenfolge sortieren','Sort order')}</span><span>${h('Schaltfläche <strong>⇅ Sortieren</strong> neben dem Favoriten-Titel antippen → Sortiermodus aktiv (wechselt automatisch in Listenansicht). An jedem Favorit erscheint ein <strong>⠿ Anfasser</strong> am linken Rand. Den Anfasser gedrückt halten und nach oben oder unten ziehen → Reihenfolge ändern. Schaltfläche erneut tippen → Sortiermodus beenden. Reihenfolge wird automatisch gespeichert.','Tap <strong>⇅ Sort</strong> next to the Favourites title → sort mode active (automatically switches to list view). Each favourite shows a <strong>⠿ handle</strong> on the left. Hold and drag the handle up or down → reorder. Tap button again → exit sort mode. Order is automatically saved.')}</span></div>
+      <div class="hlp-tip">💡 ${h('Empfehlung: Die Getränke, die am häufigsten bestellt werden, als Favoriten markieren und die <strong>Kachelansicht</strong> aktivieren – so lassen sich mehrere Getränke mit einem Tipp schnell hintereinander erfassen.','Recommendation: mark the most frequently ordered drinks as favourites and activate <strong>tile view</strong> – this lets you quickly record multiple drinks with a single tap each.')}</div>
     </div>
 
     <div class="hlp-card">
