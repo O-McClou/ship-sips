@@ -8379,14 +8379,41 @@ function checkForAppUpdate(){
       if(typeof swUpdateApply==='function')swUpdateApply();
       return;
     }
-    // Trigger network check
-    reg.update().then(function(){
-      if(reg.waiting){
+    // FIX SW-2: reg.update() löst auf bevor der neue SW fertig installiert ist.
+    // Deshalb updatefound-Listener VOR reg.update() registrieren und auf
+    // statechange=installed warten – erst dann ist reg.waiting gesetzt.
+    var _updFound = false;
+    function _onUpdFound(){
+      _updFound = true;
+      var newSW = reg.installing || reg.waiting;
+      if(!newSW){
+        if(resultEl){resultEl.style.color='var(--tx2)';resultEl.textContent=L?'✓ Already up to date.':'✓ Bereits auf dem neuesten Stand.';}
+        return;
+      }
+      if(newSW.state === 'installed' || newSW.state === 'waiting'){
         if(resultEl){resultEl.style.color='var(--col-ok)';resultEl.textContent=L?'✅ New version found! Installing…':'✅ Neue Version gefunden! Wird installiert…';}
         setTimeout(function(){if(typeof swUpdateApply==='function')swUpdateApply();},800);
-      } else {
-        if(resultEl){resultEl.style.color='var(--tx2)';resultEl.textContent=L?'✓ Already up to date.':'✓ Bereits auf dem neuesten Stand.';}
+        return;
       }
+      newSW.addEventListener('statechange', function(){
+        if(newSW.state === 'installed'){
+          if(resultEl){resultEl.style.color='var(--col-ok)';resultEl.textContent=L?'✅ New version found! Installing…':'✅ Neue Version gefunden! Wird installiert…';}
+          setTimeout(function(){if(typeof swUpdateApply==='function')swUpdateApply();},800);
+        }
+      });
+    }
+    reg.addEventListener('updatefound', _onUpdFound);
+    reg.update().then(function(){
+      // Kurz warten – falls updatefound noch unterwegs ist (iOS-Timing)
+      setTimeout(function(){
+        if(!_updFound){
+          if(reg.waiting){
+            _onUpdFound();
+          } else {
+            if(resultEl){resultEl.style.color='var(--tx2)';resultEl.textContent=L?'✓ Already up to date.':'✓ Bereits auf dem neuesten Stand.';}
+          }
+        }
+      }, 500);
     }).catch(function(){
       if(resultEl)resultEl.textContent=L?'⚠️ Could not check – no internet connection?':'⚠️ Prüfung fehlgeschlagen – kein Internet?';
     });
@@ -11666,19 +11693,28 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
 <span id="portSizer" aria-hidden="true"></span>
 
 <script>
-/* ── V47 PWA: Service Worker + professioneller Update-Mechanismus ──
+/* ── V48 PWA: Service Worker + professioneller Update-Mechanismus ──
    Strategie: Nutzergesteuertes Update (kein erzwungenes skipWaiting)
    ① SW registrieren
    ② registration.waiting  → Banner sofort anzeigen
    ③ updatefound           → neuen SW beobachten
    ④ statechange=installed → Banner anzeigen
    ⑤ Nutzer klickt „Jetzt" → SKIP_WAITING → controllerchange → reload
+
+   FIX V48 SW-1: _swUpdatePending-Flag verhindert ungewollten Reload
+     beim Erst-Install (clients.claim() löst sonst controllerchange aus).
+   FIX V48 SW-2: checkForAppUpdate hört jetzt via updatefound auf den
+     neuen installierten SW – kein Race mit reg.waiting mehr.
+   FIX V48 SW-3: updatefound-Listener wird IMMER registriert, auch wenn
+     ein SW gerade installiert oder bereits wartend ist.
    ──────────────────────────────────────────────────────────────── */
 (function(){
   if(!('serviceWorker' in navigator)) return;
   if(location.protocol==='file:')     return;
 
   var _swReg = null;
+  /* FIX SW-1: Nur true wenn wir selbst skipWaiting ausgelöst haben */
+  var _swUpdatePending = false;
 
   /* Banner-Texte zweisprachig */
   function _swLang(de, en){
@@ -11702,6 +11738,9 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
 
   /* Neuen (wartenden) SW beobachten */
   function _trackInstalling(sw){
+    if(!sw) return;
+    /* Falls der SW bereits weiter ist (Race beim Listener-Anhängen) */
+    if(sw.state === 'installed') { _showUpdateBanner(); return; }
     sw.addEventListener('statechange', function(){
       if(sw.state === 'installed') _showUpdateBanner();
     });
@@ -11713,21 +11752,23 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
         _swReg = reg;
 
         /* Bereits ein wartender SW? (Seite nach Cache-Refresh neu geladen) */
-        if(reg.waiting) { _showUpdateBanner(); return; }
+        if(reg.waiting) _showUpdateBanner();
 
         /* Neuen SW beobachten, wenn gerade am Installieren */
-        if(reg.installing) { _trackInstalling(reg.installing); return; }
+        if(reg.installing) _trackInstalling(reg.installing);
 
-        /* Zukünftige Updates */
+        /* FIX SW-3: updatefound IMMER registrieren – nicht per return abbrechen */
         reg.addEventListener('updatefound', function(){
           _trackInstalling(reg.installing);
         });
       })
       .catch(function(){}); // privates Fenster, CSP etc. – ignorieren
 
-    /* Nach SKIP_WAITING: Seite neu laden */
+    /* FIX SW-1: Nur bei echtem Update neu laden, nicht beim Erst-Install.
+       clients.claim() im SW löst controllerchange ebenfalls aus – ohne diesen
+       Guard würde die App beim allerersten Start ungewollt neu laden. */
     navigator.serviceWorker.addEventListener('controllerchange', function(){
-      window.location.reload();
+      if(_swUpdatePending) window.location.reload();
     });
 
   }catch(e){}
@@ -11738,6 +11779,7 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
     if(b) b.classList.remove('visible');
     var reg = _swReg;
     if(reg && reg.waiting){
+      _swUpdatePending = true; // FIX SW-1: Reload nur bei bewusstem Update
       reg.waiting.postMessage({type:'SKIP_WAITING'});
     }
   };
