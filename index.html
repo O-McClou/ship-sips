@@ -5431,7 +5431,6 @@ function openTileColorPicker(drinkId){
   const grid=document.getElementById('tileColorGrid');
   if(!grid)return;
   const cur=(S.favTileCustomColors&&S.favTileCustomColors[drinkId])||'';
-  const L=S.lang==='en';
   const groups=[
     {lbl:L?'Navy':'Navy',       start:0,  end:6},
     {lbl:L?'Teal':'Petrol',     start:6,  end:12},
