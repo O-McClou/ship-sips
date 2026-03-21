@@ -1066,12 +1066,10 @@ html .fav-tile-grid .drow.fav-tile{
   box-sizing:border-box;
 }
 html .fav-tile-grid .drow.fav-tile.has{
-  background:rgba(255,255,255,0.07);
   border-left-color:var(--ac);
   box-shadow:var(--shadow-card);
 }
 html .fav-tile-grid .drow.fav-tile.fl{
-  background:rgba(255,255,255,0.12);
   border-left-color:var(--ac);
 }
 html .fav-tile-grid .drow.fav-tile:active{opacity:.72;transform:scale(0.96)}
@@ -5407,7 +5405,7 @@ function openTileCtx(drinkId){
   document.getElementById('tileCtxOv').className='ov show-center';
 }
 function closeTileCtx(){document.getElementById('tileCtxOv').className='ov';_tileCtxId=null;}
-function tileCtxColor(){closeTileCtx();if(_tileCtxId)openTileColorPicker(_tileCtxId);}
+function tileCtxColor(){const id=_tileCtxId;closeTileCtx();if(id)openTileColorPicker(id);}
 function tileCtxRemoveFav(){const id=_tileCtxId;closeTileCtx();if(id)toggleFav(id);}
 
 /* ── Tile Color Picker ── */
