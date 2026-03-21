@@ -533,8 +533,7 @@ body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;
 .cbtn:active{opacity:.75}
 .tbar{padding:7px 14px;display:flex;justify-content:flex-end}
 .rbtn{padding:4px 10px;background:transparent;border:1px dashed #e0555577;color:#e0555577;border-radius:6px;cursor:pointer;font-size:11px;font-family:Georgia,serif;opacity:0.6}
-.fav-section{padding:6px 14px 10px;border-radius:12px;margin:0 6px 2px;border:1px solid var(--ac-33);background:var(--ac-13)}
-.fav-section .drow{background:var(--bg1)!important}
+.fav-section{padding:0 14px 4px}
 .fav-title{font-size:9px;color:var(--ac);font-weight:bold;letter-spacing:3px;text-transform:uppercase;padding:10px 2px 8px;cursor:pointer;user-select:none;-webkit-user-select:none;display:flex;align-items:center;gap:8px;touch-action:manipulation}
 .fav-title::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--ac-27),transparent)}
 .top10-section{padding:0 14px 4px}
@@ -1334,7 +1333,11 @@ details.hlp-acc summary:active{opacity:.75}
         onclick="cycleConcept()"
         title="Design ändern"
         aria-label="Design ändern">🎨<span class="hdr-design-lbl">Design</span></button>
-
+      <!-- FIX V48 F12: Hell-/Dunkel-Umschalter -->
+      <button id="dayNightBtn" class="hdr-design-btn"
+        onclick="toggleDayNight()"
+        title="Tagmodus aktivieren"
+        aria-label="Tagmodus aktivieren">☀️<span class="hdr-design-lbl">Tag</span></button>
       <div id="hdrUserExpanded" onclick="openUserSwitcher()"></div>
       <div id="currentLocBar" class="port-input-wrap">
         <input id="currentLocInput" type="text" placeholder="Hafen …" maxlength="100" autocomplete="off" spellcheck="false" list="locDatalist"
@@ -2381,6 +2384,8 @@ function applyTheme(id){
   const themeIcons={kapitaensbuch:'⚓',atelier:'🎩',sonnendeck:'☀️',original:'✦',nautical_noir:'🎩',mare_sereno:'🌊',capitaine:'⚓',pergament:'📜',tiefsee:'🌑',champagner:'🥂',aida:'builtin:brand_aida',nicko:'builtin:brand_nicko',mein_schiff:'builtin:brand_mein_schiff'};
   const ctIcon=(S&&S.customThemes||[]).find(ct=>ct.id===id);
   if(btn){const _ic=ctIcon?ctIcon.icon:(themeIcons[id]||'✦');if(_ic.startsWith('custom:')||_ic.startsWith('builtin:')){const _du=resolveIconDataUrl(_ic);if(_du){btn.innerHTML=`<img src="${_du}" style="width:22px;height:22px;object-fit:contain;border-radius:3px;display:block">`;btn.style.fontSize='0';}else{btn.textContent='🎨';btn.style.fontSize='';}}else{btn.textContent=_ic;btn.style.fontSize='';}}
+  // FIX V48 F12: Tag-/Nacht-Button-Label aktualisieren (nach applyTheme immer aufrufen)
+  try{_updateDayNightBtn();}catch(e){}
 }
 function toggleThemePanel(){S.themeOpen=!S.themeOpen;renderVerwaltung();}
 function setTheme(id){
@@ -2416,7 +2421,41 @@ function _isCurrentThemeDark(){
   const t=THEMES[S.theme]||THEMES.kapitaensbuch;
   return luminanceHex(t.vars.bg||'#06101E')<=0.15;
 }
-
+function toggleDayNight(){
+  const L=S.lang==='en';
+  if(_isCurrentThemeDark()){
+    // Aktuelles dunkles Theme merken, zu hellem wechseln
+    S.lastDarkTheme=S.theme;
+    const target=S.lastLightTheme||'sonnendeck';
+    setTheme(target);
+    showToast('☀️ '+(L?'Day mode':'Tagmodus'),'info',1500);
+  } else {
+    // Aktuelles helles Theme merken, zu dunklem wechseln
+    S.lastLightTheme=S.theme;
+    const target=S.lastDarkTheme||'kapitaensbuch';
+    setTheme(target);
+    showToast('🌙 '+(L?'Night mode':'Nachtmodus'),'info',1500);
+  }
+  try{
+    localStorage.setItem('a4_lastdarktheme',S.lastDarkTheme);
+    localStorage.setItem('a4_lastlighttheme',S.lastLightTheme);
+    db.setCfg('lastDarkTheme',S.lastDarkTheme).catch(()=>{});
+    db.setCfg('lastLightTheme',S.lastLightTheme).catch(()=>{});
+  }catch(e){}
+}
+function _updateDayNightBtn(){
+  const btn=document.getElementById('dayNightBtn');
+  if(!btn)return;
+  const isDark=_isCurrentThemeDark();
+  const L=S.lang==='en';
+  const icon=isDark?'☀️':'🌙';
+  const lbl=isDark?(L?'Day':'Tag'):(L?'Night':'Nacht');
+  // innerHTML statt textContent – bewahrt die .hdr-design-lbl span-Struktur
+  btn.innerHTML=icon+'<span class="hdr-design-lbl">'+lbl+'</span>';
+  const title=isDark?(L?'Switch to day mode':'Tagmodus aktivieren'):(L?'Switch to night mode':'Nachtmodus aktivieren');
+  btn.title=title;
+  btn.setAttribute('aria-label',title);
+}
 
 function toggleConceptFavorite(id){
   if(!S.conceptFavorites)S.conceptFavorites=['kapitaensbuch','atelier','sonnendeck'];
@@ -5199,27 +5238,8 @@ function hideDrinkSearchIfEmpty(){
     if(btn)btn.style.color='var(--ac)';
   }
 }
-/* Farbe für "All Inklusive"-Kategorie und incl-dot */
-const AI_COLOR='#10b981';
-function renderCatFilter(){
-  const cats=allCats();
-  const L=S.lang==='en';
-  const aiLbl=L?'A/I':'A/I';
-  const aiInclCount=S.drinks.filter(d=>d.included).length;
-  // AI-Tab nur anzeigen wenn mindestens 1 inklusives Getränk vorhanden
-  const showAI=aiInclCount>0;
-  const items=[{l:T('cat.all'),i:-1},...(showAI?[{l:aiLbl,i:-2}]:[]),...cats.map((c,i)=>({l:c,i}))];
-  document.getElementById('cscroll').innerHTML=items.map(({l,i})=>{
-    if(i===-2){
-      const on=S.selCat==='__ai__';
-      return `<button class="cbtn${on?' on':''}" data-ci="-2" style="${on?`background:${AI_COLOR};border-color:${AI_COLOR};color:#fff`:`color:${AI_COLOR};border-color:${AI_COLOR}44`}"><span class="cdot" style="background:${AI_COLOR}"></span>${esc(l)}</button>`;
-    }
-    const col=i>=0?catColor(l):null;
-    const dot=col?`<span class="cdot" style="background:${col}"></span>`:'';
-    return `<button class="cbtn${S.selCat===(i===-1?'__all__':cats[i])?' on':''}" data-ci="${i}">${dot}${esc(l)}</button>`;
-  }).join('');
-}
-document.getElementById('cscroll').addEventListener('click',function(e){const b=e.target.closest('[data-ci]');if(!b)return;const i=parseInt(b.dataset.ci);S.selCat=i===-1?'__all__':(i===-2?'__ai__':(allCats()[i]||'__all__'));S.stableOrder=[];clearTimeout(S.sortTimer);renderDrinks(true);});
+function renderCatFilter(){const cats=allCats();const items=[{l:T('cat.all'),i:-1},...cats.map((c,i)=>({l:c,i}))];document.getElementById('cscroll').innerHTML=items.map(({l,i})=>{const col=i>=0?catColor(l):null;const dot=col?`<span class="cdot" style="background:${col}"></span>`:'';return `<button class="cbtn${S.selCat===(i===-1?'__all__':cats[i])?' on':''}" data-ci="${i}">${dot}${esc(l)}</button>`;}).join('');}
+document.getElementById('cscroll').addEventListener('click',function(e){const b=e.target.closest('[data-ci]');if(!b)return;const i=parseInt(b.dataset.ci);S.selCat=i===-1?'__all__':(allCats()[i]||'__all__');S.stableOrder=[];clearTimeout(S.sortTimer);renderDrinks(true);});
 let _favDebounce={};
 function toggleFav(id){const now=Date.now();if(_favDebounce[id]&&now-_favDebounce[id]<400)return;_favDebounce[id]=now;if(S.favorites.has(id)){S.favorites.delete(id);S.favOrder=S.favOrder.filter(x=>x!==id);}else{S.favorites.add(id);if(!S.favOrder.includes(id))S.favOrder.push(id);}saveState();renderDrinks(false);}
 function toggleFavSection(){S.favCollapsed=!S.favCollapsed;renderDrinks(false);}
@@ -5250,7 +5270,7 @@ function drinkRow(d,rankIdx,showCat){
   return `<div class="drow-wrap" data-dswid="${esc(d.id)}" data-has="${c>0?'1':''}" data-swside="${plusRight?'left':'right'}"><div class="drow-swipe-bg"><span style="font-size:22px">↩</span><div style="font-size:10px;letter-spacing:.5px;margin-top:2px">UNDO</div></div><div class="drow-strip"></div><div class="drow${has?' has':''}${fl?' fl':''}" style="border-left-color:${col}">
     ${showRnk?`<div class="rnk" style="background:${RNK[rankIdx]}">#${rankIdx+1}</div>`:''}
     ${leftSlot}
-    <div class="dinfo"><div class="dname${has?' on':''}">${esc(d.name)}</div>${d.nameEN&&S.lang==="en"?`<div style="font-size:10px;color:var(--ac);margin-top:1px;opacity:.8">${esc(d.nameEN)}</div>`:d.nameEN?`<div style="font-size:10px;color:var(--tx2);margin-top:1px">${esc(d.nameEN)}</div>`:''} ${showCat?`<div class="dcat"><span class="cdot" style="background:${col}"></span>${esc(d.cat)}</div>`:''}<div class="dprice">${eur(d.price)}<span class="incl-dot ${d.included?'filled':'outline'}" style="${d.included?`background:${AI_COLOR};width:7px;height:7px`:`color:${col};width:7px;height:7px`}" title="${d.included?(S.lang==='en'?'All Inclusive':'All Inklusive'):(S.lang==='en'?'Not included':'Nicht inklusive')}"></span></div></div>
+    <div class="dinfo"><div class="dname${has?' on':''}">${esc(d.name)}</div>${d.nameEN&&S.lang==="en"?`<div style="font-size:10px;color:var(--ac);margin-top:1px;opacity:.8">${esc(d.nameEN)}</div>`:d.nameEN?`<div style="font-size:10px;color:var(--tx2);margin-top:1px">${esc(d.nameEN)}</div>`:''} ${showCat?`<div class="dcat"><span class="cdot" style="background:${col}"></span>${esc(d.cat)}</div>`:''}<div class="dprice">${eur(d.price)}<span class="incl-dot ${d.included?'filled':'outline'}" style="${d.included?`background:${col};width:7px;height:7px`:`color:${col};width:7px;height:7px`}" title="${d.included?(S.lang==='en'?'Included in package':'Im Paket inklusive'):(S.lang==='en'?'Not included':'Nicht inklusive')}"></span></div></div>
     <div class="dcnt"><div class="dnum ${has?'nz':'z'}">${c}</div>${has?`<div class="dsub">${eur(c*d.price)}</div>`:''}</div>
     ${rightSlot}
   </div></div>`;
@@ -5273,9 +5293,7 @@ function renderDrinks(forceSort){
   renderCatFilter();
   const q=(document.getElementById('sinput').value||'').toLowerCase();
   const isF=q||S.selCat!=='__all__';
-  // Guard: __ai__ zurücksetzen wenn keine inklusiven Getränke vorhanden
-  if(S.selCat==='__ai__'&&!S.drinks.some(d=>d.included)){S.selCat='__all__';}
-  const af=S.drinks.filter(d=>{const mc=S.selCat==='__all__'||(S.selCat==='__ai__'?d.included:d.cat===S.selCat),ms=!q||d.name.toLowerCase().includes(q)||d.cat.toLowerCase().includes(q);return mc&&ms;});
+  const af=S.drinks.filter(d=>{const mc=S.selCat==='__all__'||d.cat===S.selCat,ms=!q||d.name.toLowerCase().includes(q)||d.cat.toLowerCase().includes(q);return mc&&ms;});
   let ordered;
   const sm=S.drinkSortMode||'freq';
   if(forceSort||!S.stableOrder.length){
@@ -8248,10 +8266,6 @@ function renderVerwaltung(){
         <!-- Kategorien & Getränke verwalten -->
         <div class="adm-divider"></div>
         <div style="font-size:10px;font-weight:bold;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px">${T('manage.cats.title')}</div>
-        <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;margin-bottom:10px;background:var(--bg3);border-radius:8px;border-left:3px solid ${AI_COLOR};font-size:11px;color:var(--tx1);line-height:1.5">
-          <span style="width:10px;height:10px;border-radius:50%;background:${AI_COLOR};flex-shrink:0;display:inline-block"></span>
-          <span>${L?'<strong style="color:#10b981">Green dot</strong> behind the price = <strong>All Inclusive</strong> (included in your package). <strong>○ Outline</strong> = not included.':'<strong style="color:#10b981">Grüner Punkt</strong> hinter dem Preis = <strong>All Inklusive</strong> (im Paket inbegriffen). <strong>○ Umriss</strong> = nicht inklusive.'}</span>
-        </div>
         <div id="drinkMgmt">${catHtml}</div>
         <button class="new-cat-btn" onclick="openNewCat()">&#65291; ${T('manage.new.cat').replace('\uff0b ','')}</button>
 
@@ -8532,7 +8546,7 @@ function renderHelp(){
 
     <div class="hlp-card">
       <div class="hlp-card-title">🗺️ ${h('App-Übersicht – was ist wo?','App overview – what is where?')}</div>
-      <div class="hlp-row"><span class="hlp-badge gold">🍹 ${h('GETRÄNKE','DRINKS')}</span><span>${h('Hauptbildschirm: Getränke erfassen, Favoriten, häufig bestellt, Kategoriefilter, Suche (🔍-Symbol antippen), aktiven Hafen setzen, Tages-Zusammenfassung, Tagesziel-Fortschrittsbalken, Status-Banner. Hinter jedem Preis: <strong style="color:#10b981">⬤ grüner Kreis</strong> = All Inklusive (im Paket), <strong>○ Umriss-Kreis</strong> = nicht inklusive.','Main screen: record drinks, favourites, most ordered, category filter, search (tap 🔍 icon), active port, daily summary, goal progress bar, status banners. Behind each price: <strong style="color:#10b981">⬤ green dot</strong> = All Inclusive (in package), <strong>○ outline circle</strong> = not included.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge gold">🍹 ${h('GETRÄNKE','DRINKS')}</span><span>${h('Hauptbildschirm: Getränke erfassen, Favoriten, häufig bestellt, Kategoriefilter, Suche (🔍-Symbol antippen), aktiven Hafen setzen, Tages-Zusammenfassung, Tagesziel-Fortschrittsbalken, Status-Banner. Hinter jedem Preis: <strong>⬤ ausgefüllter Kreis</strong> = inklusive, <strong>○ Umriss-Kreis</strong> = nicht inklusive. Farbe = Kategoriefarbe.','Main screen: record drinks, favourites, most ordered, category filter, search (tap 🔍 icon), active port, daily summary, goal progress bar, status banners. Behind each price: <strong>⬤ filled circle</strong> = included in package, <strong>○ outline circle</strong> = not included. Colour = category colour.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">📋 ${h('PROTOKOLL','LOG')}</span><span>${h('Alle Einträge chronologisch: Swipe-Bearbeitung, Mehrfachauswahl, Suche, Nutzer-/Kategorie-/Datum-/Preisfilter, Notiz je Eintrag, manuell Eintrag hinzufügen, CSV-Export.','All entries chronologically: swipe editing, multi-select, search, user/category/date/price filter, note per entry, add manual entry, CSV export.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">📊 ${h('STATISTIK','STATISTICS')}</span><span>${h('Zeitraum- und Nutzer-Filter, Übersicht-KPIs, Trendkurve, Top-Tage, Nach Nutzer (inkl. Budget), <strong>⬤ Inklusive vs. Nicht inklusive</strong>, Top-Getränke, Hafen-Statistik, Wochentag-Muster, Tageszeiten-Heatmap, Tagesvergleich, Nach Kategorie, <strong>Ausgaben pro Reise-Segment</strong>, Reise-Kalender, Schiffszeit-Verlauf.','Period and user filter, overview KPIs, trend chart, top days, by user (incl. budget), <strong>⬤ Included vs. Not Included</strong>, top drinks, port statistics, weekday pattern, time-of-day heatmap, daily comparison, by category, <strong>expenses by voyage segment</strong>, voyage calendar, ship\'s time journey.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">⚙️ ${h('VERWALTUNG','MANAGEMENT')}</span><span>${h('Backup &amp; Daten (immer sichtbar): Backup speichern (Download), <strong>📡 Backup teilen</strong> (iOS-Sheet: AirDrop/WhatsApp/iCloud …), Backup laden. PDF-Reisebericht, Einstellungen, Nutzer-Profile (inkl. Reisebudget), Schiffszeit, Design, Getränke &amp; Kategorien, <strong>🗺️ Reiseroute</strong> (CSV importieren/exportieren, manuell bearbeiten) – als aufklappbare Abschnitte. Bei jedem Getränk: <strong>Kreis-Symbol</strong> (⬤/○) antippen, um den Inklusive-Status zu aktivieren/deaktivieren.','Backup &amp; Data (always visible): Save backup (download), <strong>📡 Share backup</strong> (iOS sheet: AirDrop/WhatsApp/iCloud …), restore backup. PDF voyage report, settings, user profiles (incl. travel budget), ship\'s time, design, drinks &amp; categories, <strong>🗺️ Voyage Route</strong> (import/export CSV, edit manually) – as collapsible sections. Per drink: tap the <strong>circle symbol</strong> (⬤/○) to toggle the included-in-package status.')}</span></div>
@@ -8595,19 +8609,18 @@ function renderHelp(){
     </div>
 
     <div class="hlp-card">
-      <div class="hlp-card-title">⬤ ${h('All-Inklusive-Kennzeichnung &amp; A/I-Filter','All-Inclusive Indicator &amp; A/I Filter')}</div>
-      <div class="hlp-row"><span class="hlp-badge" style="background:#10b981;color:#fff">⬤ ${h('Grüner Kreis','Green dot')}</span><span>${h('Ein <strong style="color:#10b981">grüner Kreis ⬤</strong> hinter dem Preis zeigt an: dieses Getränk ist im gebuchten Paket <strong>All Inklusive</strong> – es fällt keine zusätzliche Gebühr an.','A <strong style="color:#10b981">green circle ⬤</strong> behind the price indicates: this drink is <strong>All Inclusive</strong> in the booked package – no additional charge.')}</span></div>
+      <div class="hlp-card-title">⬤ ${h('Inklusive-Kennzeichnung','Included in Package')}</div>
+      <div class="hlp-row"><span class="hlp-badge gold">⬤ ${h('Ausgefüllter Kreis','Filled circle')}</span><span>${h('Ein <strong>ausgefüllter Kreis ⬤</strong> in der Kategoriefarbe hinter dem Preis zeigt an: dieses Getränk ist im gebuchten Paket <strong>inklusive</strong>.','A <strong>filled circle ⬤</strong> in the category colour behind the price indicates: this drink is <strong>included</strong> in the booked package.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">○ ${h('Umriss-Kreis','Outline circle')}</span><span>${h('Ein <strong>Umriss-Kreis ○</strong> (nur Rand, nicht gefüllt) hinter dem Preis zeigt an: dieses Getränk ist <strong>nicht inklusive</strong> und wird extra berechnet.','An <strong>outline circle ○</strong> (border only, not filled) behind the price indicates: this drink is <strong>not included</strong> and will be charged separately.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge" style="background:#10b981;color:#fff">A/I ${h('Filter-Tab','Filter tab')}</span><span>${h('Der Tab <strong style="color:#10b981">A/I</strong> in der Kategorie-Leiste filtert die Getränkeliste auf alle <strong>All-Inklusive-Getränke</strong>. Er erscheint automatisch, sobald mindestens ein Getränk als inklusive markiert ist.','The <strong style="color:#10b981">A/I</strong> tab in the category bar filters the drink list to show all <strong>All-Inclusive drinks</strong>. It appears automatically once at least one drink is marked as included.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('Wo sichtbar','Where visible')}</span><span>${h('Der Kreis erscheint überall, wo Preise angezeigt werden: Getränkeliste, Protokoll, Statistik und im PDF-Reisebericht.','The circle appears everywhere prices are shown: drink list, log, statistics and the PDF voyage report.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge green">${h('Status setzen','Set status')}</span><span>${h('Tab <strong>EINSTELLUNGEN</strong> → <strong>Getränke &amp; Kategorien</strong> → Kategorie aufklappen → bei jedem Getränk erscheint ein Kreis-Button hinter dem Preis. Antippen wechselt zwischen ⬤ (All Inklusive) und ○ (nicht inklusive). Der Status wird sofort gespeichert.','Tab <strong>SETTINGS</strong> → <strong>Drinks &amp; Categories</strong> → expand a category → each drink shows a circle button behind its price. Tap to toggle between ⬤ (All Inclusive) and ○ (not included). The status is saved immediately.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge green">${h('Status setzen','Set status')}</span><span>${h('Tab <strong>VERWALTUNG</strong> → <strong>Getränke &amp; Kategorien</strong> → Kategorie aufklappen → bei jedem Getränk erscheint ein Kreis-Button hinter dem Preis. Antippen wechselt zwischen ⬤ (inklusive) und ○ (nicht inklusive). Der Status wird sofort gespeichert.','Tab <strong>MANAGEMENT</strong> → <strong>Drinks &amp; Categories</strong> → expand a category → each drink shows a circle button behind its price. Tap to toggle between ⬤ (included) and ○ (not included). The status is saved immediately.')}</span></div>
       <div class="hlp-tip">💡 ${h('Tipp: Beim CSV-Export der Getränkeliste wird die Inklusive-Kennzeichnung als <strong>●</strong> in der Spalte „Inklusive" mitexportiert. Beim Re-Import wird der Status automatisch wiederhergestellt.','Tip: When exporting the drink list as CSV, the inclusion marker is exported as <strong>●</strong> in the "Inklusive" column. On re-import the status is automatically restored.')}</div>
     </div>
 
     <div class="hlp-card">
       <div class="hlp-card-title">🔍 ${h('Suche, Kategoriefilter &amp; Sortierung','Search, category filter &amp; sort')}</div>
       <div class="hlp-row"><span class="hlp-badge blue">🔍 ${h('Suchfeld','Search field')}</span><span>${h('Das Suchfeld ist standardmäßig ausgeblendet. <strong>🔍-Symbol</strong> rechts neben der Kategorie-Leiste antippen → Suchfeld öffnet sich und erhält sofort den Fokus. Getränkename eintippen → Liste filtert in Echtzeit. Suchfeld verlassen (ohne Eingabe) → klappt automatisch wieder zu. Suchfeld leert sich automatisch nach 5 Minuten Inaktivität.','The search field is hidden by default. Tap the <strong>🔍 icon</strong> to the right of the category bar → search field opens and receives focus immediately. Type a drink name → list filters in real time. Leave the field (without input) → closes automatically. Search field clears after 5 minutes of inactivity.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('Kategoriefilter','Category filter')}</span><span>${h('Horizontales Filterband beim Scrollen am oberen Rand fixiert → Kategorie antippen → nur Getränke dieser Kategorie werden angezeigt. <strong>Alle</strong> zeigt alle Kategorien. <strong style="color:#10b981">A/I</strong> filtert auf All-Inklusive-Getränke. Eine aktive Kategorie wird farbig hervorgehoben.','Horizontal filter strip fixed at the top while scrolling → tap a category → only drinks from that category are shown. <strong>All</strong> shows all categories. <strong style="color:#10b981">A/I</strong> filters for All-Inclusive drinks. An active category is highlighted in colour.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('Kategoriefilter','Category filter')}</span><span>${h('Horizontales Filterband beim Scrollen am oberen Rand fixiert → Kategorie antippen → nur Getränke dieser Kategorie werden angezeigt. <strong>Alle</strong> zeigt alle Kategorien. Eine aktive Kategorie wird farbig hervorgehoben.','Horizontal filter strip fixed at the top while scrolling → tap a category → only drinks from that category are shown. <strong>All</strong> shows all categories. An active category is highlighted in colour.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('Kategoriegruppen','Category groups')}</span><span>${h('Wenn kein Kategoriefilter aktiv ist, werden Getränke in aufklappbaren <strong>Kategoriegruppen</strong> angezeigt. Pfeil am Gruppen-Header antippen → Gruppe ein-/ausklappen. Die Gruppe zeigt Anzahl der enthaltenen Getränke und den Gesamtzähler der Kategorie.','When no category filter is active, drinks are shown in collapsible <strong>category groups</strong>. Tap the arrow on the group header → expand/collapse. The group shows the number of drinks and the total counter for the category.')}</span></div>
     </div>
 
@@ -8869,6 +8882,7 @@ function renderHelp(){
       <div class="hlp-card-title">🎨 ${h('Themes &amp; Design – Übersicht','Themes &amp; Design – Overview')}</div>
       <div class="hlp-row"><span class="hlp-badge gold">🎨 ${h('Vorinstallierte Themes','Pre-installed themes')}</span><span>${h('25+ vorinstallierte Themes (AIDA, nicko, Mein Schiff u. a.).','25+ pre-installed themes (AIDA, nicko, Mein Schiff etc.).')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">✏️ ${h('Eigenes Theme erstellen','Create custom theme')}</span><span>${h('Eigenes Theme erstellen: <strong>Einstellungen → Design → Neues Konzept</strong>. Der Custom Theme Editor öffnet sich als eigenes Vollbild-Fenster (Einstellungen → Design → Neues Konzept erstellen).','Create custom theme: <strong>Settings → Design → New concept</strong>. The custom theme editor opens in its own full-screen window (Settings → Design → New concept).')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">🌗 ${h('Auto Dark/Light','Auto dark/light')}</span><span>${h('Auto-Dark/Light: wechselt automatisch per iPhone-Systemeinstellung.','Auto dark/light: switches automatically based on iPhone system setting.')}</span></div>
     </div>
     </div>
 
@@ -11536,8 +11550,24 @@ function dismissPwa(){
   const b=document.getElementById('pwaBanner');if(b)b.remove();
 }
 
-
-
+/* ── Auto-Dark/Light-Mode via System-Einstellungen (Optional) ── */
+(function(){
+  function _applyAutoSystemTheme(){
+    if(!S||!S.autoDarkMode)return;
+    const dark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const target=dark?(S.autoDarkConcept||'kapitaensbuch'):(S.autoLightConcept||'sonnendeck');
+    if(S.conceptTheme===target)return;
+    S.conceptTheme=target;applyTheme(target);
+    try{localStorage.setItem('a4_concepttheme',target);db.setCfg('conceptTheme',target).catch(()=>{});}catch(e){}
+  }
+  if(window.matchMedia){
+    const mq=window.matchMedia('(prefers-color-scheme: dark)');
+    const handler=()=>_applyAutoSystemTheme();
+    if(typeof mq.addEventListener==='function'){mq.addEventListener('change',handler);}else if(typeof mq.addListener==='function'){mq.addListener(handler);}
+  }
+  setTimeout(()=>{if(typeof _applyAutoSystemTheme==='function')_applyAutoSystemTheme();},300);
+  window._applyAutoSystemTheme=()=>{if(typeof _applyAutoSystemTheme==='function')_applyAutoSystemTheme();};
+})();
 
 /* ══════════════════════════════════════════════════════════
    ONBOARDING – Erstnutzer-Modal (10 Schritte)
