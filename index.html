@@ -1064,6 +1064,8 @@ html .fav-tile-grid .drow.fav-tile{
   border-left:4px solid var(--ac-13);
   transition:opacity .15s,transform .1s;
   box-sizing:border-box;
+  -webkit-user-select:none;user-select:none;
+  -webkit-touch-callout:none;
 }
 html .fav-tile-grid .drow.fav-tile.has{
   border-left-color:var(--ac);
@@ -1077,10 +1079,13 @@ html .fav-tile-grid .drow.fav-tile:active{opacity:.72;transform:scale(0.96)}
 html .fav-tile-grid .drow.fav-tile.tile-drag-active{opacity:.45;transform:scale(0.97)}
 html .fav-tile-grid .drow.fav-tile.tile-drag-over{box-shadow:0 0 0 2px var(--ac)!important;opacity:1}
 .fav-tile-drag-handle{
-  position:absolute;top:5px;left:7px;
-  font-size:16px;color:var(--ac-60);cursor:grab;
+  position:absolute;top:4px;left:5px;width:22px;height:22px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;color:var(--ac-60);cursor:grab;
   -webkit-user-select:none;user-select:none;touch-action:none;
+  -webkit-touch-callout:none;
   letter-spacing:-2px;line-height:1;z-index:5;
+  background:var(--ac-07);border-radius:5px;
 }
 .fav-tile-drag-handle:active{color:var(--ac);cursor:grabbing}
 .fav-tile-top{display:flex;align-items:flex-start;width:100%;gap:4px}
@@ -1106,7 +1111,7 @@ body.fz-xlarge .fav-tile-name{font-size:21px}
   flex-shrink:0;line-height:1.4;
 }
 .tile-color-btn.active{background:var(--ac-13);color:var(--ac);border-color:var(--ac-40)}
-.tile-cpicker-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;padding:4px 0 8px}
+.tile-cpicker-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:4px 0 8px}
 .tile-cpicker-swatch{
   aspect-ratio:1;border-radius:8px;cursor:pointer;border:2px solid transparent;
   transition:transform .15s,border-color .15s;touch-action:manipulation;min-height:34px;
@@ -5340,16 +5345,22 @@ let _renderDrinksTimer=null;
 function toggleFavTileMode(){S.favTileMode=!S.favTileMode;if(S.favTileMode)S.favSortMode=false;saveState();renderDrinks(false);}
 function toggleFavTileColors(){S.favTileColors=!S.favTileColors;saveState();renderDrinks(false);}
 
-/* ── 30 maritime tile colors ── */
+/* ── 36 maritime tile colors – organized by hue ── */
 const TILE_COLORS=[
-  '#12304E','#0A2238','#1A4860','#0C3548',
-  '#0F3A3A','#0A2A2A','#183A28','#0A2418',
-  '#28183A','#1A0E2E','#1E1060','#14104A',
-  '#3A1818','#2A0C0C','#3A1028','#28081E',
-  '#3A2808','#2A1E04','#3A3008','#28260A',
-  '#1A1A1A','#242430','#1E2830','#283020',
-  '#1E1428','#0E2830','#2A2010','#301820',
-  '#0A1E38','#1E2A18'
+  // Navy / Blau
+  '#0A1E38','#122440','#1A3A5C','#0A2A4A','#1A2E5A','#0E1E44',
+  // Petrol / Teal
+  '#0A2828','#0F3A3A','#0A2A32','#152838','#0D3040','#1A4050',
+  // Grün / Wald
+  '#0A2818','#142A18','#1A3820','#0F2A18','#122810','#1C3A20',
+  // Violett / Indigo
+  '#1A0A2E','#220E3A','#1C0E4A','#260A38','#1E1040','#2A0E3C',
+  // Rot / Bordeaux
+  '#2A0808','#380A10','#300810','#2E0A18','#3A0E0E','#280810',
+  // Amber / Mahagoni
+  '#2A1808','#381E06','#2E1A06','#341A08','#2C1606','#301A0A',
+  // Neutral / Dunkel
+  '#181818','#1E1E28','#1A1C28','#1C2028','#202020','#1A1820'
 ];
 
 /* active picker/ctx state */
@@ -5420,9 +5431,25 @@ function openTileColorPicker(drinkId){
   const grid=document.getElementById('tileColorGrid');
   if(!grid)return;
   const cur=(S.favTileCustomColors&&S.favTileCustomColors[drinkId])||'';
-  grid.innerHTML=TILE_COLORS.map(function(clr){
-    return `<div class="tile-cpicker-swatch${cur===clr?' sel':''}" style="background:${clr}" data-clr="${clr}" onclick="setTileColor('${drinkId}','${clr}')"></div>`;
-  }).join('');
+  const L=S.lang==='en';
+  const groups=[
+    {lbl:L?'Navy':'Navy',       start:0,  end:6},
+    {lbl:L?'Teal':'Petrol',     start:6,  end:12},
+    {lbl:L?'Green':'Grün',      start:12, end:18},
+    {lbl:L?'Violet':'Violett',  start:18, end:24},
+    {lbl:L?'Red':'Rot',         start:24, end:30},
+    {lbl:L?'Amber':'Amber',     start:30, end:36},
+  ];
+  let html='';
+  groups.forEach(function(g){
+    html+=`<div style="grid-column:1/-1;font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin:4px 0 2px;padding-top:2px;border-top:1px solid var(--ac-07)">${g.lbl}</div>`;
+    TILE_COLORS.slice(g.start,g.end).forEach(function(clr){
+      html+=`<div class="tile-cpicker-swatch${cur===clr?' sel':''}" style="background:${clr}" data-clr="${clr}" onclick="setTileColor('${drinkId}','${clr}')"></div>`;
+    });
+  });
+  grid.style.display='grid';
+  grid.style.gridTemplateColumns='repeat(6,1fr)';
+  grid.innerHTML=html;
   document.getElementById('tileColorOv').className='ov show-center';
 }
 function setTileColor(drinkId,color){
@@ -5470,52 +5497,64 @@ function _initTileLongPress(){
   favSec._tlpClone=favSec;favSec._tlpTS=tsH;favSec._tlpTE=teH;favSec._tlpTM=tmH;favSec._tlpCM=cmH;
 }
 
-/* ── Tile Drag-Sort ── */
-let _tfd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null};
+/* ── Tile Drag-Sort (grid-level delegation) ── */
+let _tfd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null,moved:false};
 function initTileDrag(){
-  document.querySelectorAll('[data-tile-drag]').forEach(function(handle){
-    if(handle._tdi)return;handle._tdi=true;
-    handle.addEventListener('touchstart',function(e){
-      const wrap=handle.closest('.drow-wrap');if(!wrap)return;
-      _tfd.active=true;_tfd.id=wrap.dataset.dswid;_tfd.el=wrap;
-      _tfd.startX=e.touches[0].clientX;_tfd.startY=e.touches[0].clientY;_tfd.lastOver=null;
-      wrap.querySelector('.drow').classList.add('tile-drag-active');
-      e.preventDefault();
-    },{passive:false});
-    handle.addEventListener('touchmove',function(e){
-      if(!_tfd.active)return;
-      e.preventDefault();
-      const x=e.touches[0].clientX,y=e.touches[0].clientY;
-      const wraps=[...document.querySelectorAll('.fav-tile-grid .drow-wrap')];
-      let target=null;
-      for(const w of wraps){
-        if(w===_tfd.el)continue;
-        const r=w.getBoundingClientRect();
-        if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom){target=w;break;}
+  const grid=document.querySelector('.fav-tile-grid');
+  if(!grid||grid._tileDragInit)return;
+  grid._tileDragInit=true;
+
+  grid.addEventListener('touchstart',function(e){
+    const handle=e.target.closest('[data-tile-drag]');
+    if(!handle)return;
+    e.preventDefault();
+    e.stopPropagation();
+    clearTimeout(_tileLpTimer);_tileLpId=null; // cancel long-press
+    const wrap=handle.closest('.drow-wrap');
+    if(!wrap)return;
+    _tfd.active=true;_tfd.id=wrap.dataset.dswid;_tfd.el=wrap;
+    _tfd.startX=e.touches[0].clientX;_tfd.startY=e.touches[0].clientY;
+    _tfd.lastOver=null;_tfd.moved=false;
+    wrap.querySelector('.drow').classList.add('tile-drag-active');
+  },{passive:false});
+
+  grid.addEventListener('touchmove',function(e){
+    if(!_tfd.active)return;
+    e.preventDefault();
+    _tfd.moved=true;
+    const x=e.touches[0].clientX,y=e.touches[0].clientY;
+    const wraps=[...grid.querySelectorAll('.drow-wrap')];
+    let target=null;
+    for(const w of wraps){
+      if(w===_tfd.el)continue;
+      const r=w.getBoundingClientRect();
+      // expand hit area slightly so edge-dragging works
+      if(x>=r.left-4&&x<=r.right+4&&y>=r.top-4&&y<=r.bottom+4){target=w;break;}
+    }
+    wraps.forEach(w=>{const d=w.querySelector('.drow');if(d)d.classList.remove('tile-drag-over');});
+    if(target){target.querySelector('.drow').classList.add('tile-drag-over');_tfd.lastOver=target;}
+    else _tfd.lastOver=null;
+  },{passive:false});
+
+  grid.addEventListener('touchend',function(){
+    if(!_tfd.active)return;
+    _tfd.active=false;
+    if(_tfd.el){const dr=_tfd.el.querySelector('.drow');if(dr)dr.classList.remove('tile-drag-active');}
+    const wraps=[...grid.querySelectorAll('.drow-wrap')];
+    wraps.forEach(w=>{const d=w.querySelector('.drow');if(d)d.classList.remove('tile-drag-over');});
+    if(_tfd.lastOver&&_tfd.moved){
+      const allIds=wraps.map(w=>w.dataset.dswid);
+      const fromIdx=allIds.indexOf(_tfd.id);
+      const toIdx=allIds.indexOf(_tfd.lastOver.dataset.dswid);
+      if(fromIdx!==-1&&toIdx!==-1&&fromIdx!==toIdx){
+        const newOrder=[...allIds];
+        newOrder.splice(fromIdx,1);
+        newOrder.splice(toIdx,0,_tfd.id);
+        S.favOrder=newOrder;saveState();renderDrinks(false);
       }
-      wraps.forEach(w=>w.querySelector('.drow')&&w.querySelector('.drow').classList.remove('tile-drag-over'));
-      if(target){target.querySelector('.drow').classList.add('tile-drag-over');_tfd.lastOver=target;}
-      else _tfd.lastOver=null;
-    },{passive:false});
-    handle.addEventListener('touchend',function(){
-      if(!_tfd.active)return;_tfd.active=false;
-      if(_tfd.el){const dr=_tfd.el.querySelector('.drow');if(dr)dr.classList.remove('tile-drag-active');}
-      const wraps=[...document.querySelectorAll('.fav-tile-grid .drow-wrap')];
-      wraps.forEach(w=>w.querySelector('.drow')&&w.querySelector('.drow').classList.remove('tile-drag-over'));
-      if(_tfd.lastOver){
-        const allIds=wraps.map(w=>w.dataset.dswid);
-        const fromIdx=allIds.indexOf(_tfd.id);
-        const toIdx=allIds.indexOf(_tfd.lastOver.dataset.dswid);
-        if(fromIdx!==-1&&toIdx!==-1&&fromIdx!==toIdx){
-          const newOrder=[...allIds];
-          newOrder.splice(fromIdx,1);
-          newOrder.splice(toIdx>fromIdx?toIdx-1:toIdx,0,_tfd.id);
-          S.favOrder=newOrder;saveState();renderDrinks(false);
-        }
-      }
-      _tfd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null};
-    },{passive:true});
-  });
+    }
+    _tfd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null,moved:false};
+  },{passive:true});
 }
 function renderDrinksDebounced(full){
   if(_renderDrinksTimer)clearTimeout(_renderDrinksTimer);
@@ -5571,7 +5610,12 @@ function renderDrinks(forceSort){
         favListEl.className='fav-tile-grid';
         favListEl.style.padding='';
         favListEl.innerHTML=favFiltered.map(d=>drinkTile(d,sortActive)).join('');
-        requestAnimationFrame(function(){_initTileLongPress();if(sortActive)initTileDrag();});
+        // Reset grid init flag so listeners re-attach to fresh DOM
+        requestAnimationFrame(function(){
+          const g=document.querySelector('.fav-tile-grid');if(g)g._tileDragInit=false;
+          _initTileLongPress();
+          if(sortActive)initTileDrag();
+        });
       }else if(S.favSortMode){
         favListEl.className='dlist';
         favListEl.style.padding='0';
@@ -6370,6 +6414,8 @@ function initSwipeDelete(){
 function initDrinkSwipe(){
   document.querySelectorAll('.drow-wrap').forEach(wrap=>{
     if(wrap._dsi)return;
+    // skip tiles in sort mode – drag-handles take priority
+    if(wrap.closest('.fav-tile-grid')&&wrap.querySelector('[data-tile-drag]'))return;
     wrap._dsi=true;
     const row=wrap.querySelector('.drow');
     const bg=wrap.querySelector('.drow-swipe-bg');
