@@ -2186,7 +2186,7 @@ const THEMES={
   kapitaensbuch:{label:'kapitaensbuch',vars:{
     bg:'#06101E',bg1:'#0A1A30',bg2:'#112240',bg3:'#091828',bg4:'#1A2E48',
     ac:'#C9A84C',acFg:'#06101E',acWarm:'#D4B86A',acDeep:'#8A7030',
-    tx0:'#EDE4CC',tx1:'#8DAFC8',tx2:'#5A7A98',tx3:'#C4B498',tx4:'#1E3252',
+    tx0:'#EDE4CC',tx1:'#A8C4D8',tx2:'#7898B0',tx3:'#C4B498',tx4:'#1E3252',
     ac07:'#C9A84C12',ac09:'#C9A84C17',ac10:'#C9A84C1A',ac13:'#C9A84C21',
     ac20:'#C9A84C33',ac27:'#C9A84C45',ac33:'#C9A84C54',ac40:'#C9A84C66',ac60:'#C9A84C99'
   }},
@@ -2194,7 +2194,7 @@ const THEMES={
   atelier:{label:'atelier',vars:{
     bg:'#080809',bg1:'#0A0A0C',bg2:'#101010',bg3:'#0C0C0E',bg4:'#1A1A1C',
     ac:'#C8B878',acFg:'#080809',acWarm:'#D4CC98',acDeep:'#8A7840',
-    tx0:'#E8E0D0',tx1:'#96937E',tx2:'#C4BEAE',tx3:'#5A5848',tx4:'#1A1A18',
+    tx0:'#E8E0D0',tx1:'#96937E',tx2:'#C4BEAE',tx3:'#9A9080',tx4:'#1A1A18',
     ac07:'#C8B87812',ac09:'#C8B87817',ac10:'#C8B8781A',ac13:'#C8B87821',
     ac20:'#C8B87833',ac27:'#C8B87845',ac33:'#C8B87854',ac40:'#C8B87866',ac60:'#C8B87899'
   }},
@@ -2212,7 +2212,7 @@ const THEMES={
   nautical_noir:{label:'nautical_noir',vars:{
     bg:'#08060E',bg1:'#0F0C1A',bg2:'#1A1426',bg3:'#0D0A14',bg4:'#201830',
     ac:'#B89A3C',acFg:'#08060E',acWarm:'#CEB85A',acDeep:'#7A6220',
-    tx0:'#EEE4C8',tx1:'#7A7060',tx2:'#AEA090',/* FIX V47+: war #4A4030, WCAG-Kontrast ~1.4:1 → jetzt ~6:1 */tx3:'#C8BC98',tx4:'#201A0C',
+    tx0:'#EEE4C8',tx1:'#9A9080',tx2:'#AEA090',/* FIX V47+: war #4A4030, WCAG-Kontrast ~1.4:1 → jetzt ~6:1 */tx3:'#C8BC98',tx4:'#201A0C',
     ac07:'#B89A3C12',ac09:'#B89A3C17',ac10:'#B89A3C1A',ac13:'#B89A3C21',
     ac20:'#B89A3C33',ac27:'#B89A3C45',ac33:'#B89A3C54',ac40:'#B89A3C66',ac60:'#B89A3C99'
   }},
@@ -7623,7 +7623,7 @@ function renderVerwaltung(){
         <span>${L?'Save now':'Jetzt sichern'}</span>
         <span style="font-size:9px;font-weight:normal;opacity:.75">${L?'Instant · no dialog':'Sofort · kein Dialog'}</span>
       </button>
-      <button class="adm-btn-primary" onclick="importLatestInternal()" style="background:linear-gradient(135deg,#162840,#0a1e30);box-shadow:0 2px 10px rgba(15,40,70,.4)">
+      <button class="adm-btn-primary" onclick="importLatestInternal()" style="background:linear-gradient(135deg,#162840,#0a1e30);box-shadow:0 2px 10px rgba(15,40,70,.4);color:var(--tx0)">
         <span class="adm-bico">⚡</span>
         <span>${L?'Load last':'Letztes laden'}</span>
         <span style="font-size:9px;font-weight:normal;opacity:.75">${L?'Restore internal backup':'Int. Backup wiederherstellen'}</span>
@@ -7633,7 +7633,7 @@ function renderVerwaltung(){
     <!-- ── ROW 2: Extern / Datei ──────────── -->
     <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin:10px 0 5px">${L?'External – share file':'Extern – Datei teilen'}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
-      <button class="adm-btn-primary" onclick="shareBackup()" style="background:linear-gradient(135deg,#0d2030,#071525)">
+      <button class="adm-btn-primary" onclick="shareBackup()" style="background:linear-gradient(135deg,#0d2030,#071525);color:var(--tx0)">
         <span class="adm-bico">📤</span>
         <span>${L?'Export':'Exportieren'}</span>
         <span style="font-size:9px;font-weight:normal;opacity:.75">AirDrop · iCloud · …</span>
