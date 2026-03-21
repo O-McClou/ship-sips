@@ -416,7 +416,7 @@ html.theme-transitioning *{transition:background-color 0.28s ease,border-color 0
 ──────────────────────────────────────────────────────────────────────────── */
 html{background:var(--bg);height:100%;min-height:calc(100% + env(safe-area-inset-top));padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 html,body{margin:0}
-body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;color:var(--tx0);-webkit-text-size-adjust:100%;padding:0}
+body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0);-webkit-text-size-adjust:100%;padding:0;overscroll-behavior-y:none}
 /* ── iOS PWA Fullscreen ───────────────────────────────────────────────────────
    position:fixed;bottom:0 stoppt auf iOS an der Safe-Area-Grenze, NICHT am
    physischen Rand. window.innerHeight liefert die echte Gesamthöhe in CSS-px.
@@ -455,9 +455,11 @@ body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;
 .goal-bar-meta{display:flex;justify-content:space-between;font-size:8px;color:var(--tx2);margin-bottom:4px;letter-spacing:0.5px}
 .goal-bar-track{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
 .goal-bar-fill{height:100%;border-radius:2px;transition:width .5s ease,background .5s ease;background:linear-gradient(to right,var(--ac-deep),var(--ac))}
-/* Tabs: fixierte Bottom-Nav (iOS-konform, Daumen-erreichbar) */
+/* Tabs: fixierte Bottom-Nav. html hat KEIN padding (würde fixed;bottom:0 auf iOS verschieben).
+   translate3d(0,0,0) erzwingt eigene GPU-Compositing-Ebene → korrekte Positionierung iOS Safari.
+   padding-bottom füllt den Home-Indicator-Bereich farbig aus. */
 .tabs{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:200;display:flex;border-top:1px solid var(--ac-20);background:var(--bg);padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -3px 18px rgba(0,0,0,0.45)}
-.tab{flex:1;padding:7px 0 8px;background:transparent;color:var(--tx2);border:none;cursor:pointer;font-family:Georgia,serif;font-size:9px;letter-spacing:0.5px;transition:color .2s,background .2s;display:flex;flex-direction:column;align-items:center;gap:3px;-webkit-user-select:none;touch-action:manipulation;position:relative}
+.tab{flex:1;padding:7px 0 8px;background:transparent;color:var(--tx2);border:none;cursor:pointer;font-family:Georgia,serif;font-size:9px;letter-spacing:0.5px;transition:color .2s,background .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;-webkit-user-select:none;touch-action:manipulation;position:relative}
 .tab.on{background:var(--ac-07);color:var(--ac);font-weight:bold}
 .tab.on::after{content:'';position:absolute;top:0;left:25%;right:25%;height:2px;background:var(--ac);border-radius:0 0 2px 2px}
 .tab:active{background:var(--ac-10);opacity:1}
@@ -528,14 +530,19 @@ body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;
 .sinput::placeholder{color:var(--tx2)}
 .cscroll{display:flex;gap:5px;overflow-x:auto;padding:3px 0 1px;-webkit-overflow-scrolling:touch;scrollbar-width:none;scroll-snap-type:x mandatory}
 .cscroll::-webkit-scrollbar{display:none}
-.cbtn{flex-shrink:0;padding:0 12px;background:var(--bg2);color:var(--tx1);border:1px solid var(--ac-13);border-radius:20px;cursor:pointer;font-size:10px;font-family:Georgia,serif;white-space:nowrap;display:flex;align-items:center;gap:4px;scroll-snap-align:start;transition:all .2s;touch-action:manipulation;letter-spacing:0.3px;min-height:44px;height:auto;box-sizing:border-box;/* FIX V48 F10: 44px Apple HIG Touch-Target */}
+.cbtn{flex-shrink:0;padding:0 12px;background:var(--bg2);color:var(--tx1);border:1px solid var(--ac-13);border-radius:20px;cursor:pointer;font-size:10px;font-family:Georgia,serif;white-space:nowrap;display:flex;align-items:center;gap:4px;scroll-snap-align:start;transition:all .2s;touch-action:manipulation;letter-spacing:0.3px;min-height:35px;height:auto;box-sizing:border-box;/* FIX V48 F10: 44px Apple HIG Touch-Target */}
 .cbtn.on{background:var(--ac);color:var(--ac-fg);border-color:var(--ac);font-weight:bold}
 .cbtn:active{opacity:.75}
 .tbar{padding:7px 14px;display:flex;justify-content:flex-end}
 .rbtn{padding:4px 10px;background:transparent;border:1px dashed #e0555577;color:#e0555577;border-radius:6px;cursor:pointer;font-size:11px;font-family:Georgia,serif;opacity:0.6}
-.fav-section{padding:0 14px 4px}
+.fav-section{padding:0 14px 4px;background:var(--ac-07);border-radius:10px;margin:0 4px}
 .fav-title{font-size:9px;color:var(--ac);font-weight:bold;letter-spacing:3px;text-transform:uppercase;padding:10px 2px 8px;cursor:pointer;user-select:none;-webkit-user-select:none;display:flex;align-items:center;gap:8px;touch-action:manipulation}
 .fav-title::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--ac-27),transparent)}
+/* FIX V48: drow in Favoriten transparent -> sec-bg (ac-07) als einheitliche Zone.
+   html-Prefix: Spezifitaet (0,0,2,1) schlaegt alle html[data-theme] .drow-Overrides. */
+html .fav-section .drow{background:transparent;border-color:var(--ac-13);border-left-color:var(--ac-27)}
+html .fav-section .drow.has{background:var(--ac-13);border-color:var(--ac-27);border-left-color:var(--ac);box-shadow:none}
+html .fav-section .drow.fl{background:var(--ac-13);border-left-color:var(--ac)}
 .top10-section{padding:0 14px 4px}
 .top10-title{font-size:9px;color:var(--ac);font-weight:bold;letter-spacing:3px;text-transform:uppercase;padding:10px 2px 8px;display:flex;align-items:center;gap:8px}
 .top10-title::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--ac-20),transparent)}
@@ -1291,6 +1298,8 @@ details.hlp-acc summary:active{opacity:.75}
   setTimeout(setAppH, 500);
   window.addEventListener('resize', setAppH);
   window.addEventListener('orientationchange', function(){ setTimeout(setAppH, 300); });
+  // Tabs-Positionierung: rein per CSS env(safe-area-inset-bottom) in .tabs –
+  // kein JS-Override nötig; CSS-env() in Stylesheets funktioniert zuverlässig auf iOS.
 })();
 </script>
 <div id="app">
@@ -1333,11 +1342,7 @@ details.hlp-acc summary:active{opacity:.75}
         onclick="cycleConcept()"
         title="Design ändern"
         aria-label="Design ändern">🎨<span class="hdr-design-lbl">Design</span></button>
-      <!-- FIX V48 F12: Hell-/Dunkel-Umschalter -->
-      <button id="dayNightBtn" class="hdr-design-btn"
-        onclick="toggleDayNight()"
-        title="Tagmodus aktivieren"
-        aria-label="Tagmodus aktivieren">☀️<span class="hdr-design-lbl">Tag</span></button>
+
       <div id="hdrUserExpanded" onclick="openUserSwitcher()"></div>
       <div id="currentLocBar" class="port-input-wrap">
         <input id="currentLocInput" type="text" placeholder="Hafen …" maxlength="100" autocomplete="off" spellcheck="false" list="locDatalist"
@@ -1513,15 +1518,6 @@ details.hlp-acc summary:active{opacity:.75}
   <div class="hlppane" id="hlppane"></div>
 </div>
 
-<!-- BOTTOM-NAV: fixierte Tab-Leiste (aus Header verschoben, position:fixed bottom:0) -->
-<div class="tabs">
-  <button class="tab on" id="t0" onclick="switchTab(0)" aria-label="Tab: Getränke"><!-- [PUNKT-F] --><span class="tab-icon">🍹</span><span class="tab-label">Getränke</span></button>
-  <button class="tab"    id="t1" onclick="switchTab(1)" aria-label="Tab: Protokoll"><!-- [PUNKT-F] --><span class="tab-icon">📋</span><span class="tab-label">Protokoll</span></button>
-  <button class="tab"    id="t2" onclick="switchTab(2)" aria-label="Tab: Statistik"><!-- [PUNKT-F] --><span class="tab-icon">📊</span><span class="tab-label">Statistik</span></button>
-  <button class="tab"    id="t3" onclick="switchTab(3)" aria-label="Tab: Einstellungen" style="position:relative"><!-- [PUNKT-F] --><span class="tab-icon">⚙️</span><span class="tab-label">Einstellungen</span><div id="admBadge" style="display:none;position:absolute;width:8px;height:8px;border-radius:50%;background:#E53935;top:6px;right:6px;pointer-events:none"></div></button>
-  <button class="tab"    id="t4" onclick="switchTab(4)" aria-label="Tab: Hilfe"><!-- [PUNKT-F] --><span class="tab-icon">❓</span><span class="tab-label">Hilfe</span></button>
-</div>
-
 <!-- MODAL: User Management -->
 <div class="ov" id="userOv">
   <div class="modal-sheet" style="max-height:90vh">
@@ -1588,6 +1584,16 @@ details.hlp-acc summary:active{opacity:.75}
     <button class="swub-close" id="swubClose" onclick="swUpdateDismiss()" aria-label="Schließen">✕</button>
   </div>
 </div>
+</div>
+
+<!-- BOTTOM-NAV: außerhalb #app – position:fixed funktioniert auf iOS Safari nur
+     korrekt wenn das Element KEIN overflow:hidden-Vorfahre hat. -->
+<div class="tabs">
+  <button class="tab on" id="t0" onclick="switchTab(0)" aria-label="Tab: Getränke"><!-- [PUNKT-F] --><span class="tab-icon">🍹</span><span class="tab-label">Getränke</span></button>
+  <button class="tab"    id="t1" onclick="switchTab(1)" aria-label="Tab: Protokoll"><!-- [PUNKT-F] --><span class="tab-icon">📋</span><span class="tab-label">Protokoll</span></button>
+  <button class="tab"    id="t2" onclick="switchTab(2)" aria-label="Tab: Statistik"><!-- [PUNKT-F] --><span class="tab-icon">📊</span><span class="tab-label">Statistik</span></button>
+  <button class="tab"    id="t3" onclick="switchTab(3)" aria-label="Tab: Einstellungen" style="position:relative"><!-- [PUNKT-F] --><span class="tab-icon">⚙️</span><span class="tab-label">Einstellungen</span><div id="admBadge" style="display:none;position:absolute;width:8px;height:8px;border-radius:50%;background:#E53935;top:6px;right:6px;pointer-events:none"></div></button>
+  <button class="tab"    id="t4" onclick="switchTab(4)" aria-label="Tab: Hilfe"><!-- [PUNKT-F] --><span class="tab-icon">❓</span><span class="tab-label">Hilfe</span></button>
 </div>
 
 <!-- FLOATING: Undo-Stack-Panel (V34) -->
@@ -2190,7 +2196,7 @@ const THEMES={
   kapitaensbuch:{label:'kapitaensbuch',vars:{
     bg:'#06101E',bg1:'#0A1A30',bg2:'#112240',bg3:'#091828',bg4:'#1A2E48',
     ac:'#C9A84C',acFg:'#06101E',acWarm:'#D4B86A',acDeep:'#8A7030',
-    tx0:'#EDE4CC',tx1:'#8DAFC8',tx2:'#5A7A98',tx3:'#C4B498',tx4:'#1E3252',
+    tx0:'#EDE4CC',tx1:'#A8C4D8',tx2:'#7898B0',tx3:'#C4B498',tx4:'#1E3252',
     ac07:'#C9A84C12',ac09:'#C9A84C17',ac10:'#C9A84C1A',ac13:'#C9A84C21',
     ac20:'#C9A84C33',ac27:'#C9A84C45',ac33:'#C9A84C54',ac40:'#C9A84C66',ac60:'#C9A84C99'
   }},
@@ -2198,7 +2204,7 @@ const THEMES={
   atelier:{label:'atelier',vars:{
     bg:'#080809',bg1:'#0A0A0C',bg2:'#101010',bg3:'#0C0C0E',bg4:'#1A1A1C',
     ac:'#C8B878',acFg:'#080809',acWarm:'#D4CC98',acDeep:'#8A7840',
-    tx0:'#E8E0D0',tx1:'#96937E',tx2:'#C4BEAE',tx3:'#5A5848',tx4:'#1A1A18',
+    tx0:'#E8E0D0',tx1:'#96937E',tx2:'#C4BEAE',tx3:'#9A9080',tx4:'#1A1A18',
     ac07:'#C8B87812',ac09:'#C8B87817',ac10:'#C8B8781A',ac13:'#C8B87821',
     ac20:'#C8B87833',ac27:'#C8B87845',ac33:'#C8B87854',ac40:'#C8B87866',ac60:'#C8B87899'
   }},
@@ -2216,7 +2222,7 @@ const THEMES={
   nautical_noir:{label:'nautical_noir',vars:{
     bg:'#08060E',bg1:'#0F0C1A',bg2:'#1A1426',bg3:'#0D0A14',bg4:'#201830',
     ac:'#B89A3C',acFg:'#08060E',acWarm:'#CEB85A',acDeep:'#7A6220',
-    tx0:'#EEE4C8',tx1:'#7A7060',tx2:'#AEA090',/* FIX V47+: war #4A4030, WCAG-Kontrast ~1.4:1 → jetzt ~6:1 */tx3:'#C8BC98',tx4:'#201A0C',
+    tx0:'#EEE4C8',tx1:'#9A9080',tx2:'#AEA090',/* FIX V47+: war #4A4030, WCAG-Kontrast ~1.4:1 → jetzt ~6:1 */tx3:'#C8BC98',tx4:'#201A0C',
     ac07:'#B89A3C12',ac09:'#B89A3C17',ac10:'#B89A3C1A',ac13:'#B89A3C21',
     ac20:'#B89A3C33',ac27:'#B89A3C45',ac33:'#B89A3C54',ac40:'#B89A3C66',ac60:'#B89A3C99'
   }},
@@ -2384,8 +2390,6 @@ function applyTheme(id){
   const themeIcons={kapitaensbuch:'⚓',atelier:'🎩',sonnendeck:'☀️',original:'✦',nautical_noir:'🎩',mare_sereno:'🌊',capitaine:'⚓',pergament:'📜',tiefsee:'🌑',champagner:'🥂',aida:'builtin:brand_aida',nicko:'builtin:brand_nicko',mein_schiff:'builtin:brand_mein_schiff'};
   const ctIcon=(S&&S.customThemes||[]).find(ct=>ct.id===id);
   if(btn){const _ic=ctIcon?ctIcon.icon:(themeIcons[id]||'✦');if(_ic.startsWith('custom:')||_ic.startsWith('builtin:')){const _du=resolveIconDataUrl(_ic);if(_du){btn.innerHTML=`<img src="${_du}" style="width:22px;height:22px;object-fit:contain;border-radius:3px;display:block">`;btn.style.fontSize='0';}else{btn.textContent='🎨';btn.style.fontSize='';}}else{btn.textContent=_ic;btn.style.fontSize='';}}
-  // FIX V48 F12: Tag-/Nacht-Button-Label aktualisieren (nach applyTheme immer aufrufen)
-  try{_updateDayNightBtn();}catch(e){}
 }
 function toggleThemePanel(){S.themeOpen=!S.themeOpen;renderVerwaltung();}
 function setTheme(id){
@@ -2414,48 +2418,7 @@ function cycleConcept(){
   S.conceptTheme=next;
   setTheme(next);
 }
-/* FIX V48 F12: Hell-/Dunkel-Umschalter – unabhängig vom Theme-System ── */
-// Helle Design-Konzepte (bg luminance > 0.15)
-const LIGHT_THEMES_SET=new Set(['sonnendeck','mare_sereno','pergament','champagner','nicko']);
-function _isCurrentThemeDark(){
-  const t=THEMES[S.theme]||THEMES.kapitaensbuch;
-  return luminanceHex(t.vars.bg||'#06101E')<=0.15;
-}
-function toggleDayNight(){
-  const L=S.lang==='en';
-  if(_isCurrentThemeDark()){
-    // Aktuelles dunkles Theme merken, zu hellem wechseln
-    S.lastDarkTheme=S.theme;
-    const target=S.lastLightTheme||'sonnendeck';
-    setTheme(target);
-    showToast('☀️ '+(L?'Day mode':'Tagmodus'),'info',1500);
-  } else {
-    // Aktuelles helles Theme merken, zu dunklem wechseln
-    S.lastLightTheme=S.theme;
-    const target=S.lastDarkTheme||'kapitaensbuch';
-    setTheme(target);
-    showToast('🌙 '+(L?'Night mode':'Nachtmodus'),'info',1500);
-  }
-  try{
-    localStorage.setItem('a4_lastdarktheme',S.lastDarkTheme);
-    localStorage.setItem('a4_lastlighttheme',S.lastLightTheme);
-    db.setCfg('lastDarkTheme',S.lastDarkTheme).catch(()=>{});
-    db.setCfg('lastLightTheme',S.lastLightTheme).catch(()=>{});
-  }catch(e){}
-}
-function _updateDayNightBtn(){
-  const btn=document.getElementById('dayNightBtn');
-  if(!btn)return;
-  const isDark=_isCurrentThemeDark();
-  const L=S.lang==='en';
-  const icon=isDark?'☀️':'🌙';
-  const lbl=isDark?(L?'Day':'Tag'):(L?'Night':'Nacht');
-  // innerHTML statt textContent – bewahrt die .hdr-design-lbl span-Struktur
-  btn.innerHTML=icon+'<span class="hdr-design-lbl">'+lbl+'</span>';
-  const title=isDark?(L?'Switch to day mode':'Tagmodus aktivieren'):(L?'Switch to night mode':'Nachtmodus aktivieren');
-  btn.title=title;
-  btn.setAttribute('aria-label',title);
-}
+
 
 function toggleConceptFavorite(id){
   if(!S.conceptFavorites)S.conceptFavorites=['kapitaensbuch','atelier','sonnendeck'];
@@ -3330,6 +3293,9 @@ function doThemeImport(){
 
 
 const PALETTE=['#c9a84c','#5b9bd5','#5faa70','#e07840','#a868d0','#d45577','#3ab0d0','#b08830','#72b060','#d066a8','#4a72c4','#62a898','#c85050','#6a84d5','#8a9a8a','#7ab87a','#c888cc','#70b8d8','#d4c040','#e07a7a'];
+/* All-Inclusive Kennfarbe – Smaragdgrün, eindeutig & positiv */
+const AI_COLOR='#1EC87A';
+
 function catColor(cat){
   if(S.ccm[cat]===undefined){
     const used=Object.values(S.ccm);
@@ -5238,8 +5204,8 @@ function hideDrinkSearchIfEmpty(){
     if(btn)btn.style.color='var(--ac)';
   }
 }
-function renderCatFilter(){const cats=allCats();const items=[{l:T('cat.all'),i:-1},...cats.map((c,i)=>({l:c,i}))];document.getElementById('cscroll').innerHTML=items.map(({l,i})=>{const col=i>=0?catColor(l):null;const dot=col?`<span class="cdot" style="background:${col}"></span>`:'';return `<button class="cbtn${S.selCat===(i===-1?'__all__':cats[i])?' on':''}" data-ci="${i}">${dot}${esc(l)}</button>`;}).join('');}
-document.getElementById('cscroll').addEventListener('click',function(e){const b=e.target.closest('[data-ci]');if(!b)return;const i=parseInt(b.dataset.ci);S.selCat=i===-1?'__all__':(allCats()[i]||'__all__');S.stableOrder=[];clearTimeout(S.sortTimer);renderDrinks(true);});
+function renderCatFilter(){const cats=allCats();const aiCount=S.drinks.filter(d=>d.included).length;const items=[{l:T('cat.all'),i:-1},{l:'AI',i:'__ai__'},...cats.map((c,i)=>({l:c,i}))];document.getElementById('cscroll').innerHTML=items.map(({l,i})=>{let col=null;let isOn=false;if(i==='__ai__'){col=AI_COLOR;isOn=S.selCat==='__ai__';}else if(i===-1){isOn=S.selCat==='__all__';}else{col=catColor(cats[i]);isOn=S.selCat===cats[i];}const dot=col?`<span class="cdot" style="background:${col}"></span>`:'';const cnt=i==='__ai__'&&aiCount>0?` <span style="font-size:8px;opacity:.65">${aiCount}</span>`:'';return `<button class="cbtn${isOn?' on':''}" data-ci="${i}">${dot}${esc(l)}${cnt}</button>`;}).join('');}
+document.getElementById('cscroll').addEventListener('click',function(e){const b=e.target.closest('[data-ci]');if(!b)return;const raw=b.dataset.ci;if(raw==='__ai__'){S.selCat='__ai__';}else{const i=parseInt(raw);S.selCat=i===-1?'__all__':(allCats()[i]||'__all__');}S.stableOrder=[];clearTimeout(S.sortTimer);renderDrinks(true);});
 let _favDebounce={};
 function toggleFav(id){const now=Date.now();if(_favDebounce[id]&&now-_favDebounce[id]<400)return;_favDebounce[id]=now;if(S.favorites.has(id)){S.favorites.delete(id);S.favOrder=S.favOrder.filter(x=>x!==id);}else{S.favorites.add(id);if(!S.favOrder.includes(id))S.favOrder.push(id);}saveState();renderDrinks(false);}
 function toggleFavSection(){S.favCollapsed=!S.favCollapsed;renderDrinks(false);}
@@ -5270,7 +5236,7 @@ function drinkRow(d,rankIdx,showCat){
   return `<div class="drow-wrap" data-dswid="${esc(d.id)}" data-has="${c>0?'1':''}" data-swside="${plusRight?'left':'right'}"><div class="drow-swipe-bg"><span style="font-size:22px">↩</span><div style="font-size:10px;letter-spacing:.5px;margin-top:2px">UNDO</div></div><div class="drow-strip"></div><div class="drow${has?' has':''}${fl?' fl':''}" style="border-left-color:${col}">
     ${showRnk?`<div class="rnk" style="background:${RNK[rankIdx]}">#${rankIdx+1}</div>`:''}
     ${leftSlot}
-    <div class="dinfo"><div class="dname${has?' on':''}">${esc(d.name)}</div>${d.nameEN&&S.lang==="en"?`<div style="font-size:10px;color:var(--ac);margin-top:1px;opacity:.8">${esc(d.nameEN)}</div>`:d.nameEN?`<div style="font-size:10px;color:var(--tx2);margin-top:1px">${esc(d.nameEN)}</div>`:''} ${showCat?`<div class="dcat"><span class="cdot" style="background:${col}"></span>${esc(d.cat)}</div>`:''}<div class="dprice">${eur(d.price)}<span class="incl-dot ${d.included?'filled':'outline'}" style="${d.included?`background:${col};width:7px;height:7px`:`color:${col};width:7px;height:7px`}" title="${d.included?(S.lang==='en'?'Included in package':'Im Paket inklusive'):(S.lang==='en'?'Not included':'Nicht inklusive')}"></span></div></div>
+    <div class="dinfo"><div class="dname${has?' on':''}">${esc(d.name)}</div>${d.nameEN&&S.lang==="en"?`<div style="font-size:10px;color:var(--ac);margin-top:1px;opacity:.8">${esc(d.nameEN)}</div>`:d.nameEN?`<div style="font-size:10px;color:var(--tx2);margin-top:1px">${esc(d.nameEN)}</div>`:''} ${showCat?`<div class="dcat"><span class="cdot" style="background:${col}"></span>${esc(d.cat)}</div>`:''}<div class="dprice">${eur(d.price)}<span class="incl-dot ${d.included?'filled':'outline'}" style="${d.included?`background:${AI_COLOR};width:7px;height:7px`:`color:${col};width:7px;height:7px`}" title="${d.included?(S.lang==='en'?'All Inclusive':'All Inclusive'):(S.lang==='en'?'Not included':'Nicht inklusive')}"></span></div></div>
     <div class="dcnt"><div class="dnum ${has?'nz':'z'}">${c}</div>${has?`<div class="dsub">${eur(c*d.price)}</div>`:''}</div>
     ${rightSlot}
   </div></div>`;
@@ -5284,7 +5250,7 @@ function renderDrinksDebounced(full){
 }
 function renderDrinks(forceSort){
   // 12.2: Skip re-render if nothing visually changed
-  const hash=JSON.stringify([S.drinks.length,S.catFilter,S.fz,S.lang,JSON.stringify([...S.favorites]),S.btnLayout,JSON.stringify(S.counts),S.favCollapsed,S.top10Collapsed,S.favSortMode,JSON.stringify(S.favOrder),JSON.stringify([...S.drinkExpandedCats])]);
+  const hash=JSON.stringify([S.drinks.length,S.catFilter,S.fz,S.lang,JSON.stringify([...S.favorites]),S.btnLayout,JSON.stringify(S.counts),S.favCollapsed,S.top10Collapsed,S.favSortMode,JSON.stringify(S.favOrder),JSON.stringify([...S.drinkExpandedCats]),S.selCat,S.drinks.filter(d=>d.included).length]);
   if(!forceSort&&hash===_lastDrinksHash){return;}
   _lastDrinksHash=hash;
   // Scroll-Position aus dem echten Scroll-Container (#p0) retten
@@ -5293,7 +5259,7 @@ function renderDrinks(forceSort){
   renderCatFilter();
   const q=(document.getElementById('sinput').value||'').toLowerCase();
   const isF=q||S.selCat!=='__all__';
-  const af=S.drinks.filter(d=>{const mc=S.selCat==='__all__'||d.cat===S.selCat,ms=!q||d.name.toLowerCase().includes(q)||d.cat.toLowerCase().includes(q);return mc&&ms;});
+  const af=S.drinks.filter(d=>{const mc=S.selCat==='__all__'||(S.selCat==='__ai__'?d.included:d.cat===S.selCat),ms=!q||d.name.toLowerCase().includes(q)||d.cat.toLowerCase().includes(q);return mc&&ms;});
   let ordered;
   const sm=S.drinkSortMode||'freq';
   if(forceSort||!S.stableOrder.length){
@@ -7575,7 +7541,7 @@ function renderVerwaltung(){
   let catHtml='';
   S.catIndex.forEach((cat,ci)=>{
     const ds=S.drinks.filter(d=>d.cat===cat),isO=S.expandedCats.has(cat),col=catColor(cat);
-    catHtml+=`<div class="catblock"><div class="cathdr" data-tc="${ci}" style="border-left-color:${col}"><span class="cathdr-name"><span class="cdot" style="background:${col}"></span>${esc(cat)}</span><span class="cathdr-cnt">${ds.length} ${T('cat.drinks')}</span><span class="cathdr-arr${isO?' open':''}">&#9658;</span></div><div class="catbody${isO?' open':''}"><div class="cat-actions"><button class="cab cab-r" data-rc="${ci}">${T('cat.rename.btn')}</button><button class="cab cab-d" data-dc="${ci}">${T('cat.del.btn')}</button></div>${ds.map(d=>{const dcol=catColor(d.cat);return`<div class="drinkitem"><span class="di-name">${esc(d.name)}</span><span class="di-price">${eur(d.price)}</span><button class="di-incl" onclick="toggleIncluded('${esc(d.id)}')" title="${d.included?(L?'Included – click to remove':'Inklusive – zum Entfernen tippen'):(L?'Not included – click to set':'Nicht inklusive – zum Aktivieren tippen')}"><span class="incl-dot ${d.included?'filled':'outline'}" style="${d.included?`background:${dcol};width:12px;height:12px`:`color:${dcol};width:12px;height:12px`}"></span></button><button class="di-btn di-e" data-ed="${esc(d.id)}" aria-label=\"Bearbeiten\">&#9999;&#65039;</button><!-- [PUNKT-F] --><button class="di-btn di-d" data-dd="${esc(d.id)}" aria-label=\"Getränk löschen\">&#128465;</button><!-- [PUNKT-F] --></div>`;}).join('')}<button class="add-drink-row" data-ad="${ci}">&#65291; ${T('modal.drink.add').replace('Add ','').replace('Getr\xe4nk h','H')}</button></div></div>`;
+    catHtml+=`<div class="catblock"><div class="cathdr" data-tc="${ci}" style="border-left-color:${col}"><span class="cathdr-name"><span class="cdot" style="background:${col}"></span>${esc(cat)}</span><span class="cathdr-cnt">${ds.length} ${T('cat.drinks')}</span><span class="cathdr-arr${isO?' open':''}">&#9658;</span></div><div class="catbody${isO?' open':''}"><div class="cat-actions"><button class="cab cab-r" data-rc="${ci}">${T('cat.rename.btn')}</button><button class="cab cab-d" data-dc="${ci}">${T('cat.del.btn')}</button></div>${ds.map(d=>{return`<div class="drinkitem"><span class="di-name">${esc(d.name)}</span><span class="di-price">${eur(d.price)}</span><button class="di-incl" onclick="toggleIncluded('${esc(d.id)}')" title="${d.included?(L?'All Inclusive – tap to remove':'All Inclusive – zum Entfernen tippen'):(L?'Not included – tap to set AI':'Nicht inklusive – zum AI-Aktivieren tippen')}"><span class="incl-dot ${d.included?'filled':'outline'}" style="${d.included?`background:${AI_COLOR};width:12px;height:12px`:`color:${catColor(d.cat)};width:12px;height:12px`}"></span></button><button class="di-btn di-e" data-ed="${esc(d.id)}" aria-label=\"Bearbeiten\">&#9999;&#65039;</button><!-- [PUNKT-F] --><button class="di-btn di-d" data-dd="${esc(d.id)}" aria-label=\"Getränk löschen\">&#128465;</button><!-- [PUNKT-F] --></div>`;}).join('')}<button class="add-drink-row" data-ad="${ci}">&#65291; ${T('modal.drink.add').replace('Add ','').replace('Getr\xe4nk h','H')}</button></div></div>`;
   });
 
   /* ── TZ_OFFSETS ─────────────────────────────────── */
@@ -7667,7 +7633,7 @@ function renderVerwaltung(){
         <span>${L?'Save now':'Jetzt sichern'}</span>
         <span style="font-size:9px;font-weight:normal;opacity:.75">${L?'Instant · no dialog':'Sofort · kein Dialog'}</span>
       </button>
-      <button class="adm-btn-primary" onclick="importLatestInternal()" style="background:linear-gradient(135deg,#162840,#0a1e30);box-shadow:0 2px 10px rgba(15,40,70,.4)">
+      <button class="adm-btn-primary" onclick="importLatestInternal()" style="background:linear-gradient(135deg,#162840,#0a1e30);box-shadow:0 2px 10px rgba(15,40,70,.4);color:var(--tx0)">
         <span class="adm-bico">⚡</span>
         <span>${L?'Load last':'Letztes laden'}</span>
         <span style="font-size:9px;font-weight:normal;opacity:.75">${L?'Restore internal backup':'Int. Backup wiederherstellen'}</span>
@@ -7677,7 +7643,7 @@ function renderVerwaltung(){
     <!-- ── ROW 2: Extern / Datei ──────────── -->
     <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin:10px 0 5px">${L?'External – share file':'Extern – Datei teilen'}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
-      <button class="adm-btn-primary" onclick="shareBackup()" style="background:linear-gradient(135deg,#0d2030,#071525)">
+      <button class="adm-btn-primary" onclick="shareBackup()" style="background:linear-gradient(135deg,#0d2030,#071525);color:var(--tx0)">
         <span class="adm-bico">📤</span>
         <span>${L?'Export':'Exportieren'}</span>
         <span style="font-size:9px;font-weight:normal;opacity:.75">AirDrop · iCloud · …</span>
@@ -8266,6 +8232,7 @@ function renderVerwaltung(){
         <!-- Kategorien & Getränke verwalten -->
         <div class="adm-divider"></div>
         <div style="font-size:10px;font-weight:bold;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px">${T('manage.cats.title')}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;padding:7px 10px;background:${AI_COLOR}18;border:1px solid ${AI_COLOR}44;border-radius:8px;font-size:10px;color:var(--tx1)"><span class="incl-dot filled" style="background:${AI_COLOR};width:10px;height:10px;flex-shrink:0"></span><span>${L?'<strong style="color:'+AI_COLOR+'">Green dot</strong> behind the price = All Inclusive (AI). Tap the dot to toggle the status.':'<strong style="color:'+AI_COLOR+'">Grüner Punkt</strong> hinter dem Preis = All Inclusive (AI). Punkt antippen zum Umschalten.'}</span></div>
         <div id="drinkMgmt">${catHtml}</div>
         <button class="new-cat-btn" onclick="openNewCat()">&#65291; ${T('manage.new.cat').replace('\uff0b ','')}</button>
 
@@ -8422,14 +8389,41 @@ function checkForAppUpdate(){
       if(typeof swUpdateApply==='function')swUpdateApply();
       return;
     }
-    // Trigger network check
-    reg.update().then(function(){
-      if(reg.waiting){
+    // FIX SW-2: reg.update() löst auf bevor der neue SW fertig installiert ist.
+    // Deshalb updatefound-Listener VOR reg.update() registrieren und auf
+    // statechange=installed warten – erst dann ist reg.waiting gesetzt.
+    var _updFound = false;
+    function _onUpdFound(){
+      _updFound = true;
+      var newSW = reg.installing || reg.waiting;
+      if(!newSW){
+        if(resultEl){resultEl.style.color='var(--tx2)';resultEl.textContent=L?'✓ Already up to date.':'✓ Bereits auf dem neuesten Stand.';}
+        return;
+      }
+      if(newSW.state === 'installed' || newSW.state === 'waiting'){
         if(resultEl){resultEl.style.color='var(--col-ok)';resultEl.textContent=L?'✅ New version found! Installing…':'✅ Neue Version gefunden! Wird installiert…';}
         setTimeout(function(){if(typeof swUpdateApply==='function')swUpdateApply();},800);
-      } else {
-        if(resultEl){resultEl.style.color='var(--tx2)';resultEl.textContent=L?'✓ Already up to date.':'✓ Bereits auf dem neuesten Stand.';}
+        return;
       }
+      newSW.addEventListener('statechange', function(){
+        if(newSW.state === 'installed'){
+          if(resultEl){resultEl.style.color='var(--col-ok)';resultEl.textContent=L?'✅ New version found! Installing…':'✅ Neue Version gefunden! Wird installiert…';}
+          setTimeout(function(){if(typeof swUpdateApply==='function')swUpdateApply();},800);
+        }
+      });
+    }
+    reg.addEventListener('updatefound', _onUpdFound);
+    reg.update().then(function(){
+      // Kurz warten – falls updatefound noch unterwegs ist (iOS-Timing)
+      setTimeout(function(){
+        if(!_updFound){
+          if(reg.waiting){
+            _onUpdFound();
+          } else {
+            if(resultEl){resultEl.style.color='var(--tx2)';resultEl.textContent=L?'✓ Already up to date.':'✓ Bereits auf dem neuesten Stand.';}
+          }
+        }
+      }, 500);
     }).catch(function(){
       if(resultEl)resultEl.textContent=L?'⚠️ Could not check – no internet connection?':'⚠️ Prüfung fehlgeschlagen – kein Internet?';
     });
@@ -8546,10 +8540,10 @@ function renderHelp(){
 
     <div class="hlp-card">
       <div class="hlp-card-title">🗺️ ${h('App-Übersicht – was ist wo?','App overview – what is where?')}</div>
-      <div class="hlp-row"><span class="hlp-badge gold">🍹 ${h('GETRÄNKE','DRINKS')}</span><span>${h('Hauptbildschirm: Getränke erfassen, Favoriten, häufig bestellt, Kategoriefilter, Suche (🔍-Symbol antippen), aktiven Hafen setzen, Tages-Zusammenfassung, Tagesziel-Fortschrittsbalken, Status-Banner. Hinter jedem Preis: <strong>⬤ ausgefüllter Kreis</strong> = inklusive, <strong>○ Umriss-Kreis</strong> = nicht inklusive. Farbe = Kategoriefarbe.','Main screen: record drinks, favourites, most ordered, category filter, search (tap 🔍 icon), active port, daily summary, goal progress bar, status banners. Behind each price: <strong>⬤ filled circle</strong> = included in package, <strong>○ outline circle</strong> = not included. Colour = category colour.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge gold">🍹 ${h('GETRÄNKE','DRINKS')}</span><span>${h('Hauptbildschirm: Getränke erfassen, Favoriten, häufig bestellt, Kategoriefilter, Suche (🔍-Symbol antippen), aktiven Hafen setzen, Tages-Zusammenfassung, Tagesziel-Fortschrittsbalken, Status-Banner. Hinter jedem Preis: <strong style="color:#1EC87A">⬤ grüner Kreis</strong> = All Inclusive, <strong>○ Umriss-Kreis</strong> = nicht inklusive. Filter-Tab <strong style="color:#1EC87A">AI</strong> zeigt nur inklusive Getränke.','Main screen: record drinks, favourites, most ordered, category filter, search (tap 🔍 icon), active port, daily summary, goal progress bar, status banners. Behind each price: <strong style="color:#1EC87A">⬤ green circle</strong> = All Inclusive, <strong>○ outline circle</strong> = not included. Filter tab <strong style="color:#1EC87A">AI</strong> shows only included drinks.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">📋 ${h('PROTOKOLL','LOG')}</span><span>${h('Alle Einträge chronologisch: Swipe-Bearbeitung, Mehrfachauswahl, Suche, Nutzer-/Kategorie-/Datum-/Preisfilter, Notiz je Eintrag, manuell Eintrag hinzufügen, CSV-Export.','All entries chronologically: swipe editing, multi-select, search, user/category/date/price filter, note per entry, add manual entry, CSV export.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">📊 ${h('STATISTIK','STATISTICS')}</span><span>${h('Zeitraum- und Nutzer-Filter, Übersicht-KPIs, Trendkurve, Top-Tage, Nach Nutzer (inkl. Budget), <strong>⬤ Inklusive vs. Nicht inklusive</strong>, Top-Getränke, Hafen-Statistik, Wochentag-Muster, Tageszeiten-Heatmap, Tagesvergleich, Nach Kategorie, <strong>Ausgaben pro Reise-Segment</strong>, Reise-Kalender, Schiffszeit-Verlauf.','Period and user filter, overview KPIs, trend chart, top days, by user (incl. budget), <strong>⬤ Included vs. Not Included</strong>, top drinks, port statistics, weekday pattern, time-of-day heatmap, daily comparison, by category, <strong>expenses by voyage segment</strong>, voyage calendar, ship\'s time journey.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">⚙️ ${h('VERWALTUNG','MANAGEMENT')}</span><span>${h('Backup &amp; Daten (immer sichtbar): Backup speichern (Download), <strong>📡 Backup teilen</strong> (iOS-Sheet: AirDrop/WhatsApp/iCloud …), Backup laden. PDF-Reisebericht, Einstellungen, Nutzer-Profile (inkl. Reisebudget), Schiffszeit, Design, Getränke &amp; Kategorien, <strong>🗺️ Reiseroute</strong> (CSV importieren/exportieren, manuell bearbeiten) – als aufklappbare Abschnitte. Bei jedem Getränk: <strong>Kreis-Symbol</strong> (⬤/○) antippen, um den Inklusive-Status zu aktivieren/deaktivieren.','Backup &amp; Data (always visible): Save backup (download), <strong>📡 Share backup</strong> (iOS sheet: AirDrop/WhatsApp/iCloud …), restore backup. PDF voyage report, settings, user profiles (incl. travel budget), ship\'s time, design, drinks &amp; categories, <strong>🗺️ Voyage Route</strong> (import/export CSV, edit manually) – as collapsible sections. Per drink: tap the <strong>circle symbol</strong> (⬤/○) to toggle the included-in-package status.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">⚙️ ${h('VERWALTUNG','MANAGEMENT')}</span><span>${h('Backup &amp; Daten (immer sichtbar): Backup speichern (Download), <strong>📡 Backup teilen</strong> (iOS-Sheet: AirDrop/WhatsApp/iCloud …), Backup laden. PDF-Reisebericht, Einstellungen, Nutzer-Profile (inkl. Reisebudget), Schiffszeit, Design, Getränke &amp; Kategorien, <strong>🗺️ Reiseroute</strong> (CSV importieren/exportieren, manuell bearbeiten) – als aufklappbare Abschnitte. Bei jedem Getränk: <strong style="color:#1EC87A">Kreis-Symbol</strong> (⬤/○) antippen, um den All-Inclusive-Status zu aktivieren/deaktivieren. Aktivierte Getränke erhalten einen <strong style="color:#1EC87A">grünen Punkt</strong> und erscheinen im Tab <strong style="color:#1EC87A">AI</strong>.','Backup &amp; Data (always visible): Save backup (download), <strong>📡 Share backup</strong> (iOS sheet: AirDrop/WhatsApp/iCloud …), restore backup. PDF voyage report, settings, user profiles (incl. travel budget), ship\'s time, design, drinks &amp; categories, <strong>🗺️ Voyage Route</strong> (import/export CSV, edit manually) – as collapsible sections. Per drink: tap the <strong style="color:#1EC87A">circle symbol</strong> (⬤/○) to toggle the All-Inclusive status. Activated drinks receive a <strong style="color:#1EC87A">green dot</strong> and appear in the <strong style="color:#1EC87A">AI</strong> tab.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">❓ ${h('HILFE','HELP')}</span><span>${h('Diese Bedienungsanleitung. Suchfeld oben im Hilfe-Tab – sofort alle passenden Abschnitte aufklappen und hervorheben. Bei leerem Feld: alle Abschnitte wieder einklappen. Der <strong>💾 BKP</strong>-Button daneben erstellt sofort ein Backup.','This user guide. Search field at the top of the Help tab – instantly expands and highlights all matching sections. Empty field: collapses all sections again. The <strong>💾 BKP</strong> button next to it creates an instant backup.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge gold">💾 BKP</span><span>${h('Schnell-Backup-Button in der Tab-Leiste: speichert sofort die vollständige JSON-Sicherungsdatei (Download). Für direktes Teilen: Tab <strong>VERWALTUNG</strong> → <strong>📡 Backup teilen</strong>.','Quick backup button in the tab bar: instantly saves the complete JSON backup file (download). For direct sharing: tab <strong>MANAGEMENT</strong> → <strong>📡 Share backup</strong>.')}</span></div>
     </div>
@@ -8613,14 +8607,14 @@ function renderHelp(){
       <div class="hlp-row"><span class="hlp-badge gold">⬤ ${h('Ausgefüllter Kreis','Filled circle')}</span><span>${h('Ein <strong>ausgefüllter Kreis ⬤</strong> in der Kategoriefarbe hinter dem Preis zeigt an: dieses Getränk ist im gebuchten Paket <strong>inklusive</strong>.','A <strong>filled circle ⬤</strong> in the category colour behind the price indicates: this drink is <strong>included</strong> in the booked package.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">○ ${h('Umriss-Kreis','Outline circle')}</span><span>${h('Ein <strong>Umriss-Kreis ○</strong> (nur Rand, nicht gefüllt) hinter dem Preis zeigt an: dieses Getränk ist <strong>nicht inklusive</strong> und wird extra berechnet.','An <strong>outline circle ○</strong> (border only, not filled) behind the price indicates: this drink is <strong>not included</strong> and will be charged separately.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('Wo sichtbar','Where visible')}</span><span>${h('Der Kreis erscheint überall, wo Preise angezeigt werden: Getränkeliste, Protokoll, Statistik und im PDF-Reisebericht.','The circle appears everywhere prices are shown: drink list, log, statistics and the PDF voyage report.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge green">${h('Status setzen','Set status')}</span><span>${h('Tab <strong>VERWALTUNG</strong> → <strong>Getränke &amp; Kategorien</strong> → Kategorie aufklappen → bei jedem Getränk erscheint ein Kreis-Button hinter dem Preis. Antippen wechselt zwischen ⬤ (inklusive) und ○ (nicht inklusive). Der Status wird sofort gespeichert.','Tab <strong>MANAGEMENT</strong> → <strong>Drinks &amp; Categories</strong> → expand a category → each drink shows a circle button behind its price. Tap to toggle between ⬤ (included) and ○ (not included). The status is saved immediately.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge green">${h('Status setzen','Set status')}</span><span>${h('Tab <strong>VERWALTUNG</strong> → <strong>Getränke &amp; Kategorien</strong> → Kategorie aufklappen → bei jedem Getränk erscheint ein Kreis-Button hinter dem Preis. Antippen wechselt zwischen <span style="color:#1EC87A">⬤</span> (All Inclusive, grün) und ○ (nicht inklusive). Der Status wird sofort gespeichert. Im Getränke-Tab erscheint ein grüner Punkt <span style="color:#1EC87A">⬤</span> hinter dem Preis; der Filter-Tab <strong style="color:#1EC87A">AI</strong> zeigt alle inklusive Getränke auf einen Blick.','Tab <strong>MANAGEMENT</strong> → <strong>Drinks &amp; Categories</strong> → expand a category → each drink shows a circle button behind its price. Tap to toggle between <span style="color:#1EC87A">⬤</span> (All Inclusive, green) and ○ (not included). The status is saved immediately. In the Drinks tab a green dot <span style="color:#1EC87A">⬤</span> appears behind the price; the filter tab <strong style="color:#1EC87A">AI</strong> shows all included drinks at a glance.')}</span></div>
       <div class="hlp-tip">💡 ${h('Tipp: Beim CSV-Export der Getränkeliste wird die Inklusive-Kennzeichnung als <strong>●</strong> in der Spalte „Inklusive" mitexportiert. Beim Re-Import wird der Status automatisch wiederhergestellt.','Tip: When exporting the drink list as CSV, the inclusion marker is exported as <strong>●</strong> in the "Inklusive" column. On re-import the status is automatically restored.')}</div>
     </div>
 
     <div class="hlp-card">
       <div class="hlp-card-title">🔍 ${h('Suche, Kategoriefilter &amp; Sortierung','Search, category filter &amp; sort')}</div>
       <div class="hlp-row"><span class="hlp-badge blue">🔍 ${h('Suchfeld','Search field')}</span><span>${h('Das Suchfeld ist standardmäßig ausgeblendet. <strong>🔍-Symbol</strong> rechts neben der Kategorie-Leiste antippen → Suchfeld öffnet sich und erhält sofort den Fokus. Getränkename eintippen → Liste filtert in Echtzeit. Suchfeld verlassen (ohne Eingabe) → klappt automatisch wieder zu. Suchfeld leert sich automatisch nach 5 Minuten Inaktivität.','The search field is hidden by default. Tap the <strong>🔍 icon</strong> to the right of the category bar → search field opens and receives focus immediately. Type a drink name → list filters in real time. Leave the field (without input) → closes automatically. Search field clears after 5 minutes of inactivity.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('Kategoriefilter','Category filter')}</span><span>${h('Horizontales Filterband beim Scrollen am oberen Rand fixiert → Kategorie antippen → nur Getränke dieser Kategorie werden angezeigt. <strong>Alle</strong> zeigt alle Kategorien. Eine aktive Kategorie wird farbig hervorgehoben.','Horizontal filter strip fixed at the top while scrolling → tap a category → only drinks from that category are shown. <strong>All</strong> shows all categories. An active category is highlighted in colour.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('Kategoriefilter','Category filter')}</span><span>${h('Horizontales Filterband beim Scrollen am oberen Rand fixiert → Kategorie antippen → nur Getränke dieser Kategorie werden angezeigt. <strong>Alle</strong> zeigt alle Kategorien. <strong style="color:#1EC87A">AI</strong> zeigt nur All-Inclusive-Getränke (grüner Punkt). Eine aktive Kategorie wird farbig hervorgehoben.','Horizontal filter strip fixed at the top while scrolling → tap a category → only drinks from that category are shown. <strong>All</strong> shows all categories. <strong style="color:#1EC87A">AI</strong> shows only All-Inclusive drinks (green dot). An active category is highlighted in colour.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('Kategoriegruppen','Category groups')}</span><span>${h('Wenn kein Kategoriefilter aktiv ist, werden Getränke in aufklappbaren <strong>Kategoriegruppen</strong> angezeigt. Pfeil am Gruppen-Header antippen → Gruppe ein-/ausklappen. Die Gruppe zeigt Anzahl der enthaltenen Getränke und den Gesamtzähler der Kategorie.','When no category filter is active, drinks are shown in collapsible <strong>category groups</strong>. Tap the arrow on the group header → expand/collapse. The group shows the number of drinks and the total counter for the category.')}</span></div>
     </div>
 
@@ -11709,19 +11703,28 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
 <span id="portSizer" aria-hidden="true"></span>
 
 <script>
-/* ── V47 PWA: Service Worker + professioneller Update-Mechanismus ──
+/* ── V48 PWA: Service Worker + professioneller Update-Mechanismus ──
    Strategie: Nutzergesteuertes Update (kein erzwungenes skipWaiting)
    ① SW registrieren
    ② registration.waiting  → Banner sofort anzeigen
    ③ updatefound           → neuen SW beobachten
    ④ statechange=installed → Banner anzeigen
    ⑤ Nutzer klickt „Jetzt" → SKIP_WAITING → controllerchange → reload
+
+   FIX V48 SW-1: _swUpdatePending-Flag verhindert ungewollten Reload
+     beim Erst-Install (clients.claim() löst sonst controllerchange aus).
+   FIX V48 SW-2: checkForAppUpdate hört jetzt via updatefound auf den
+     neuen installierten SW – kein Race mit reg.waiting mehr.
+   FIX V48 SW-3: updatefound-Listener wird IMMER registriert, auch wenn
+     ein SW gerade installiert oder bereits wartend ist.
    ──────────────────────────────────────────────────────────────── */
 (function(){
   if(!('serviceWorker' in navigator)) return;
   if(location.protocol==='file:')     return;
 
   var _swReg = null;
+  /* FIX SW-1: Nur true wenn wir selbst skipWaiting ausgelöst haben */
+  var _swUpdatePending = false;
 
   /* Banner-Texte zweisprachig */
   function _swLang(de, en){
@@ -11745,6 +11748,9 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
 
   /* Neuen (wartenden) SW beobachten */
   function _trackInstalling(sw){
+    if(!sw) return;
+    /* Falls der SW bereits weiter ist (Race beim Listener-Anhängen) */
+    if(sw.state === 'installed') { _showUpdateBanner(); return; }
     sw.addEventListener('statechange', function(){
       if(sw.state === 'installed') _showUpdateBanner();
     });
@@ -11756,21 +11762,23 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
         _swReg = reg;
 
         /* Bereits ein wartender SW? (Seite nach Cache-Refresh neu geladen) */
-        if(reg.waiting) { _showUpdateBanner(); return; }
+        if(reg.waiting) _showUpdateBanner();
 
         /* Neuen SW beobachten, wenn gerade am Installieren */
-        if(reg.installing) { _trackInstalling(reg.installing); return; }
+        if(reg.installing) _trackInstalling(reg.installing);
 
-        /* Zukünftige Updates */
+        /* FIX SW-3: updatefound IMMER registrieren – nicht per return abbrechen */
         reg.addEventListener('updatefound', function(){
           _trackInstalling(reg.installing);
         });
       })
       .catch(function(){}); // privates Fenster, CSP etc. – ignorieren
 
-    /* Nach SKIP_WAITING: Seite neu laden */
+    /* FIX SW-1: Nur bei echtem Update neu laden, nicht beim Erst-Install.
+       clients.claim() im SW löst controllerchange ebenfalls aus – ohne diesen
+       Guard würde die App beim allerersten Start ungewollt neu laden. */
     navigator.serviceWorker.addEventListener('controllerchange', function(){
-      window.location.reload();
+      if(_swUpdatePending) window.location.reload();
     });
 
   }catch(e){}
@@ -11781,6 +11789,7 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
     if(b) b.classList.remove('visible');
     var reg = _swReg;
     if(reg && reg.waiting){
+      _swUpdatePending = true; // FIX SW-1: Reload nur bei bewusstem Update
       reg.waiting.postMessage({type:'SKIP_WAITING'});
     }
   };
