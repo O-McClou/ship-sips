@@ -540,9 +540,9 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 .fav-title::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--ac-27),transparent)}
 /* FIX V48: drow in Favoriten transparent -> sec-bg (ac-07) als einheitliche Zone.
    html-Prefix: Spezifitaet (0,0,2,1) schlaegt alle html[data-theme] .drow-Overrides. */
-html .fav-section .drow{background:transparent;border-color:var(--ac-13);border-left-color:var(--ac-27)}
-html .fav-section .drow.has{background:var(--ac-13);border-color:var(--ac-27);border-left-color:var(--ac);box-shadow:none}
-html .fav-section .drow.fl{background:var(--ac-13);border-left-color:var(--ac)}
+html .fav-section .drow{background:transparent;border-color:rgba(255,255,255,0.06);border-left-color:rgba(255,255,255,0.12)}
+html .fav-section .drow.has{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.10);border-left-color:var(--ac);box-shadow:none}
+html .fav-section .drow.fl{background:rgba(255,255,255,0.07);border-left-color:var(--ac)}
 .top10-section{padding:0 14px 4px;background:var(--bg2);border-radius:10px;margin:0 4px}
 .top10-title{font-size:9px;color:var(--ac);font-weight:bold;letter-spacing:3px;text-transform:uppercase;padding:10px 2px 8px;display:flex;align-items:center;gap:8px}
 .top10-title::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--ac-20),transparent)}
