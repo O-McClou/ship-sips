@@ -1516,15 +1516,6 @@ details.hlp-acc summary:active{opacity:.75}
   <div class="hlppane" id="hlppane"></div>
 </div>
 
-<!-- BOTTOM-NAV: fixierte Tab-Leiste (aus Header verschoben, position:fixed bottom:0) -->
-<div class="tabs">
-  <button class="tab on" id="t0" onclick="switchTab(0)" aria-label="Tab: Getränke"><!-- [PUNKT-F] --><span class="tab-icon">🍹</span><span class="tab-label">Getränke</span></button>
-  <button class="tab"    id="t1" onclick="switchTab(1)" aria-label="Tab: Protokoll"><!-- [PUNKT-F] --><span class="tab-icon">📋</span><span class="tab-label">Protokoll</span></button>
-  <button class="tab"    id="t2" onclick="switchTab(2)" aria-label="Tab: Statistik"><!-- [PUNKT-F] --><span class="tab-icon">📊</span><span class="tab-label">Statistik</span></button>
-  <button class="tab"    id="t3" onclick="switchTab(3)" aria-label="Tab: Einstellungen" style="position:relative"><!-- [PUNKT-F] --><span class="tab-icon">⚙️</span><span class="tab-label">Einstellungen</span><div id="admBadge" style="display:none;position:absolute;width:8px;height:8px;border-radius:50%;background:#E53935;top:6px;right:6px;pointer-events:none"></div></button>
-  <button class="tab"    id="t4" onclick="switchTab(4)" aria-label="Tab: Hilfe"><!-- [PUNKT-F] --><span class="tab-icon">❓</span><span class="tab-label">Hilfe</span></button>
-</div>
-
 <!-- MODAL: User Management -->
 <div class="ov" id="userOv">
   <div class="modal-sheet" style="max-height:90vh">
@@ -1591,6 +1582,16 @@ details.hlp-acc summary:active{opacity:.75}
     <button class="swub-close" id="swubClose" onclick="swUpdateDismiss()" aria-label="Schließen">✕</button>
   </div>
 </div>
+</div>
+
+<!-- BOTTOM-NAV: außerhalb #app – position:fixed funktioniert auf iOS Safari nur
+     korrekt wenn das Element KEIN overflow:hidden-Vorfahre hat. -->
+<div class="tabs">
+  <button class="tab on" id="t0" onclick="switchTab(0)" aria-label="Tab: Getränke"><!-- [PUNKT-F] --><span class="tab-icon">🍹</span><span class="tab-label">Getränke</span></button>
+  <button class="tab"    id="t1" onclick="switchTab(1)" aria-label="Tab: Protokoll"><!-- [PUNKT-F] --><span class="tab-icon">📋</span><span class="tab-label">Protokoll</span></button>
+  <button class="tab"    id="t2" onclick="switchTab(2)" aria-label="Tab: Statistik"><!-- [PUNKT-F] --><span class="tab-icon">📊</span><span class="tab-label">Statistik</span></button>
+  <button class="tab"    id="t3" onclick="switchTab(3)" aria-label="Tab: Einstellungen" style="position:relative"><!-- [PUNKT-F] --><span class="tab-icon">⚙️</span><span class="tab-label">Einstellungen</span><div id="admBadge" style="display:none;position:absolute;width:8px;height:8px;border-radius:50%;background:#E53935;top:6px;right:6px;pointer-events:none"></div></button>
+  <button class="tab"    id="t4" onclick="switchTab(4)" aria-label="Tab: Hilfe"><!-- [PUNKT-F] --><span class="tab-icon">❓</span><span class="tab-label">Hilfe</span></button>
 </div>
 
 <!-- FLOATING: Undo-Stack-Panel (V34) -->
