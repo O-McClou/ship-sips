@@ -460,7 +460,7 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 /* Tabs: fixierte Bottom-Nav. html hat KEIN padding (würde fixed;bottom:0 auf iOS verschieben).
    translate3d(0,0,0) erzwingt eigene GPU-Compositing-Ebene → korrekte Positionierung iOS Safari.
    padding-bottom füllt den Home-Indicator-Bereich farbig aus. */
-.tabs{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:200;display:flex;align-items:flex-start;border-top:1px solid var(--ac-20);background:var(--bg);padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -3px 18px rgba(0,0,0,0.45)}
+.tabs{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:200;display:flex;align-items:flex-start;border-top:1px solid var(--ac-20);background:var(--bg);padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -3px 18px rgba(0,0,0,0.45);transform:translateZ(0);-webkit-transform:translateZ(0)}
 .tab{flex:1;padding:7px 0 8px;background:transparent;color:var(--tx2);border:none;cursor:pointer;font-family:Georgia,serif;font-size:9px;letter-spacing:0.5px;transition:color .2s,background .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;-webkit-user-select:none;touch-action:manipulation;position:relative}
 .tab.on{background:var(--ac-07);color:var(--ac);font-weight:bold}
 .tab.on::after{content:'';position:absolute;top:0;left:25%;right:25%;height:2px;background:var(--ac);border-radius:0 0 2px 2px}
@@ -545,7 +545,10 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 html .fav-section .drow{background:transparent;border-color:var(--ac-13);border-left-color:var(--ac-27)}
 html .fav-section .drow.has{background:var(--bg3);border-color:var(--ac-27);border-left-color:var(--ac);box-shadow:none}
 html .fav-section .drow.fl{background:var(--bg3);border-left-color:var(--ac)}
-.top10-section{padding:0 14px 4px}
+.top10-section{padding:0 14px 4px;background:var(--bg-fav);border-radius:10px;margin:0 4px}
+html .top10-section .drow{background:transparent;border-color:var(--ac-13);border-left-color:var(--ac-27)}
+html .top10-section .drow.has{background:var(--bg3);border-color:var(--ac-27);border-left-color:var(--ac);box-shadow:none}
+html .top10-section .drow.fl{background:var(--bg3);border-left-color:var(--ac)}
 .top10-title{font-size:9px;color:var(--ac);font-weight:bold;letter-spacing:3px;text-transform:uppercase;padding:10px 2px 8px;display:flex;align-items:center;gap:8px}
 .top10-title::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--ac-20),transparent)}
 .drink-cat-group{margin:0 14px 4px}
@@ -1300,20 +1303,6 @@ details.hlp-acc summary:active{opacity:.75}
   setTimeout(setAppH, 500);
   window.addEventListener('resize', setAppH);
   window.addEventListener('orientationchange', function(){ setTimeout(setAppH, 300); });
-  // JS-Fallback: Tabs exakt am physischen Bildschirmrand positionieren
-  function fixTabsBottom(){
-    var tabs=document.querySelector('.tabs');
-    if(!tabs)return;
-    // Differenz zwischen physischer Bildschirmhöhe und CSS-Viewport = safe-area unten
-    var screenH=window.screen.height/(window.devicePixelRatio||1);
-    var gap=Math.max(0,Math.round(screenH-window.innerHeight));
-    tabs.style.paddingBottom=gap>0?gap+'px':'env(safe-area-inset-bottom,0px)';
-  }
-  document.addEventListener('DOMContentLoaded',fixTabsBottom);
-  setTimeout(fixTabsBottom,200);
-  setTimeout(fixTabsBottom,800);
-  window.addEventListener('resize',fixTabsBottom);
-  window.addEventListener('orientationchange',function(){setTimeout(fixTabsBottom,400);});
 })();
 </script>
 <div id="app">
