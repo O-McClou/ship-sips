@@ -2448,14 +2448,16 @@ function _updateDayNightBtn(){
   if(!btn)return;
   const isDark=_isCurrentThemeDark();
   const L=S.lang==='en';
-  btn.textContent=isDark?'☀️':'🌙';
-  btn.title=isDark?(L?'Switch to day mode':'Tagmodus aktivieren'):(L?'Switch to night mode':'Nachtmodus aktivieren');
-  btn.setAttribute('aria-label',btn.title);
-  const lbl=btn.querySelector('.hdr-design-lbl');
-  if(lbl)lbl.textContent=isDark?(L?'Day':'Tag'):(L?'Night':'Nacht');
+  const icon=isDark?'☀️':'🌙';
+  const lbl=isDark?(L?'Day':'Tag'):(L?'Night':'Nacht');
+  // innerHTML statt textContent – bewahrt die .hdr-design-lbl span-Struktur
+  btn.innerHTML=icon+'<span class="hdr-design-lbl">'+lbl+'</span>';
+  const title=isDark?(L?'Switch to day mode':'Tagmodus aktivieren'):(L?'Switch to night mode':'Nachtmodus aktivieren');
+  btn.title=title;
+  btn.setAttribute('aria-label',title);
 }
 
-
+function toggleConceptFavorite(id){
   if(!S.conceptFavorites)S.conceptFavorites=['kapitaensbuch','atelier','sonnendeck'];
   const idx=S.conceptFavorites.indexOf(id);
   if(idx>=0){
