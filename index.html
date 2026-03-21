@@ -414,9 +414,9 @@ html.theme-transitioning *{transition:background-color 0.28s ease,border-color 0
    dvh-Bugs oder height%-Ketten. html/body brauchen nur background für den
    Bereich hinter den Safe-Areas (Kamera oben, Home-Indicator unten).
 ──────────────────────────────────────────────────────────────────────────── */
-html{background:var(--bg);height:100%;min-height:calc(100% + env(safe-area-inset-top));padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+html{background:var(--bg);height:100%}
 html,body{margin:0}
-body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;color:var(--tx0);-webkit-text-size-adjust:100%;padding:0}
+body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0);-webkit-text-size-adjust:100%;padding:0}
 /* ── iOS PWA Fullscreen ───────────────────────────────────────────────────────
    position:fixed;bottom:0 stoppt auf iOS an der Safe-Area-Grenze, NICHT am
    physischen Rand. window.innerHeight liefert die echte Gesamthöhe in CSS-px.
@@ -455,9 +455,11 @@ body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;
 .goal-bar-meta{display:flex;justify-content:space-between;font-size:8px;color:var(--tx2);margin-bottom:4px;letter-spacing:0.5px}
 .goal-bar-track{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
 .goal-bar-fill{height:100%;border-radius:2px;transition:width .5s ease,background .5s ease;background:linear-gradient(to right,var(--ac-deep),var(--ac))}
-/* Tabs: fixierte Bottom-Nav (iOS-konform, Daumen-erreichbar) */
+/* Tabs: fixierte Bottom-Nav. html hat KEIN padding (würde fixed;bottom:0 auf iOS verschieben).
+   translate3d(0,0,0) erzwingt eigene GPU-Compositing-Ebene → korrekte Positionierung iOS Safari.
+   padding-bottom füllt den Home-Indicator-Bereich farbig aus. */
 .tabs{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:200;display:flex;border-top:1px solid var(--ac-20);background:var(--bg);padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -3px 18px rgba(0,0,0,0.45)}
-.tab{flex:1;padding:7px 0 8px;background:transparent;color:var(--tx2);border:none;cursor:pointer;font-family:Georgia,serif;font-size:9px;letter-spacing:0.5px;transition:color .2s,background .2s;display:flex;flex-direction:column;align-items:center;gap:3px;-webkit-user-select:none;touch-action:manipulation;position:relative}
+.tab{flex:1;padding:7px 0 8px;background:transparent;color:var(--tx2);border:none;cursor:pointer;font-family:Georgia,serif;font-size:9px;letter-spacing:0.5px;transition:color .2s,background .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;-webkit-user-select:none;touch-action:manipulation;position:relative}
 .tab.on{background:var(--ac-07);color:var(--ac);font-weight:bold}
 .tab.on::after{content:'';position:absolute;top:0;left:25%;right:25%;height:2px;background:var(--ac);border-radius:0 0 2px 2px}
 .tab:active{background:var(--ac-10);opacity:1}
@@ -528,7 +530,7 @@ body{height:100%;overflow:hidden;background:var(--bg);font-family:Georgia,serif;
 .sinput::placeholder{color:var(--tx2)}
 .cscroll{display:flex;gap:5px;overflow-x:auto;padding:3px 0 1px;-webkit-overflow-scrolling:touch;scrollbar-width:none;scroll-snap-type:x mandatory}
 .cscroll::-webkit-scrollbar{display:none}
-.cbtn{flex-shrink:0;padding:0 12px;background:var(--bg2);color:var(--tx1);border:1px solid var(--ac-13);border-radius:20px;cursor:pointer;font-size:10px;font-family:Georgia,serif;white-space:nowrap;display:flex;align-items:center;gap:4px;scroll-snap-align:start;transition:all .2s;touch-action:manipulation;letter-spacing:0.3px;min-height:44px;height:auto;box-sizing:border-box;/* FIX V48 F10: 44px Apple HIG Touch-Target */}
+.cbtn{flex-shrink:0;padding:0 12px;background:var(--bg2);color:var(--tx1);border:1px solid var(--ac-13);border-radius:20px;cursor:pointer;font-size:10px;font-family:Georgia,serif;white-space:nowrap;display:flex;align-items:center;gap:4px;scroll-snap-align:start;transition:all .2s;touch-action:manipulation;letter-spacing:0.3px;min-height:35px;height:auto;box-sizing:border-box;/* FIX V48 F10: 44px Apple HIG Touch-Target */}
 .cbtn.on{background:var(--ac);color:var(--ac-fg);border-color:var(--ac);font-weight:bold}
 .cbtn:active{opacity:.75}
 .tbar{padding:7px 14px;display:flex;justify-content:flex-end}
@@ -1296,6 +1298,20 @@ details.hlp-acc summary:active{opacity:.75}
   setTimeout(setAppH, 500);
   window.addEventListener('resize', setAppH);
   window.addEventListener('orientationchange', function(){ setTimeout(setAppH, 300); });
+  // JS-Fallback: Tabs exakt am physischen Bildschirmrand positionieren
+  function fixTabsBottom(){
+    var tabs=document.querySelector('.tabs');
+    if(!tabs)return;
+    // Differenz zwischen physischer Bildschirmhöhe und CSS-Viewport = safe-area unten
+    var screenH=window.screen.height/(window.devicePixelRatio||1);
+    var gap=Math.max(0,Math.round(screenH-window.innerHeight));
+    tabs.style.paddingBottom=gap>0?gap+'px':'env(safe-area-inset-bottom,0px)';
+  }
+  document.addEventListener('DOMContentLoaded',fixTabsBottom);
+  setTimeout(fixTabsBottom,200);
+  setTimeout(fixTabsBottom,800);
+  window.addEventListener('resize',fixTabsBottom);
+  window.addEventListener('orientationchange',function(){setTimeout(fixTabsBottom,400);});
 })();
 </script>
 <div id="app">
@@ -1514,15 +1530,6 @@ details.hlp-acc summary:active{opacity:.75}
   <div class="hlppane" id="hlppane"></div>
 </div>
 
-<!-- BOTTOM-NAV: fixierte Tab-Leiste (aus Header verschoben, position:fixed bottom:0) -->
-<div class="tabs">
-  <button class="tab on" id="t0" onclick="switchTab(0)" aria-label="Tab: Getränke"><!-- [PUNKT-F] --><span class="tab-icon">🍹</span><span class="tab-label">Getränke</span></button>
-  <button class="tab"    id="t1" onclick="switchTab(1)" aria-label="Tab: Protokoll"><!-- [PUNKT-F] --><span class="tab-icon">📋</span><span class="tab-label">Protokoll</span></button>
-  <button class="tab"    id="t2" onclick="switchTab(2)" aria-label="Tab: Statistik"><!-- [PUNKT-F] --><span class="tab-icon">📊</span><span class="tab-label">Statistik</span></button>
-  <button class="tab"    id="t3" onclick="switchTab(3)" aria-label="Tab: Einstellungen" style="position:relative"><!-- [PUNKT-F] --><span class="tab-icon">⚙️</span><span class="tab-label">Einstellungen</span><div id="admBadge" style="display:none;position:absolute;width:8px;height:8px;border-radius:50%;background:#E53935;top:6px;right:6px;pointer-events:none"></div></button>
-  <button class="tab"    id="t4" onclick="switchTab(4)" aria-label="Tab: Hilfe"><!-- [PUNKT-F] --><span class="tab-icon">❓</span><span class="tab-label">Hilfe</span></button>
-</div>
-
 <!-- MODAL: User Management -->
 <div class="ov" id="userOv">
   <div class="modal-sheet" style="max-height:90vh">
@@ -1589,6 +1596,16 @@ details.hlp-acc summary:active{opacity:.75}
     <button class="swub-close" id="swubClose" onclick="swUpdateDismiss()" aria-label="Schließen">✕</button>
   </div>
 </div>
+</div>
+
+<!-- BOTTOM-NAV: außerhalb #app – position:fixed funktioniert auf iOS Safari nur
+     korrekt wenn das Element KEIN overflow:hidden-Vorfahre hat. -->
+<div class="tabs">
+  <button class="tab on" id="t0" onclick="switchTab(0)" aria-label="Tab: Getränke"><!-- [PUNKT-F] --><span class="tab-icon">🍹</span><span class="tab-label">Getränke</span></button>
+  <button class="tab"    id="t1" onclick="switchTab(1)" aria-label="Tab: Protokoll"><!-- [PUNKT-F] --><span class="tab-icon">📋</span><span class="tab-label">Protokoll</span></button>
+  <button class="tab"    id="t2" onclick="switchTab(2)" aria-label="Tab: Statistik"><!-- [PUNKT-F] --><span class="tab-icon">📊</span><span class="tab-label">Statistik</span></button>
+  <button class="tab"    id="t3" onclick="switchTab(3)" aria-label="Tab: Einstellungen" style="position:relative"><!-- [PUNKT-F] --><span class="tab-icon">⚙️</span><span class="tab-label">Einstellungen</span><div id="admBadge" style="display:none;position:absolute;width:8px;height:8px;border-radius:50%;background:#E53935;top:6px;right:6px;pointer-events:none"></div></button>
+  <button class="tab"    id="t4" onclick="switchTab(4)" aria-label="Tab: Hilfe"><!-- [PUNKT-F] --><span class="tab-icon">❓</span><span class="tab-label">Hilfe</span></button>
 </div>
 
 <!-- FLOATING: Undo-Stack-Panel (V34) -->
