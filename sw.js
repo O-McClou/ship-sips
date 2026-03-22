@@ -4,11 +4,13 @@
    Cache-Version ship-sips-v48:
    FIX V48 F7: manifest.json in ASSETS ergänzt (war zuvor nicht
    gecacht – führte im Offline-Betrieb zu fehlender Manifest-Datei).
+   FIX V48.3 SW-CN: Cache-Name von v49 auf v48 korrigiert –
+   stimmt jetzt mit APP_VERSION in index.html überein.
    Cache-Name an App-Version angeglichen.
    skipWaiting() bleibt aktiv damit der neue Cache sofort greift.
    ═══════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'ship-sips-v49';
+const CACHE_NAME = 'ship-sips-v48'; /* FIX V48.3: Cache-Name an APP_VERSION angeglichen (war v49) */
 
 const ASSETS = [
   './index.html',

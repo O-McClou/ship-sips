@@ -3956,10 +3956,27 @@ async function _saveStateAsync(){
 }
 
 function _saveStateLocalStorageFallback(){
-  // Immer in localStorage schreiben: auf iOS (file:// UND https:// PWA) ist
-  // IndexedDB nicht persistent garantiert – localStorage überlebt App-Schließen
-  // zuverlässig. Schadet auf anderen Plattformen nicht (doppeltes Backup).
-  const pairs=[['a4_drinks',JSON.stringify(S.drinks)],['a4_log',JSON.stringify(S.log)],
+  // Sicherheitsnetz: alle Kerndaten in localStorage schreiben (Fallback falls
+  // IndexedDB auf einem Gerät nicht verfügbar oder nach iOS-Eviction leer ist).
+  // Hinweis: a4_iconlib wird hier NICHT geschrieben – die Icon-Library besteht
+  // aus Base64-Bilddaten (bis 1 MB/Icon, max. 20) und ist in der IndexedDB primär
+  // gespeichert. Im localStorage würde sie das 5-MB-Limit gefährden.
+
+  const _L=S&&S.lang==='en';
+
+  // Frühwarnung: wenn localStorage bereits >3,5 MB belegt ist
+  try{
+    let lsUsed=0;
+    for(const k of Object.keys(localStorage)){lsUsed+=(localStorage.getItem(k)||'').length+k.length;}
+    if(lsUsed>3.5*1024*1024){
+      showToast((_L?'⚠️ Backup storage nearly full – create a backup now!':'⚠️ Sicherungsspeicher fast voll – jetzt Backup erstellen!'),'warn',10000);
+      console.warn('[Ship-Sips] localStorage Frühwarnung:',Math.round(lsUsed/1024),'KB');
+    }
+  }catch(_){}
+
+  const pairs=[
+    ['a4_drinks',JSON.stringify(S.drinks)],
+    ['a4_log',JSON.stringify(S.log)],
     ['a4_title1',S.appTitle1],['a4_title2',S.appTitle2],['a4_titleicon',S.titleIcon||''],
     ['a4_lastbkp',S.lastBackupDate||''],['a4_lastbkpreminder',S.lastBackupReminderDate||''],
     ['a4_favs',JSON.stringify([...S.favorites])],['a4_favorder',JSON.stringify(S.favOrder||[])],
@@ -3979,8 +3996,21 @@ function _saveStateLocalStorageFallback(){
     ['a4_statdayshow',JSON.stringify(S.statDayShow||{})],
     ['a4_statopen',JSON.stringify(S.statOpen||{})],
     ['a4_syncenabled',S.syncEnabled?'1':''],
-    ['a4_lastsync',S.lastSyncDate||'']];
-  for(const[k,v]of pairs){try{localStorage.setItem(k,v);}catch(e){break;}}
+    ['a4_lastsync',S.lastSyncDate||'']
+    // a4_iconlib absichtlich ausgelassen (Base64-Bilder → IndexedDB ist primär)
+  ];
+  for(const[k,v]of pairs){
+    try{localStorage.setItem(k,v);}
+    catch(e){
+      // QuotaExceededError: localStorage voll – sichtbar warnen und abbrechen
+      showToast((_L
+        ?'⚠️ Backup storage full – fallback save incomplete! Please create a backup immediately!'
+        :'⚠️ Sicherungsspeicher voll – Backup-Sicherung unvollständig! Bitte sofort Backup erstellen!'),
+        'error',12000);
+      console.error('[Ship-Sips] localStorage voll bei Key:',k,e);
+      break;
+    }
+  }
 }
 let _saveTimer=null;
 function saveStateDebounced(){
@@ -7239,21 +7269,21 @@ function renderStats(){
 
 /* ═══ FEATURE 15: PDF-REISEBERICHT MIT HAFEN-TIMELINE (V48) ═══════════ */
 /*
- * Lädt jsPDF dynamisch von cdnjs und erzeugt einen mehrsprachigen
- * Reisebericht mit Hafen-Timeline, Ausgaben-Übersicht und Kategorie-
- * auswertung. Komplett offline nach einmaligem Laden der Bibliothek.
+ * Lädt jsPDF aus der lokalen Datei jspdf.umd.min.js (muss im selben
+ * Ordner wie index.html liegen) – vollständig offline-fähig.
+ * FIX: CDN-Abhängigkeit entfernt, lokale Bibliothek wird verwendet.
  */
 function exportVoyagePDF(){
   const L=S.lang==='en';
   showToast((L?'⏳ Preparing PDF…':'⏳ PDF wird vorbereitet…'),'info',3000);
 
-  // jsPDF dynamisch laden (einmalig, dann gecacht im Scope)
+  // jsPDF lokal laden (einmalig, dann gecacht) – kein Internet erforderlich
   function _withJsPDF(cb){
     if(window.jspdf&&window.jspdf.jsPDF){cb(window.jspdf.jsPDF);return;}
     const script=document.createElement('script');
-    script.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    script.src='./jspdf.umd.min.js';
     script.onload=function(){cb(window.jspdf.jsPDF);};
-    script.onerror=function(){showToast((L?'⚠️ PDF library could not be loaded. Check internet connection.':'⚠️ PDF-Bibliothek konnte nicht geladen werden. Internetverbindung prüfen.'),'error',6000);};
+    script.onerror=function(){showToast((L?'⚠️ PDF library (jspdf.umd.min.js) not found. Please place it in the same folder as the app.':'⚠️ PDF-Bibliothek (jspdf.umd.min.js) nicht gefunden. Bitte die Datei in denselben Ordner wie die App legen.'),'error',8000);};
     document.head.appendChild(script);
   }
 
@@ -7754,7 +7784,7 @@ function renderVerwaltung(){
         </div>
         <!-- V46: IndexedDB hat kein festes Limit – positiver Status statt Balken -->
         <div style="margin-bottom:10px;padding:8px 10px;background:var(--col-ok-bg);border:1px solid var(--col-ok);border-radius:8px;font-size:10px;color:var(--col-ok);line-height:1.6">
-          🗄️ <strong>IndexedDB</strong> – ${L?'No storage limit. iOS will never delete your data.':'Kein Speicherlimit. iOS löscht deine Daten nicht.'}
+          🗄️ <strong>IndexedDB</strong> – ${L?'No storage limit. iOS rarely deletes this data (only under extreme storage pressure).':'Kein Speicherlimit. iOS löscht diese Daten nur in extremen Ausnahmefällen.'}
         </div>
         <!-- Kontext-Info -->
         <div style="font-size:10px;color:var(--tx2);line-height:1.6;border-top:1px solid var(--ac-07);padding-top:8px">
@@ -8653,7 +8683,7 @@ function renderHelp(){
       <div class="hlp-row"><span class="hlp-badge gold">${h('Tagesziel-Balken','Daily goal bar')}</span><span>${h('Wenn ein Tageslimit gesetzt ist (Einstellungen → Tageslimit &amp; Währung → Tageslimit), erscheint in der Kopfzeile ein Fortschrittsbalken mit Betrag und Prozentwert:<br>• <strong>Grün</strong> = unter 80 % des Limits<br>• <strong>Orange</strong> = 80–99 %<br>• <strong>Rot + 🚨</strong> = Limit überschritten','When a daily limit is set (Settings → Daily Limit &amp; Currency → Daily limit), a progress bar appears in the header:<br>• <strong>Green</strong> = below 80 % of limit<br>• <strong>Orange</strong> = 80–99 %<br>• <strong>Red + 🚨</strong> = limit exceeded')}</span></div>
       <div class="hlp-row"><span class="hlp-badge red">🚨 ${h('Limit-Banner','Limit banner')}</span><span>${h('Wenn das Tageslimit überschritten ist, erscheint ein blinkender roter 🚨-Banner direkt unter der Kopfzeile. Er verschwindet automatisch am nächsten Schiffstag.','When the daily limit is exceeded, a flashing red 🚨 banner appears directly below the header. It disappears automatically the next ship day.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge orange">💾 ${h('Backup-Erinnerung','Backup reminder')}</span><span>${h('Erscheint als dezenter Toast-Hinweis (einmal pro Tag), wenn mehr als 30 Einträge vorhanden sind und seit mehr als 72 Stunden kein Backup erstellt wurde. Zusätzlich erscheint ein <strong>roter Punkt</strong> am ⚙️ Einstellungs-Tab, bis ein Backup erstellt wird. Backup nur über <strong>Einstellungen → Backup &amp; Daten</strong> erstellen.','Appears as a subtle toast notification (once per day) when more than 30 entries exist and no backup was created for more than 72 hours. Additionally a <strong>red dot</strong> appears on the ⚙️ Settings tab until a backup is created. Create backups via <strong>Settings → Backup &amp; Data</strong> only.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge green">✅ ${h('Speicher: kein Limit','Storage: no limit')}</span><span>${h('Die App speichert in IndexedDB – kein 5-MB-Limit mehr. Hunderte MB sind möglich. iOS löscht diese Daten nicht automatisch. Regelmäßige Backups sind trotzdem empfohlen!','The app stores data in IndexedDB – no 5 MB limit. Hundreds of MB are possible. iOS does not delete this data automatically. Regular backups are still recommended!')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge green">✅ ${h('Speicher: kein Limit','Storage: no limit')}</span><span>${h('Die App speichert in IndexedDB – kein 5-MB-Limit mehr. Hunderte MB sind möglich. iOS löscht diese Daten nur unter extremem Speicherdruck (sehr selten). Regelmäßige Backups sind trotzdem empfohlen!','The app stores data in IndexedDB – no 5 MB limit. Hundreds of MB are possible. iOS only deletes this data under extreme storage pressure (very rare). Regular backups are still recommended!')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">📱 ${h('App zum Homescreen','App to homescreen')}</span><span>${h('Ein blauer Banner erscheint gelegentlich mit dem Hinweis, die App zum iPhone-Homescreen hinzuzufügen. Schaltfläche <strong>Anleitung</strong> zeigt Schritt-für-Schritt-Anleitung. ✕ schließt den Banner dauerhaft. <em>Hinweis: Die App funktioniert auch ohne Homescreen-Icon – der Hinweis ist optional.</em>','A blue banner occasionally suggests adding the app to the iPhone home screen. Tap <strong>Guide</strong> for step-by-step instructions. ✕ permanently dismisses the banner. <em>Note: The app works fine without a home screen icon – the hint is optional.</em>')}</span></div>
     </div>
 
@@ -8827,7 +8857,7 @@ function renderHelp(){
 
     <div class="hlp-card" style="margin-top:10px">
       <div class="hlp-card-title">💾 ${h('Backup &amp; Daten (immer sichtbar)','Backup &amp; Data (always visible)')}</div>
-      <div class="hlp-row"><span class="hlp-badge blue">💽 ${h('Speicher','Storage')}</span><span>${h('Die App nutzt IndexedDB – kein festes Speicherlimit. Einträge werden zuverlässig gespeichert, egal wie lang die Reise dauert. Regelmäßige Backups trotzdem empfohlen.','The app uses IndexedDB – no fixed storage limit. Entries are saved reliably no matter how long the voyage. Regular backups are still recommended.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">💽 ${h('Speicher','Storage')}</span><span>${h('Die App nutzt <strong>IndexedDB</strong> als Primärspeicher – kein festes Limit, hunderte MB möglich. Einträge werden zuverlässig gespeichert, egal wie lang die Reise dauert. Regelmäßige Backups trotzdem empfohlen.','The app uses <strong>IndexedDB</strong> as primary storage – no fixed limit, hundreds of MB possible. Entries are saved reliably no matter how long the voyage. Regular backups still recommended.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge gold">📤 ${h('Backup speichern','Save backup')}</span><span>${h('Speichert <strong>alle Daten</strong> als JSON-Datei (Download): Getränkeliste, komplettes Protokoll, Einstellungen, Nutzer-Profile, Reisebudgets, Zeitzone, Farbschema, Titelzeilen. Der <strong>iOS-Teilen-Dialog</strong> öffnet sich direkt → <em>In Dateien sichern</em> → iCloud Drive oder „Auf meinem iPhone", oder per AirDrop / WhatsApp / E-Mail.','Saves <strong>all data</strong> as a JSON file (download): drink list, complete log, settings, user profiles, travel budgets, timezone, colour scheme, title lines. In Edge downloads tap the file → <strong>Share</strong> → <em>Save to Files</em> → iCloud Drive or "On My iPhone".')}</span></div>
       <div class="hlp-row"><span class="hlp-badge gold">📡 ${h('Backup teilen','Share backup')}</span><span>${h('Öffnet den <strong>nativen iOS-Teilen-Dialog</strong> direkt aus der App heraus – direkt aus der App heraus. Die Backup-JSON-Datei wird über folgende Wege geteilt:<br>• <strong>AirDrop</strong>: Empfänger-iPhone erscheint im Sheet → Ein Tap → Datei wird übertragen → landet in Dateien-App des Empfängers<br>• <strong>WhatsApp / iMessage / Signal</strong>: Kontakt wählen → Senden → Empfänger kann Anhang direkt in Dateien sichern<br>• <strong>E-Mail</strong>: Mail-App öffnet sich, Datei als Anhang, Betreff vorausgefüllt<br>• <strong>In Dateien sichern</strong>: Ordner auf eigenem Gerät wählen (lokales Backup, kein Empfänger nötig)<br>• <strong>iCloud Drive / Google Drive / Dropbox</strong>: falls installiert, erscheinen direkt im Sheet<br><em>Hinweis: Der Empfänger erhält die JSON-Backup-Datei (nicht die App selbst). Er importiert sie über VERWALTUNG → 📥 Backup laden.</em>','Opens the <strong>native iOS share sheet</strong> directly from within the app – directly from within the app. The backup JSON file can be shared via:<br>• <strong>AirDrop</strong>: recipient iPhone appears in the sheet → one tap → file is transferred → lands in recipient\'s Files app<br>• <strong>WhatsApp / iMessage / Signal</strong>: choose contact → send → recipient can save attachment to Files<br>• <strong>Email</strong>: Mail app opens with file attached, subject pre-filled<br>• <strong>Save to Files</strong>: choose a folder on your own device (local backup, no recipient needed)<br>• <strong>iCloud Drive / Google Drive / Dropbox</strong>: if installed, appear directly in the sheet<br><em>Note: the recipient gets the JSON backup file (not the app itself). They import it via MANAGEMENT → 📥 Restore backup.</em>')}</span></div>
       <div class="hlp-row"><span class="hlp-badge gold">📥 ${h('Backup importieren','Import backup')}</span><span>${h('JSON-Datei auswählen → <strong>Vorschau</strong> zeigt Details (Exportdatum, Zeitraum, Anzahl Einträge, neue Einträge, bereits vorhandene) → dann wählen:<br>• <strong>📥 Ergänzen (Merge)</strong> – fügt nur neue Einträge hinzu, vorhandene Daten und Einstellungen bleiben erhalten. Sicher für tägliche Synchronisation. Duplikate werden automatisch erkannt und übersprungen.<br>• <strong>⚠️ Ersetzen</strong> – löscht <em>alle</em> vorhandenen Daten und ersetzt durch Backup vollständig. Nur bei Gerätewechsel oder nach Reset verwenden.','Select JSON file → <strong>preview</strong> shows details (export date, period, entry count, new entries, already present) → then choose:<br>• <strong>📥 Merge</strong> – adds only new entries, existing data and settings are preserved. Safe for daily sync. Duplicates are detected and skipped automatically.<br>• <strong>⚠️ Replace</strong> – deletes <em>all</em> existing data and replaces with backup completely. Only use on device change or after reset.')}</span></div>
@@ -9099,7 +9129,7 @@ function renderHelp(){
 
     <div class="hlp-card" style="border-color:var(--ac-27)">
       <div class="hlp-card-title" style="color:var(--ac)">🗺️ ${h('Was ist die Reiseroute?','What is the Voyage Route?')}</div>
-      <div class="hlp-row-full">${h('Die Reiseroute ordnet jedem Reisetag einen Hafen oder Seetag zu. Der heutige Hafen aus der Route wird beim App-Start <strong>automatisch ins Hafenfeld</strong> des Kopfbereichs übernommen.<br>Das Hafenfeld ist weiterhin frei editierbar. Wird es manuell geändert, bleibt die Route unverändert – im Protokoll und in Exporten erscheint dann der Hinweis <strong>„✏️ Route wurde geändert"</strong>.','The voyage route assigns a port or sea day to each travel day. Today\'s port from the route is automatically placed into the <strong>port field</strong> in the header on app start.<br>The port field remains freely editable. If changed manually, the route stays unchanged – the log and exports then show the note <strong>"✏️ Route changed"</strong>.')}</div>
+      <div class="hlp-row-full">${h('Die Reiseroute ordnet jedem Reisetag einen Hafen oder Seetag zu. Sie liefert beim App-Start zwei automatische Aktionen:<br>① Der heutige Hafen wird <strong>automatisch ins Hafenfeld</strong> des Kopfbereichs übernommen.<br>② Die heutige Zeitzone (falls eingetragen) wird <strong>automatisch als Schiffszeit gesetzt</strong> – einmalig pro Tag, mit Undo-Möglichkeit per Toast.<br>Das Hafenfeld ist weiterhin frei editierbar. Wird es manuell geändert, bleibt die Route unverändert – im Protokoll und in Exporten erscheint dann der Hinweis <strong>„✏️ Route wurde geändert"</strong>.','The voyage route assigns a port or sea day to each travel day. Today\'s port from the route is automatically placed into the <strong>port field</strong> in the header on app start.<br>The port field remains freely editable. If changed manually, the route stays unchanged – the log and exports then show the note <strong>"✏️ Route changed"</strong>.')}</div>
     </div>
 
     <div class="hlp-card">
@@ -9129,7 +9159,7 @@ function renderHelp(){
       </div>
       <div class="hlp-row"><span class="hlp-badge gold">${h('Wochentag','Weekday')}</span><span>${h('Neben jedem Datum wird der Wochentag (Mo–So) angezeigt. ⭐ = heute. ⚠️ = doppeltes Datum (wird beim Speichern bereinigt).','Next to each date the weekday is shown. ⭐ = today. ⚠️ = duplicate date (cleaned up on save).')}</span></div>
       <div class="hlp-row"><span class="hlp-badge red">${h('Rotes Datumsfeld','Red date field')}</span><span>${h('Fehlendes oder doppeltes Datum. Beim Speichern automatisch bereinigt.','Missing or duplicate date. Automatically resolved on save.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('Optionale Felder je Tag','Optional fields per day')}</span><span>${h('Jeder Routeneintrag hat neben Datum und Hafen vier optionale Felder:<br>• <strong>Land</strong> – z. B. „Spanien", „Japan"<br>• <strong>Zeitzone</strong> – z. B. „UTC+1", „UTC+9" (nur als Information, ändert die App-Zeitzone nicht automatisch)<br>• <strong>Ankunft</strong> – geplante Ankunftszeit (HH:MM)<br>• <strong>Abfahrt</strong> – geplante Abfahrtszeit (HH:MM)<br>Diese Felder werden im Backup gespeichert, erscheinen in der Route-Vorschau und im CSV-Export, aber <em>nicht</em> im Hafenfeld-Hinweis im Protokoll.','Each route entry has four optional fields in addition to date and port:<br>• <strong>Country</strong> – e.g. "Spain", "Japan"<br>• <strong>Timezone</strong> – e.g. "UTC+1", "UTC+9" (informational only, does not automatically change the app timezone)<br>• <strong>Arrival</strong> – scheduled arrival time (HH:MM)<br>• <strong>Departure</strong> – scheduled departure time (HH:MM)<br>These fields are saved in backups, shown in the route preview and CSV export, but <em>not</em> in the port field notice in the log.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('Optionale Felder je Tag','Optional fields per day')}</span><span>${h('Jeder Routeneintrag hat neben Datum und Hafen vier optionale Felder:<br>• <strong>Land</strong> – z. B. „Spanien", „Japan"<br>• <strong>Zeitzone</strong> – z. B. „UTC+1", „UTC+9" (<strong>wird beim Erreichen des Tages automatisch als Schiffszeit übernommen</strong> – einmalig pro Tag, mit Undo-Möglichkeit per Toast)<br>• <strong>Ankunft</strong> – geplante Ankunftszeit (HH:MM)<br>• <strong>Abfahrt</strong> – geplante Abfahrtszeit (HH:MM)<br>Diese Felder werden im Backup gespeichert, erscheinen in der Route-Vorschau und im CSV-Export, aber <em>nicht</em> im Hafenfeld-Hinweis im Protokoll.','Each route entry has four optional fields in addition to date and port:<br>• <strong>Country</strong> – e.g. "Spain", "Japan"<br>• <strong>Timezone</strong> – e.g. "UTC+1", "UTC+9" (<strong>automatically applied as ship's time</strong> when that day is reached – once per day, with undo option)<br>• <strong>Arrival</strong> – scheduled arrival time (HH:MM)<br>• <strong>Departure</strong> – scheduled departure time (HH:MM)<br>These fields are saved in backups, shown in the route preview and CSV export, but <em>not</em> in the port field notice in the log.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge gold">${h('Zusammenfassungs-Zeile im Editor','Summary line in editor')}</span><span>${h('Oben im Route-Editor zeigt eine Statuszeile: Anzahl der Tage, Datum von–bis, und eine Warnung wenn doppelte oder ungültige Daten vorhanden sind.','At the top of the route editor a status line shows: number of days, date range from–to, and a warning if duplicate or invalid dates are present.')}</span></div>
       <div class="hlp-tip">💡 ${h('Für eine <strong>zukünftige Reise</strong>: ersten Tag hinzufügen → Startdatum auf Abreisedatum setzen → weitere Tage ergänzen. Folgedaten werden automatisch hochgezählt.','For a <strong>future voyage</strong>: add first day → set start date to departure date → add more days. Subsequent dates are automatically incremented.')}</div>
     </div>
@@ -9187,8 +9217,9 @@ function renderHelp(){
 
     <div class="hlp-card">
       <div class="hlp-card-title">💽 ${h('Speicherlimits','Storage limits')}</div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('Maximaler Speicher','Maximum storage')}</span><span>${h('Alle Einträge werden primär in <strong>localStorage</strong> gespeichert. LocalStorage kann bei sehr niedrigem Gerätespeicher durch iOS gelöscht werden – <strong>regelmäßige Backups sind daher essenziell!</strong> Die Icon-Library wird zusätzlich in IndexedDB gesichert.','All entries are stored primarily in <strong>localStorage</strong>. LocalStorage can be deleted by iOS under very low device storage – <strong>regular backups are therefore essential!</strong> The icon library is additionally backed up in IndexedDB.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('Hartes Limit','Hard limit')}</span><span>${h('Maximale Anzahl aktiver Einträge: <strong>30.000</strong>. Bei Annäherung erscheint eine Warnung. Abhilfe: Backup erstellen, dann Reset.','Maximum number of active entries: <strong>30,000</strong>. A warning appears when approaching. Solution: create backup, then reset.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge green">${h('Primärspeicher: IndexedDB','Primary storage: IndexedDB')}</span><span>${h('Alle Einträge werden primär in <strong>IndexedDB</strong> gespeichert – kein 5-MB-Limit, hunderte MB möglich. iOS löscht IndexedDB-Daten nur unter extremem Gerätespeicherdruck (praktisch nie bei normalem Betrieb). <strong>localStorage</strong> dient lediglich als Fallback-Sicherheitsnetz, falls IndexedDB einmal nicht erreichbar ist.','All entries are stored primarily in <strong>IndexedDB</strong> – no 5 MB limit, hundreds of MB possible. iOS only deletes IndexedDB data under extreme storage pressure (practically never during normal use). <strong>localStorage</strong> serves only as a fallback safety net if IndexedDB is ever unavailable.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge gold">${h('Hartes Limit','Hard limit')}</span><span>${h('Maximale Anzahl aktiver Einträge: <strong>30.000</strong>. Bei Annäherung erscheint eine Warnung. Abhilfe: Backup erstellen, dann Reset.','Maximum number of active entries: <strong>30,000</strong>. A warning appears when approaching. Solution: create backup, then reset.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge orange">⚠️ ${h('Wenn localStorage fast voll','When localStorage is almost full')}</span><span>${h('Die App speichert zusätzlich zur IndexedDB auch ein Sicherungs-Abbild im localStorage (5-MB-Limit). Füllt sich dieser – z. B. durch viele eigene Icons (max. 1 MB pro Stück) – erscheint ein <strong>gelber Warnhinweis</strong>. Sollte localStorage komplett voll sein, erscheint ein roter Toast. In beiden Fällen: sofort Backup erstellen. Die IndexedDB-Daten sind davon nicht betroffen.','In addition to IndexedDB the app also keeps a safety image in localStorage (5 MB limit). If this fills up – e.g. through many custom icons (max. 1 MB each) – a <strong>yellow warning</strong> appears. If localStorage is completely full, a red toast appears. In both cases: create a backup immediately. IndexedDB data is not affected.')}</span></div>
     </div>
 
     <div class="hlp-card">
@@ -9199,7 +9230,7 @@ function renderHelp(){
       <div class="hlp-row"><span class="hlp-badge orange">${h('Gelber Toast','Yellow toast')}</span><span>${h('Warnung: Aufmerksamkeit nötig (z. B. Tageslimit fast erreicht, Zeitzonenmismatch, keine Einträge gefunden).','Warning: attention needed (e.g. daily limit almost reached, timezone mismatch, no entries found).')}</span></div>
       <div class="hlp-row"><span class="hlp-badge green">${h('Backup-Erinnerung','Backup reminder')}</span><span>${h('Backup-Erinnerung: seit 72 Stunden kein Backup (ab 30 Einträgen). Erscheint einmal pro Tag als kurzer Toast-Hinweis. Zusätzlich zeigt ein <strong>roter Punkt</strong> am ⚙️ Einstellungs-Tab an, dass ein Backup fällig ist – er verschwindet nach dem nächsten Backup. Backup erstellen über <strong>Einstellungen → Backup &amp; Daten</strong>.','Backup reminder: no backup for 72 hours (from 30 entries). Appears once per day as a brief toast notification. Additionally a <strong>red dot</strong> on the ⚙️ Settings tab shows a backup is due – it disappears after the next backup. Create backup via <strong>Settings → Backup &amp; Data</strong>.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge red">${h('Roter 🚨-Banner','Red 🚨 banner')}</span><span>${h('Tageslimit überschritten. Blinkt zur Aufmerksamkeit. Verschwindet automatisch am nächsten Schiffstag.','Daily limit exceeded. Blinks for attention. Disappears automatically the next ship day.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('Speicher-Info','Storage info')}</span><span>${h('Die App nutzt IndexedDB ohne festes Limit. Ein Speicher-Überlauf-Banner oder -Dialog erscheint nicht mehr. Regelmäßige Backups bleiben trotzdem empfohlen, um Daten zu sichern.','The app uses IndexedDB with no fixed limit. No storage overflow banner or dialog will appear. Regular backups are still recommended to keep your data safe.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('Speicher-Info','Storage info')}</span><span>${h('Die App nutzt IndexedDB als Primärspeicher – kein festes Limit. Sollte das zusätzliche localStorage-Backup knapp werden, erscheint ein gelber Warnhinweis. Regelmäßige Backups bleiben trotzdem empfohlen, um Daten zu sichern.','The app uses IndexedDB as primary storage – no fixed limit. If the additional localStorage backup runs low, a yellow warning appears. Regular backups are still recommended to keep your data safe.')}</span></div>
     </div>
 
     <div class="hlp-card">
@@ -9254,7 +9285,7 @@ function renderHelp(){
     <div class="hlp-card">
       <div class="hlp-card-title">🗄️ ${h('IndexedDB – kein Speicherlimit mehr','IndexedDB – no storage limit')}</div>
       <div style="font-size:12px;color:var(--tx1);line-height:1.7">
-        ${h('V46 speichert alle Daten in <strong>IndexedDB</strong> statt localStorage. Das bedeutet: kein 5-MB-Limit, hunderte MB möglich, iOS löscht diese Daten nicht unter Speicherdruck. Deine 150+ Tage Reiseprotokoll passt problemlos.','V46 stores all data in <strong>IndexedDB</strong> instead of localStorage. That means: no 5 MB limit, hundreds of MB possible, iOS does not delete this data under storage pressure. Your 150+ day voyage log fits comfortably.')}
+        ${h('V46 speichert alle Daten in <strong>IndexedDB</strong> statt localStorage. Das bedeutet: kein 5-MB-Limit, hunderte MB möglich. iOS löscht IndexedDB-Daten nur unter extremem Speicherdruck – praktisch nie bei normalem Gerätebetrieb. Deine 150+ Tage Reiseprotokoll passt problemlos.','V46 stores all data in <strong>IndexedDB</strong> instead of localStorage. That means: no 5 MB limit, hundreds of MB possible. iOS only deletes IndexedDB data under extreme storage pressure – practically never during normal device use. Your 150+ day voyage log fits comfortably.')}
       </div>
     </div>
 
@@ -9285,8 +9316,19 @@ function renderHelp(){
     </div>
 
     <div class="hlp-card">
-      <div class="hlp-card-title">💡 ${h('Smart Sync vs. Voll-Backup','Smart Sync vs. Full Backup')}</div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('Protokoll teilen (Smart Sync)','Share log (Smart Sync)')}</span><span>${h('Nur Protokoll-Einträge. <strong>Einstellungen bleiben erhalten.</strong> Ideal für den täglichen Abgleich zwischen Mitreisenden.','Log entries only. <strong>Settings are preserved.</strong> Ideal for daily sync between travel companions.')}</span></div>
+      <div class="hlp-card-title">📦 ${h('Geräte-Sync (Sync-Paket)','Device Sync (Sync Package)')}</div>
+      <div style="font-size:12px;color:var(--tx1);line-height:1.7;margin-bottom:10px">
+        ${h('Zusätzlich zum einfachen Protokoll-Teilen gibt es den <strong>Geräte-Sync</strong>: ein dediziertes Sync-Paket mit Schnellzugriff und Zeitstempel. Es überträgt ausschließlich Protokolleinträge – keine Einstellungen, keine Getränkeliste.','In addition to simple log sharing, <strong>Device Sync</strong> offers a dedicated sync package with quick access and timestamp. It transfers log entries only – no settings, no drink list.')}
+      </div>
+      <div class="hlp-row"><span class="hlp-badge green">✅ ${h('Aktivieren','Enable')}</span><span>${h('Verwaltung → Backup &amp; Sync → <strong>📦 Geräte-Sync</strong> → Schalter auf <strong>An</strong>. Danach erscheint oben in der Verwaltung der Schnellzugriff-Button <strong>📦 Sync-Paket senden</strong>.','Management → Backup &amp; Sync → <strong>📦 Device sync</strong> → toggle to <strong>On</strong>. The quick-access button <strong>📦 Send sync package</strong> then appears at the top of Management.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">📤 ${h('Senden','Send')}</span><span>${h('Schnellzugriff-Button antippen → iOS-Teilen-Dialog → AirDrop oder Messenger wählen. Datum/Uhrzeit des letzten Syncs wird im Button angezeigt.','Tap the quick-access button → iOS share sheet → choose AirDrop or messenger. Date/time of last sync is shown in the button.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">📥 ${h('Empfangen','Receive')}</span><span>${h('Empfangene Sync-Datei antippen → Bestätigen → nur neue Einträge werden hinzugefügt, Duplikate werden übersprungen.','Tap the received sync file → confirm → only new entries are added, duplicates are skipped.')}</span></div>
+    </div>
+
+    <div class="hlp-card">
+      <div class="hlp-card-title">💡 ${h('Vergleich: Sync-Methoden','Comparison: Sync methods')}</div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('Protokoll teilen','Share log')}</span><span>${h('Nur Protokoll-Einträge. <strong>Einstellungen bleiben erhalten.</strong> Kein Aktivieren nötig. Ideal für den täglichen Abgleich.','Log entries only. <strong>Settings are preserved.</strong> No activation needed. Ideal for daily sync.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('Geräte-Sync-Paket','Device sync package')}</span><span>${h('Ebenfalls nur Protokoll-Einträge. Bietet Schnellzugriff oben in der Verwaltung und Zeitstempel des letzten Syncs. Muss einmalig aktiviert werden.','Also log entries only. Provides quick access at the top of Management and a timestamp of the last sync. Needs to be activated once.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge gold">${h('Voll-Backup','Full Backup')}</span><span>${h('Alles: Einträge + Einstellungen + Getränkeliste. Für eigene Datensicherung, Gerätewechsel, Notfall-Wiederherstellung.','Everything: entries + settings + drink list. For personal backup, device change, emergency restore.')}</span></div>
     </div>
 
@@ -10709,7 +10751,7 @@ function autoApplyRouteLocation(){
       updatePortMini();
     }
   }
-  // Schiffszeit-Vorschlag aus Route (Aufgabe 7)
+  // Schiffszeit automatisch aus Route übernehmen – einmalig pro Tag, mit Undo-Möglichkeit
   const _rrTZ=S.voyageRoute&&S.voyageRoute.length?S.voyageRoute.find(r=>r.date===today):null;
   if(_rrTZ&&_rrTZ.timezone!==undefined&&_rrTZ.timezone!==null){
     let _rtzMin=_rrTZ.timezone;
@@ -10718,17 +10760,27 @@ function autoApplyRouteLocation(){
       _rtzMin=_rm?(_rm[1]==='-'?-1:1)*(parseInt(_rm[2])*60+(parseInt(_rm[3])||0)):null;
     }
     if(typeof _rtzMin==='number'&&!isNaN(_rtzMin)&&_rtzMin!==S.tzOffset&&S.tzMode==='fixed'){
-      let _rtzSug=null;
-      try{_rtzSug=localStorage.getItem('a4_routetz_suggest_day')||'';}catch(e){}
-      if(_rtzSug!==today){
+      let _rtzApplied=null;
+      try{_rtzApplied=localStorage.getItem('a4_routetz_suggest_day')||'';}catch(e){}
+      if(_rtzApplied!==today){
+        // Flag setzen (einmalig pro Tag)
         try{localStorage.setItem('a4_routetz_suggest_day',today);db.setCfg('routeTzSuggestDay',today).catch(()=>{});}catch(e){}
         const _rtzL=S.lang==='en';
         const _rtzPort=port||today;
-        showCfm(
-          (_rtzL?'📅 Ship\'s time for today: ':'📅 Schiffszeit für heute: ')+_rtzPort,
-          (_rtzL?'According to voyage route, today\'s ship\'s time is: '+appOffsetLabel(_rtzMin)+'\nCurrently set: '+appOffsetLabel(S.tzOffset)+'\n\nUpdate ship\'s time?':'Laut Reiseroute gilt heute: '+appOffsetLabel(_rtzMin)+'\nAktuell eingestellt: '+appOffsetLabel(S.tzOffset)+'\n\nSchiffszeit anpassen?'),
-          (_rtzL?'✓ Yes, update':'✓ Ja, anpassen'),
-          ()=>{setTimezone('fixed',_rtzMin);if(typeof renderVerwaltung!=='undefined')renderVerwaltung();}
+        const _rtzOld=S.tzOffset; // alte Zeitzone für Undo merken
+        setTimezone('fixed',_rtzMin);
+        if(S.activeTab===3&&typeof renderVerwaltung!=='undefined')renderVerwaltung();
+        // Undo-Toast (12 Sek sichtbar) – Nutzer kann die automatische Änderung rückgängig machen
+        showToastUndo(
+          '🕐 '+(_rtzL
+            ?'Ship\'s time auto-set from route: '+_rtzPort+' → '+appOffsetLabel(_rtzMin)
+            :'Schiffszeit aus Route gesetzt: '+_rtzPort+' → '+appOffsetLabel(_rtzMin)),
+          function(){
+            // Undo: alte Zeitzone wiederherstellen + Tages-Flag löschen
+            setTimezone('fixed',_rtzOld);
+            try{localStorage.removeItem('a4_routetz_suggest_day');db.setCfg('routeTzSuggestDay','').catch(()=>{});}catch(e){}
+            if(S.activeTab===3&&typeof renderVerwaltung!=='undefined')renderVerwaltung();
+          }
         );
       }
     }
