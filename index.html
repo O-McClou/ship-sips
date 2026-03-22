@@ -1127,18 +1127,6 @@ html .fav-section .drow.fl{background:rgba(255,255,255,0.07);border-left-color:v
   margin-top:auto;padding-top:5px;
   align-self:stretch;
 }
-/* ── Tile Minus Button ── */
-.fav-tile-minus{
-  width:28px;height:28px;min-width:28px;border-radius:50%;
-  background:var(--bg4);border:1.5px solid var(--ac-40);
-  color:var(--ac);font-size:18px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;line-height:1;margin-left:auto;
-  touch-action:manipulation;-webkit-user-select:none;
-  transition:background .15s,opacity .15s;
-}
-.fav-tile-minus:active{background:var(--ac-20)}
-.fav-tile-minus.z{opacity:.22;pointer-events:none;}
 /* ── Tile Drag-Handle (Sortiermodus) ── */
 .fav-tile-drag-handle-tile{
   position:absolute;bottom:5px;left:5px;
@@ -1160,7 +1148,7 @@ html .fav-tile-grid .drow-wrap.tile-drag-over-mark{
 /* ── Favorites Tile Grid ────────────────────────────────────── */
 .fav-tile-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:2px 0 6px;align-items:start}
 html .fav-tile-grid .drow-wrap{margin-bottom:0;min-height:106px;overflow:hidden}
-html .fav-tile-grid .drow-wrap .drow-strip{display:none}
+html .fav-tile-grid .drow-wrap .drow-strip{opacity:.55;top:6px;bottom:6px}
 html .fav-tile-grid .drow.fav-tile{
   flex-direction:column;align-items:flex-start;gap:0;
   padding:8px 9px 8px 10px;min-height:106px;height:100%;cursor:pointer;
@@ -5494,9 +5482,13 @@ function setFavTileEditMode(mode){
       }
     }catch(e){}
   }
-  // O7: Hinweis wenn Farb-Modus noch inaktiv
-  if(S.favTileEditMode==='color'&&!S.favTileColors){
-    setTimeout(function(){showToast(S.lang==='en'?'🎨 Colours activated – tap a tile to choose':'🎨 Farben aktiviert – Kachel antippen zum Wählen','info',3500);},50);
+  // O7: Farb-Modus aktiviert → Auto-Farben zuweisen
+  if(S.favTileEditMode==='color'){
+    if(!S.favTileColors){
+      S.favTileColors=true;
+      autoAssignTileColors();
+      setTimeout(function(){showToast(S.lang==='en'?'🎨 Colours applied – tap a tile to change':'🎨 Farben zugewiesen – Kachel tippen zum Ändern','info',3500);},50);
+    }
   }
   saveState();renderDrinks(false);
 }
@@ -5540,14 +5532,81 @@ function favTileEditTap(id){
 
 /* ── 42 maritime tile colors – organized by hue ── */
 const TILE_COLORS=[
-  '#0A1E38','#122440','#1A3A5C','#0A2A4A','#1A2E5A','#0E1E44',
-  '#0A2828','#0F3A3A','#0A2A32','#152838','#0D3040','#1A4050',
-  '#0A2818','#142A18','#1A3820','#0F2A18','#122810','#1C3A20',
-  '#1A0A2E','#220E3A','#1C0E4A','#260A38','#1E1040','#2A0E3C',
-  '#2A0808','#380A10','#300810','#2E0A18','#3A0E0E','#280810',
-  '#2A1808','#381E06','#2E1A06','#341A08','#2C1606','#301A0A',
-  '#181818','#1E1E28','#1A1C28','#1C2028','#202020','#1A1820'
+  // Dunkel-Navy/Petrol (für dunkle Themes)
+  '#1A3A5C','#0D2B4A','#1A4050','#0A2A32','#163050','#1E3A60',
+  // Dunkel-Grün/Teal
+  '#0D3828','#1A4030','#0A3020','#163828','#0E4030','#1C3A2A',
+  // Dunkel-Violett/Blau
+  '#2A1050','#1E0A40','#2E1258','#1A0A3C','#241048','#30124A',
+  // Dunkel-Rot/Bordeaux
+  '#3A0A14','#2E0E18','#3C1020','#281018','#340C10','#3A1018',
+  // Dunkel-Amber/Bronze
+  '#3A1E04','#2E1808','#341A06','#3C200A','#2A1606','#381C08',
+  // Mittel-Petrol (lebhafter)
+  '#0E6B8A','#127A9A','#0A7080','#158090','#106878','#0C6070',
+  // Mittel-Grün (lebhafter)
+  '#0D7040','#128A4A','#0E6838','#147848','#106040','#0C6835',
+  // Mittel-Violett (lebhafter)
+  '#5A1890','#4E1480','#621A98','#541088','#4A1878','#5E1E96',
+  // Kräftig-Bunt: Ozean-Türkis
+  '#006E8A','#008099','#00748C','#007888','#006880','#00709A',
+  // Kräftig-Bunt: Smaragd
+  '#007850','#00845A','#007048','#008060','#006C44','#00785E',
+  // Kräftig-Bunt: Koralle/Karmin
+  '#C42830','#B82035','#CC2C28','#BE2438','#C82032','#BA2C35',
+  // Kräftig-Bunt: Saphir-Blau
+  '#1448B0','#1040A8','#1850C0','#1244AA','#164EB8','#1042B2',
+  // Sehr bunt – Regenbogen
+  '#E84020','#E05A10','#C87000','#A08000','#506000','#007040',
+  '#006878','#0058A8','#1830A0','#4010A0','#780C90','#A81060',
+  '#C0102A','#D02840','#D84820','#CC6000','#B07800','#707000'
 ];
+
+/* Helle Palette für helle Themes */
+const TILE_COLORS_LIGHT=[
+  // Pastell-Blau
+  '#B8D4F0','#A8C8EC','#C0DCF8','#B0CCEC','#C8E0FA','#A0C4E8',
+  // Pastell-Grün
+  '#B0DCC0','#A8D4B8','#B8E4C8','#A0D0B0','#C0ECCC','#98D0A8',
+  // Pastell-Lila
+  '#D0B8F0','#C8ACE8','#D8C4F8','#C4A8E4','#DCC8FC','#BCA0E0',
+  // Pastell-Apricot/Peach
+  '#F8C8A0','#F4BC90','#FCCCA8','#F0B888','#F8C8B0','#ECAC80',
+  // Pastell-Rose
+  '#F4B0C0','#ECA4B4','#F8BCCC','#E8A0B0','#FCC0CC','#E098A8',
+  // Warm-Creme/Sand
+  '#F0DCA0','#ECD090','#F4E4AC','#E8CC88','#F2E0A8','#E4C880',
+  // Gedämpft-Türkis
+  '#80C8D8','#70BCCC','#88D0E0','#6CC0CC','#90D4E4','#68B8C8',
+  // Gedämpft-Lavendel
+  '#C0A8E0','#B49CD4','#CAB2EC','#B098D0','#D0BCEC','#A890C8',
+  // Mittel-Ton Blau-Grau
+  '#6890B8','#6088B0','#7098C4','#5880A8','#78A0C8','#5888B0',
+  // Mittel-Ton Grün-Grau
+  '#70A880','#68A078','#78B088','#60986C','#80B890','#609870',
+  // Kräftig für helle Themes
+  '#D4501C','#C84018','#E05824','#CC3C14','#D84C20','#C63810',
+  '#1870C0','#1068B8','#2078CC','#0C60B0','#1A78CA','#0C68BC',
+  '#2A9050','#229848','#30985C','#1E8844','#289054','#208048',
+  '#8828C0','#8020B8','#9030CC','#7818B0','#8A28C8','#7820B8',
+  '#C02840','#B82038','#C83050','#B01C30','#CC2848','#B41C38',
+  '#E07800','#D87000','#E88800','#CC6800','#E08000','#D06800'
+];
+
+/* Auto-Farb-Zuweisung wenn Farb-Modus aktiviert wird */
+function autoAssignTileColors(){
+  var lightThemeIds=['sonnendeck','mare_sereno','pergament','champagner','nicko'];
+  var isLight=lightThemeIds.includes(S.theme)||document.documentElement.classList.contains('sun-mode');
+  var palette=isLight?TILE_COLORS_LIGHT:TILE_COLORS;
+  var favIds=S.favOrder.length?[...S.favOrder]:[...S.favorites];
+  if(!S.favTileCustomColors)S.favTileCustomColors={};
+  // Nur Kacheln ohne Custom-Farbe bekommen Auto-Farbe
+  favIds.forEach(function(id,i){
+    if(!S.favTileCustomColors[id]){
+      S.favTileCustomColors[id]=palette[i%palette.length];
+    }
+  });
+}
 
 let _tcPickerId=null;
 
@@ -5561,9 +5620,13 @@ function drinkTile(d){
     if(S.favTileCustomColors&&S.favTileCustomColors[d.id]){
       tileBg=S.favTileCustomColors[d.id];
     } else {
+      // Palette je nach Theme
+      var lightThemeIds=['sonnendeck','mare_sereno','pergament','champagner','nicko'];
+      var isLightPal=lightThemeIds.includes(S.theme)||document.documentElement.classList.contains('sun-mode');
+      var palette=isLightPal?TILE_COLORS_LIGHT:TILE_COLORS;
       var allIds=S.favOrder.length?S.favOrder:[...S.favorites];
       var idx=allIds.indexOf(d.id);
-      tileBg=TILE_COLORS[(idx>=0?idx:0)%TILE_COLORS.length];
+      tileBg=palette[(idx>=0?idx:0)%palette.length];
     }
   }
   var bgValue;
@@ -5588,9 +5651,6 @@ function drinkTile(d){
   var dragHandle=isSortMode?'<div class="fav-tile-drag-handle-tile" data-tile-drag="'+esc(d.id)+'">⠿</div>':'';
   // Fix 3: Badge oben rechts – pointer-events:none damit Kachel-Tap durchgeht
   var badge='<div class="fav-tile-badge'+(has?'':' z')+'">'+c+'</div>';
-  // Fix 4: Minus-Button unten rechts (deaktiviert wenn c=0; nicht im Sortiermodus)
-  var minusBtn=isSortMode?'':
-    '<button class="fav-tile-minus'+(has?'':' z')+'" data-minus="'+esc(d.id)+'" aria-label="'+(S.lang==='en'?'Remove one':'Einen entfernen')+'" onclick="event.stopPropagation();tapMinus(\''+esc(d.id)+'\')">−</button>';
   return '<div class="drow-wrap" data-dswid="'+esc(d.id)+'" data-has="'+(has&&!editActive?'1':'')+'" data-swside="'+swSide+'" data-fav-tile="1">'+
     '<div class="drow-swipe-bg"><span style="font-size:22px">↩</span><div style="font-size:10px;letter-spacing:.5px;margin-top:2px">UNDO</div></div>'+
     '<div class="drow-strip" style="background:'+col+'"></div>'+
@@ -5606,7 +5666,6 @@ function drinkTile(d){
       '</div>'+
       '<div class="fav-tile-bottom">'+
         '<div class="dprice" style="font-size:11px">'+eur(d.price)+inclDot+'</div>'+
-        minusBtn+
       '</div>'+
     '</div>'+
   '</div>';
@@ -5653,28 +5712,22 @@ function openTileColorPicker(drinkId){
   var title=document.getElementById('tileColorTitle');
   if(title)title.textContent='🎨 '+(d?d.name:(L?'Tile colour':'Kachelfarbe'));
   var cl=document.getElementById('tileColorCloseLbl');if(cl)cl.textContent=L?'Close':'Schließen';
-  var rl=document.getElementById('tileColorResetLbl');if(rl)rl.textContent=L?'↺ No colour':'↺ Keine Farbe';
+  var rl=document.getElementById('tileColorResetLbl');if(rl)rl.textContent=L?'↺ Auto colour':'↺ Auto-Farbe';
   var grid=document.getElementById('tileColorGrid');
   if(!grid)return;
   var cur=(S.favTileCustomColors&&S.favTileCustomColors[drinkId])||'';
-  var groups=[
-    {lbl:L?'Navy':'Navy',     start:0, end:6},
-    {lbl:L?'Teal':'Petrol',   start:6, end:12},
-    {lbl:L?'Green':'Grün',    start:12,end:18},
-    {lbl:L?'Violet':'Violett',start:18,end:24},
-    {lbl:L?'Red':'Rot',       start:24,end:30},
-    {lbl:L?'Amber':'Amber',   start:30,end:36},
-    {lbl:L?'Dark':'Dunkel',   start:36,end:42},
-  ];
+  // Alle Farben aus beiden Paletten zusammenführen – dunkle zuerst, dann helle/bunte
+  var allColors=TILE_COLORS.concat(TILE_COLORS_LIGHT);
+  // Deduplizieren
+  allColors=allColors.filter(function(c,i){return allColors.indexOf(c)===i;});
   var html='';
-  groups.forEach(function(g){
-    html+='<div style="grid-column:1/-1;font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin:4px 0 2px;padding-top:2px;border-top:1px solid var(--ac-07)">'+g.lbl+'</div>';
-    TILE_COLORS.slice(g.start,g.end).forEach(function(clr){
-      html+='<div class="tile-cpicker-swatch'+(cur===clr?' sel':'')+'" style="background:'+clr+'" data-clr="'+clr+'" onclick="setTileColor(\''+drinkId+'\',\''+clr+'\')"></div>';
-    });
+  allColors.forEach(function(clr){
+    html+='<div class="tile-cpicker-swatch'+(cur===clr?' sel':'')+'" style="background:'+clr+'" data-clr="'+clr+'" onclick="setTileColor(\''+drinkId+'\',\''+clr+'\')"></div>';
   });
   grid.style.display='grid';
-  grid.style.gridTemplateColumns='repeat(6,1fr)';
+  grid.style.gridTemplateColumns='repeat(7,1fr)';
+  grid.style.maxHeight='280px';
+  grid.style.overflowY='auto';
   grid.innerHTML=html;
   document.getElementById('tileColorOv').className='ov show-center';
 }
@@ -5839,53 +5892,84 @@ setInterval(updateClock,1000);
 
 /* ── O5: Long-Press Kontextmenü für Kacheln ── */
 (function(){
-  var _lpTimer=null,_lpId=null,_lpMoved=false;
+  var _lpTimer=null,_lpId=null,_lpMoved=false,_lpFired=false,_lpStartX=0,_lpStartY=0;
   function _openTileCtx(id,x,y){
-    var d=S.drinks.find(function(x){return x.id===id;});if(!d)return;
+    var d=S.drinks.find(function(xx){return xx.id===id;});if(!d)return;
     var L=S.lang==='en';
     var ex=document.getElementById('tileCtxMenu');if(ex)ex.remove();
     var menu=document.createElement('div');
     menu.id='tileCtxMenu';
-    menu.style.cssText='position:fixed;z-index:8000;background:var(--bg2);border:1px solid var(--ac-27);border-radius:14px;padding:6px 0;min-width:180px;box-shadow:0 8px 28px rgba(0,0,0,.55);font-family:Georgia,serif;touch-action:none;';
-    // Position: immer im Viewport halten
-    var maxX=window.innerWidth-200,maxY=window.innerHeight-180;
+    menu.style.cssText='position:fixed;z-index:8000;background:var(--bg2);border:1px solid var(--ac-27);border-radius:14px;padding:6px 0;min-width:186px;box-shadow:0 8px 28px rgba(0,0,0,.55);font-family:Georgia,serif;touch-action:manipulation;';
+    var maxX=window.innerWidth-200,maxY=window.innerHeight-220;
     menu.style.left=Math.max(8,Math.min(x-20,maxX))+'px';
     menu.style.top=Math.max(8,Math.min(y-10,maxY))+'px';
     function row(ico,lbl,fn){
       var btn=document.createElement('button');
-      btn.style.cssText='display:flex;align-items:center;gap:10px;width:100%;padding:11px 16px;border:none;background:transparent;color:var(--tx0);font-family:Georgia,serif;font-size:14px;cursor:pointer;text-align:left;touch-action:manipulation;';
-      btn.innerHTML='<span style="font-size:16px;width:20px;text-align:center">'+ico+'</span><span>'+lbl+'</span>';
-      btn.addEventListener('touchend',function(e){e.preventDefault();menu.remove();fn();});
-      btn.addEventListener('click',function(){menu.remove();fn();});
+      btn.style.cssText='display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;border:none;background:transparent;color:var(--tx0);font-family:Georgia,serif;font-size:14px;cursor:pointer;text-align:left;touch-action:manipulation;-webkit-user-select:none;';
+      btn.innerHTML='<span style="font-size:16px;width:20px;text-align:center;flex-shrink:0">'+ico+'</span><span>'+lbl+'</span>';
+      // touchend mit stopPropagation damit dismiss nicht gleichzeitig feuert
+      btn.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();menu.remove();_cleanupDismiss();fn();},{passive:false});
+      btn.addEventListener('click',function(e){e.stopPropagation();menu.remove();_cleanupDismiss();fn();});
       menu.appendChild(btn);
     }
     var isFav=S.favorites.has(id);
     row('★',L?(isFav?'Remove from favourites':'Add to favourites'):(isFav?'Aus Favoriten entfernen':'Zu Favoriten hinzufügen'),function(){toggleFav(id);});
-    row('🎨',L?'Tile colour':'Kachelfarbe',function(){if(!S.favTileMode){return;}if(!S.favTileColors){S.favTileColors=true;saveState();}openTileColorPicker(id);});
+    row('🎨',L?'Tile colour':'Kachelfarbe',function(){
+      if(!S.favTileColors){S.favTileColors=true;autoAssignTileColors();saveState();renderDrinks(false);}
+      openTileColorPicker(id);
+    });
     row('✏️',L?'Edit drink':'Getränk bearbeiten',function(){openEditDrink&&openEditDrink(id);});
-    // Trennlinie
     var sep=document.createElement('div');sep.style.cssText='height:1px;background:var(--ac-13);margin:4px 0';menu.appendChild(sep);
     row('✕',L?'Close':'Schließen',function(){});
     document.body.appendChild(menu);
-    // Außerhalb tippen schließt
-    function _dismiss(ev){if(!menu.contains(ev.target)){menu.remove();document.removeEventListener('touchstart',_dismiss,true);document.removeEventListener('click',_dismiss,true);}}
-    setTimeout(function(){document.addEventListener('touchstart',_dismiss,true);document.addEventListener('click',_dismiss,true);},100);
     // Haptic
-    try{if(typeof navigator.vibrate==='function')navigator.vibrate(18);}catch(_){}
+    try{if(typeof navigator.vibrate==='function')navigator.vibrate([15,10,15]);}catch(err){}
+    // Dismiss-Handler mit Verzögerung und Flag-Schutz
+    function _dismiss(ev){
+      if(menu.contains(ev.target))return;
+      menu.remove();_cleanupDismiss();
+    }
+    function _cleanupDismiss(){
+      document.removeEventListener('touchstart',_dismiss,true);
+      document.removeEventListener('click',_dismiss,true);
+    }
+    // Verzögerung länger: 300ms – erst nach dem touchend des long-press
+    setTimeout(function(){
+      document.addEventListener('touchstart',_dismiss,true);
+      document.addEventListener('click',_dismiss,true);
+    },300);
   }
-  // Attach long-press to favSection (delegiert auf Kacheln)
+  // Attach long-press to favSection
   var fs=document.getElementById('favSection');
   if(fs){
     fs.addEventListener('touchstart',function(e){
       var tile=e.target.closest('[data-tile-id]');
-      if(!tile||e.target.closest('[data-minus]')||e.target.closest('.fav-tile-drag-handle-tile'))return;
-      _lpId=tile.dataset.tileId;_lpMoved=false;
+      if(!tile||e.target.closest('.fav-tile-drag-handle-tile')||e.target.closest('.fav-view-toggle'))return;
+      _lpId=tile.dataset.tileId;_lpMoved=false;_lpFired=false;
+      _lpStartX=e.touches[0].clientX;_lpStartY=e.touches[0].clientY;
+      var ex=e.touches[0].clientX,ey=e.touches[0].clientY;
       _lpTimer=setTimeout(function(){
-        if(!_lpMoved&&_lpId){_openTileCtx(_lpId,e.touches[0].clientX,e.touches[0].clientY);}
-      },500);
+        if(!_lpMoved&&_lpId){
+          _lpFired=true;
+          _openTileCtx(_lpId,ex,ey);
+        }
+      },700); // 700ms – deutlich länger als normaler Tap
     },{passive:true});
-    fs.addEventListener('touchmove',function(){_lpMoved=true;clearTimeout(_lpTimer);},{passive:true});
-    fs.addEventListener('touchend',function(){clearTimeout(_lpTimer);},{passive:true});
+    fs.addEventListener('touchmove',function(e){
+      if(_lpTimer){
+        // Nur als bewegt markieren wenn wirklich mehr als 8px Abweichung
+        var tc=e.touches[0];
+        if(Math.abs(tc.clientX-_lpStartX)>8||Math.abs(tc.clientY-_lpStartY)>8){
+          _lpMoved=true;clearTimeout(_lpTimer);_lpTimer=null;
+        }
+      }
+    },{passive:true});
+    fs.addEventListener('touchend',function(e){
+      clearTimeout(_lpTimer);_lpTimer=null;
+      // Wenn long-press gefeuert hat → tapPlus blockieren
+      if(_lpFired){e.preventDefault();}
+      _lpFired=false;
+    },{passive:false});
   }
 })();
 
