@@ -291,51 +291,6 @@ html[data-theme="champagner"] .sumbox{background:linear-gradient(135deg,#FFFFFF,
 html[data-theme="champagner"] .adm-card{background:#FFFFFF}
 html[data-theme="champagner"] .bplus{border-radius:50%}
 
-/* ── Kachel-Schutzregeln: schlagen alle html[data-theme] .drow Overrides ──
-   Spezifität html .fav-tile-grid .drow.fav-tile (0,0,3,1) > html[data-theme] .drow (0,1,1,1)
-   → border-top, border-radius, flex-direction bleiben für Kacheln immer korrekt. ── */
-html .fav-tile-grid .drow.fav-tile{
-  border-left:none!important;
-  border-top:3px solid var(--ac-13)!important;
-  border-radius:10px!important;
-  flex-direction:column!important;
-  padding:8px 9px 8px 10px!important;
-  background:rgba(255,255,255,0.04)!important;
-}
-html .fav-tile-grid .drow.fav-tile.has{
-  border-top-color:var(--ac)!important;
-  background:var(--ac-07)!important;
-}
-html .fav-tile-grid .drow.fav-tile.fl{
-  border-top-color:var(--ac)!important;
-  background:var(--ac-13)!important;
-}
-html .fav-tile-grid .drow.fav-tile.tile-sort-sel{
-  border-top-color:var(--ac)!important;
-  background:var(--ac-13)!important;
-}
-html .fav-tile-grid .drow.fav-tile.tile-remove-hint{
-  border-top-color:var(--col-err)!important;
-}
-/* Helle Themes: weißer Kachel-Hintergrund für bessere Lesbarkeit */
-html[data-theme="sonnendeck"]  .fav-tile-grid .drow.fav-tile,
-html[data-theme="pergament"]   .fav-tile-grid .drow.fav-tile,
-html[data-theme="mare_sereno"] .fav-tile-grid .drow.fav-tile,
-html[data-theme="nicko"]       .fav-tile-grid .drow.fav-tile,
-html[data-theme="champagner"]  .fav-tile-grid .drow.fav-tile{
-  background:#FFFFFF!important;
-  border:1.5px solid rgba(0,0,0,.08)!important;
-  border-top:3px solid var(--ac-13)!important;
-}
-html[data-theme="sonnendeck"]  .fav-tile-grid .drow.fav-tile.has,
-html[data-theme="pergament"]   .fav-tile-grid .drow.fav-tile.has,
-html[data-theme="mare_sereno"] .fav-tile-grid .drow.fav-tile.has,
-html[data-theme="nicko"]       .fav-tile-grid .drow.fav-tile.has,
-html[data-theme="champagner"]  .fav-tile-grid .drow.fav-tile.has{
-  background:#FFFBEF!important;
-  border-top-color:var(--ac)!important;
-}
-
 /* ── Sonnenmodus (helles Theme) ── */
 html.sun-mode {
   --bg:   #FAF3E8;
@@ -582,7 +537,7 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
 .rbtn{padding:4px 10px;background:transparent;border:1px dashed #e0555577;color:#e0555577;border-radius:6px;cursor:pointer;font-size:11px;font-family:Georgia,serif;opacity:0.6}
 .fav-section{padding:0 14px 4px;background:var(--bg1);border-radius:10px;margin:0 4px}
 .fav-title{font-size:9px;color:var(--ac);font-weight:bold;letter-spacing:3px;text-transform:uppercase;padding:10px 2px 8px;cursor:pointer;user-select:none;-webkit-user-select:none;display:flex;align-items:center;gap:8px;touch-action:manipulation}
-.fav-title::after{content:'';flex:0 1 24px;height:1px;background:linear-gradient(to right,var(--ac-27),transparent);min-width:8px}
+.fav-title::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--ac-27),transparent)}
 /* FIX V48: drow in Favoriten transparent -> sec-bg (ac-07) als einheitliche Zone.
    html-Prefix: Spezifitaet (0,0,2,1) schlaegt alle html[data-theme] .drow-Overrides. */
 html .fav-section .drow{background:transparent;border-color:rgba(255,255,255,0.06);border-left-color:rgba(255,255,255,0.12)}
@@ -1087,166 +1042,6 @@ html .fav-section .drow.fl{background:rgba(255,255,255,0.07);border-left-color:v
   flex-shrink:0;line-height:1.4;
 }
 .fav-sort-btn.active{background:var(--ac-13);color:var(--ac);border-color:var(--ac-40)}
-/* ── Favorites Tile-View Toggle Button ─────────────────────── */
-.fav-tile-btn{
-  background:transparent;border:1px solid var(--ac-27);border-radius:12px;
-  color:var(--tx2);font-family:Georgia,serif;font-size:13px;cursor:pointer;
-  padding:2px 8px;margin-left:4px;white-space:nowrap;touch-action:manipulation;
-  flex-shrink:0;line-height:1.4;
-}
-.fav-tile-btn.active{background:var(--ac-13);color:var(--ac);border-color:var(--ac-40)}
-/* ── View-Toggle Pill (Liste ☰ / Kacheln ⊞) ── */
-.fav-view-toggle{
-  display:flex;background:var(--bg3);border:1px solid var(--ac-13);
-  border-radius:10px;padding:2px;gap:2px;flex-shrink:0;margin-left:4px;
-}
-.fav-view-btn{
-  padding:3px 10px;border-radius:7px;font-size:11px;cursor:pointer;
-  border:none;background:transparent;color:var(--tx2);
-  font-family:Georgia,serif;touch-action:manipulation;-webkit-user-select:none;
-  transition:background .15s,color .15s;min-height:26px;line-height:1.2;
-}
-.fav-view-btn.on{background:var(--ac);color:var(--ac-fg);font-weight:bold;}
-/* ── Tile Badge (Zähler oben rechts) ── */
-.fav-tile-badge{
-  position:absolute;top:6px;right:6px;
-  min-width:22px;height:22px;border-radius:11px;
-  background:var(--ac);color:var(--ac-fg);
-  font-size:11px;font-weight:bold;
-  display:flex;align-items:center;justify-content:center;
-  padding:0 5px;line-height:1;pointer-events:none;
-  box-shadow:0 1px 4px rgba(0,0,0,.35);transition:background .15s;
-}
-.fav-tile-badge.z{
-  background:rgba(255,255,255,.08);color:rgba(255,255,255,.20);
-  font-size:10px;box-shadow:none;
-}
-/* ── Tile Bottom Row ── */
-.fav-tile-bottom{
-  display:flex;align-items:center;width:100%;
-  margin-top:auto;padding-top:5px;
-  align-self:stretch;
-}
-/* ── Tile Drag-Handle (Sortiermodus) ── */
-.fav-tile-drag-handle-tile{
-  position:absolute;bottom:5px;left:5px;
-  width:20px;height:20px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:13px;color:var(--ac-60);cursor:grab;
-  -webkit-user-select:none;user-select:none;touch-action:none;
-  -webkit-touch-callout:none;letter-spacing:-2px;line-height:1;z-index:5;
-  background:var(--ac-09);border-radius:4px;
-}
-.fav-tile-drag-handle-tile:active{color:var(--ac);cursor:grabbing}
-/* ── Tile Grid: Drag-Over indicator ── */
-html .fav-tile-grid .drow-wrap.tile-drag-over-mark{
-  box-shadow:0 0 0 2px var(--ac);border-radius:10px;
-}
-/* ── Tile Grid fade on switch ── */
-#favList{transition:opacity .13s ease;}
-#favList.tile-fade{opacity:0;}
-/* ── Favorites Tile Grid ────────────────────────────────────── */
-.fav-tile-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:2px 0 6px;align-items:start}
-html .fav-tile-grid .drow-wrap{margin-bottom:0;min-height:106px;overflow:hidden}
-html .fav-tile-grid .drow-wrap .drow-strip{opacity:.55;top:6px;bottom:6px}
-html .fav-tile-grid .drow.fav-tile{
-  flex-direction:column;align-items:flex-start;gap:0;
-  padding:8px 9px 8px 10px;min-height:106px;height:100%;cursor:pointer;
-  justify-content:flex-start;position:relative;
-  border-radius:10px;
-  background:rgba(255,255,255,0.04);
-  border:1px solid rgba(255,255,255,0.07);
-  border-left:none!important;
-  border-top:3px solid var(--ac-13);
-  transition:opacity .15s,transform .1s,border-top-color .15s,background .15s;
-  box-sizing:border-box;
-  -webkit-user-select:none;user-select:none;
-  -webkit-touch-callout:none;
-}
-html .fav-tile-grid .drow.fav-tile.has{
-  border-top-color:var(--ac);
-  background:var(--ac-07);
-  box-shadow:var(--shadow-card);
-}
-html .fav-tile-grid .drow.fav-tile.fl{
-  border-top-color:var(--ac);
-  background:var(--ac-13);
-}
-html .fav-tile-grid .drow.fav-tile:active{opacity:.72;transform:scale(0.96)}
-/* Sort mode overlay */
-html .fav-tile-grid .drow.fav-tile.tile-drag-active{opacity:.45;transform:scale(0.97)}
-html .fav-tile-grid .drow.fav-tile.tile-drag-over{box-shadow:0 0 0 2px var(--ac)!important;opacity:1}
-.fav-tile-drag-handle{
-  position:absolute;top:4px;left:5px;width:22px;height:22px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:15px;color:var(--ac-60);cursor:grab;
-  -webkit-user-select:none;user-select:none;touch-action:none;
-  -webkit-touch-callout:none;
-  letter-spacing:-2px;line-height:1;z-index:5;
-  background:var(--ac-07);border-radius:5px;
-}
-.fav-tile-drag-handle:active{color:var(--ac);cursor:grabbing}
-.fav-tile-top{display:flex;align-items:flex-start;width:100%;gap:4px}
-.fav-tile-name{font-size:14px;font-weight:bold;color:var(--tx1);line-height:1.3;
-  word-break:break-word;flex:1;min-width:0;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.fav-tile-name.on{color:var(--tx0)}
-.fav-tile-star{background:none;border:none;padding:2px;cursor:pointer;font-size:13px;
-  color:var(--ac);line-height:1;flex-shrink:0;touch-action:manipulation;
-  -webkit-user-select:none;opacity:.85;margin-top:-1px}
-.fav-tile-star:active{opacity:.45;transform:scale(.8)}
-.fav-tile-cat{font-size:10px;color:var(--tx2);display:flex;align-items:center;gap:3px;margin-top:3px;overflow:hidden;white-space:nowrap}
-.fav-tile-meta{display:flex;align-items:center;gap:4px;width:100%;margin-top:auto}
-/* Font-size scaling — tile name only, height stays fixed via drow-wrap */
-body.fz-small  .fav-tile-name{font-size:12px}
-body.fz-large  .fav-tile-name{font-size:17px}
-body.fz-xlarge .fav-tile-name{font-size:16px!important}
-/* ── Tile Edit-Panel "…" ────────────────────────────────────── */
-.fav-tile-edit-btn{
-  background:transparent;border:1px solid var(--ac-27);border-radius:12px;
-  color:var(--tx2);font-family:Georgia,serif;font-size:15px;font-weight:bold;
-  cursor:pointer;padding:1px 9px 3px;margin-left:6px;white-space:nowrap;
-  touch-action:manipulation;flex-shrink:0;line-height:1.4;letter-spacing:2px;
-}
-.fav-tile-edit-btn.active{background:var(--ac-20);color:var(--ac);border-color:var(--ac-40)}
-.fav-tile-edit-panel{
-  display:flex;flex-wrap:wrap;gap:6px;padding:8px 2px 6px;
-  border-top:1px solid var(--ac-13);margin:2px 0 2px;
-}
-.fav-tile-edit-opt{
-  padding:5px 11px;border:1px solid var(--ac-20);border-radius:14px;
-  background:var(--bg3);color:var(--tx2);font-size:11px;cursor:pointer;
-  font-family:Georgia,serif;touch-action:manipulation;-webkit-user-select:none;
-  user-select:none;display:flex;align-items:center;gap:5px;line-height:1.4;
-  transition:background .15s,border-color .15s;
-}
-.fav-tile-edit-opt.on{background:var(--ac-13);color:var(--ac);border-color:var(--ac-40)}
-.fav-tile-edit-opt:active{opacity:.7}
-.fav-tile-edit-reset{
-  padding:5px 11px;border:1px dashed var(--ac-20);border-radius:14px;
-  background:transparent;color:var(--tx2);font-size:11px;cursor:pointer;
-  font-family:Georgia,serif;touch-action:manipulation;-webkit-user-select:none;
-  user-select:none;line-height:1.4;
-}
-/* Sort mode: selected tile */
-html .fav-tile-grid .drow.fav-tile.tile-sort-sel{
-  box-shadow:0 0 0 2px var(--ac)!important;
-  border-top-color:var(--ac)!important;
-  background:var(--ac-13)!important;
-  opacity:1;
-}
-/* Remove mode: subtle warning tint */
-html .fav-tile-grid .drow.fav-tile.tile-remove-hint{
-  border-top-color:var(--col-err)!important;
-  opacity:.8;
-}
-.tile-cpicker-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:4px 0 8px}
-.tile-cpicker-swatch{
-  aspect-ratio:1;border-radius:8px;cursor:pointer;border:2px solid transparent;
-  transition:transform .15s,border-color .15s;touch-action:manipulation;min-height:34px;
-}
-.tile-cpicker-swatch:active{transform:scale(.85)}
-.tile-cpicker-swatch.sel{border-color:var(--ac)!important;box-shadow:0 0 0 2px var(--ac-40)}
 .fav-sort-item{display:flex;align-items:center;gap:0;margin-bottom:3px;position:relative;transition:opacity .15s}
 .fav-sort-item.fav-dragging{opacity:.45;background:var(--ac-09);border-radius:10px}
 .fav-sort-item.fav-drag-over-top::before{content:'';display:block;position:absolute;top:-2px;left:8px;right:8px;height:3px;background:var(--ac);border-radius:2px;pointer-events:none;z-index:10}
@@ -1625,7 +1420,6 @@ details.hlp-acc summary:active{opacity:.75}
   <div id="favSection" style="display:none">
     <div class="fav-section">
       <div class="fav-title" id="favTitle">★ Favoriten</div>
-      <div id="favTileEditPanel" style="display:none"></div>
       <div id="favList" class="dlist" style="padding:0"></div>
     </div>
     <div style="margin:4px 14px 2px;border-bottom:1px solid #e0c04022"></div>
@@ -2108,18 +1902,6 @@ details.hlp-acc summary:active{opacity:.75}
     <div class="modal-btns">
       <button class="mbtn-cancel" id="mdCancelBtn" onclick="closeMd()">Abbrechen</button>
       <button class="mbtn-ok" id="mdSaveBtn" onclick="saveMd()">Speichern</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: Tile Color Picker -->
-<div class="ov" id="tileColorOv">
-  <div class="modal-box" style="max-width:360px;padding:16px 16px 20px">
-    <div class="modal-title" id="tileColorTitle" style="margin-bottom:10px;font-size:14px">🎨 Kachelfarbe</div>
-    <div class="tile-cpicker-grid" id="tileColorGrid"></div>
-    <div class="modal-btns" style="margin-top:8px;gap:8px">
-      <button class="mbtn-cancel" id="tileColorCloseLbl" onclick="closeTileColorPicker()">Schließen</button>
-      <button class="mbtn-ok" id="tileColorResetLbl" onclick="resetTileColor()" style="background:var(--bg3);border:1px solid var(--ac-20);color:var(--tx1)">↺ Zurücksetzen</button>
     </div>
   </div>
 </div>
@@ -3562,8 +3344,7 @@ let S={
   /* FIX V48 F12: Hell-/Dunkel-Umschalter – letztes dunkles / helles Theme merken */
   lastDarkTheme:'kapitaensbuch',lastLightTheme:'sonnendeck',
   dayEndHour:0,dayEndMinute:0,
-  favOrder:[],favSortMode:false,favTileMode:false,favTileColors:false,favTileCustomColors:{},
-  favTileEditActive:false,favTileEditMode:null,favTileEditSortSel:null,
+  favOrder:[],favSortMode:false,
   headerCollapsed:false,
   tzMode:"auto",tzOffset:0,tzChangeLog:[],
   // User profiles – 4 fixed slots (u1–u4 are permanent positions)
@@ -4148,9 +3929,6 @@ async function _saveStateAsync(){
     {key:'statOpen',   value:JSON.stringify(S.statOpen||{})},
     {key:'syncEnabled',value:S.syncEnabled?'1':''},
     {key:'lastSyncDate',value:S.lastSyncDate||''},
-    {key:'favTileMode',  value:S.favTileMode?'1':''},
-    {key:'favTileColors',value:S.favTileColors?'1':''},
-    {key:'favTileCustomColors',value:JSON.stringify(S.favTileCustomColors||{})},
   ];
   await db.config.bulkPut(cfgPairs);
   // Logs: upsert via bulkPut (kein clear nötig, vermeidet kurzzeitigen Datenverlust)
@@ -4199,10 +3977,7 @@ function _saveStateLocalStorageFallback(){
     ['a4_statdayshow',JSON.stringify(S.statDayShow||{})],
     ['a4_statopen',JSON.stringify(S.statOpen||{})],
     ['a4_syncenabled',S.syncEnabled?'1':''],
-    ['a4_lastsync',S.lastSyncDate||''],
-    ['a4_tilemode',S.favTileMode?'1':''],
-    ['a4_tilecolors',S.favTileColors?'1':''],
-    ['a4_tilecustomcolors',JSON.stringify(S.favTileCustomColors||{})]];
+    ['a4_lastsync',S.lastSyncDate||'']];
   for(const[k,v]of pairs){try{localStorage.setItem(k,v);}catch(e){break;}}
 }
 let _saveTimer=null;
@@ -4272,10 +4047,6 @@ function loadState(){
   try{const _so=JSON.parse(localStorage.getItem('a4_statopen')||'null');S.statOpen=_so&&typeof _so==='object'?_so:{overview:true,topdrinks:true,byday:true};}catch(e){S.statOpen={overview:true,topdrinks:true,byday:true};} // Nr.5
   S.syncEnabled=localStorage.getItem('a4_syncenabled')==='1';
   S.lastSyncDate=localStorage.getItem('a4_lastsync')||null;
-  // Kachel-Einstellungen laden
-  S.favTileMode=localStorage.getItem('a4_tilemode')==='1';
-  S.favTileColors=localStorage.getItem('a4_tilecolors')==='1';
-  try{const tc=JSON.parse(localStorage.getItem('a4_tilecustomcolors')||'{}');S.favTileCustomColors=typeof tc==='object'&&tc!==null?tc:{};}catch(e){S.favTileCustomColors={};}
   syncCustomThemesToRuntime();
   // Sync favOrder with actual favorites (remove stale, append new)
   S.favOrder=S.favOrder.filter(id=>S.favorites.has(id));
@@ -5473,296 +5244,13 @@ function drinkRow(d,rankIdx,showCat){
 
 let _lastDrinksHash='';
 let _renderDrinksTimer=null;
-function toggleFavTileMode(){S.favTileMode=!S.favTileMode;if(S.favTileMode)S.favSortMode=false;saveState();renderDrinks(false);}
-function toggleFavTileColors(){S.favTileColors=!S.favTileColors;saveState();renderDrinks(false);}
-function toggleFavTileEdit(){
-  S.favTileEditActive=!S.favTileEditActive;
-  if(!S.favTileEditActive){S.favTileEditMode=null;S.favTileEditSortSel=null;}
-  saveState();renderDrinks(false);
-}
-function setFavTileEditMode(mode){
-  S.favTileEditMode=(S.favTileEditMode===mode)?null:mode;
-  S.favTileEditSortSel=null;
-  // S5: einmaliger Hinweis-Toast beim ersten Aktivieren des Sortiermodus
-  if(S.favTileEditMode==='sort'){
-    try{
-      if(!localStorage.getItem('a4_tile_sort_hint')){
-        localStorage.setItem('a4_tile_sort_hint','1');
-        showToast(S.lang==='en'?'⇅ Tap a tile to select, tap another to swap. Use drag handles to drag.':'⇅ Kachel tippen → auswählen, dann 2. Kachel tippen → tauschen.','info',4500);
-      }
-    }catch(e){}
-  }
-  // O7: Farb-Modus aktiviert → Auto-Farben zuweisen
-  if(S.favTileEditMode==='color'){
-    if(!S.favTileColors){
-      S.favTileColors=true;
-      autoAssignTileColors();
-      setTimeout(function(){showToast(S.lang==='en'?'🎨 Colours applied – tap a tile to change':'🎨 Farben zugewiesen – Kachel tippen zum Ändern','info',3500);},50);
-    }
-  }
-  saveState();renderDrinks(false);
-}
-function resetAllTileColors(){
-  // Nur Custom-Farben löschen, Auto-Modus bleibt aktiv
-  S.favTileCustomColors={};
-  saveState();renderDrinks(false);
-}
-function resetToDefaultColors(){
-  // Vollständiger Reset: Auto-Farben AUS + Custom-Farben leer → Standard wie Listenansicht
-  S.favTileColors=false;
-  S.favTileCustomColors={};
-  saveState();renderDrinks(false);
-  showToast(S.lang==='en'?'↺ Tile colours reset to default':'↺ Kachelfarben auf Standard zurückgesetzt');
-}
-function favTileEditTap(id){
-  var mode=S.favTileEditMode;
-  if(mode==='sort'){
-    if(!S.favTileEditSortSel){
-      S.favTileEditSortSel=id;renderDrinks(false);
-    } else if(S.favTileEditSortSel===id){
-      S.favTileEditSortSel=null;renderDrinks(false);
-    } else {
-      var allFavIds=[...S.favorites];
-      var base=S.favOrder.length?[...S.favOrder]:[...allFavIds];
-      allFavIds.forEach(function(fid){if(!base.includes(fid))base.push(fid);});
-      var a=base.indexOf(S.favTileEditSortSel);
-      var b=base.indexOf(id);
-      if(a!==-1&&b!==-1){var tmp=base[a];base[a]=base[b];base[b]=tmp;}
-      S.favOrder=base;S.favTileEditSortSel=null;
-      saveState();renderDrinks(false);
-    }
-  } else if(mode==='remove'){
-    toggleFav(id);
-  } else if(mode==='color'){
-    // Farbe immer öffnen – S.favTileColors wird ggf. in renderFavTileEditPanel aktiviert
-    if(!S.favTileColors){S.favTileColors=true;saveState();}
-    openTileColorPicker(id);
-  }
-}
-
-/* ── 42 maritime tile colors – organized by hue ── */
-const TILE_COLORS=[
-  // Dunkel-Navy/Petrol (für dunkle Themes)
-  '#1A3A5C','#0D2B4A','#1A4050','#0A2A32','#163050','#1E3A60',
-  // Dunkel-Grün/Teal
-  '#0D3828','#1A4030','#0A3020','#163828','#0E4030','#1C3A2A',
-  // Dunkel-Violett/Blau
-  '#2A1050','#1E0A40','#2E1258','#1A0A3C','#241048','#30124A',
-  // Dunkel-Rot/Bordeaux
-  '#3A0A14','#2E0E18','#3C1020','#281018','#340C10','#3A1018',
-  // Dunkel-Amber/Bronze
-  '#3A1E04','#2E1808','#341A06','#3C200A','#2A1606','#381C08',
-  // Mittel-Petrol (lebhafter)
-  '#0E6B8A','#127A9A','#0A7080','#158090','#106878','#0C6070',
-  // Mittel-Grün (lebhafter)
-  '#0D7040','#128A4A','#0E6838','#147848','#106040','#0C6835',
-  // Mittel-Violett (lebhafter)
-  '#5A1890','#4E1480','#621A98','#541088','#4A1878','#5E1E96',
-  // Kräftig-Bunt: Ozean-Türkis
-  '#006E8A','#008099','#00748C','#007888','#006880','#00709A',
-  // Kräftig-Bunt: Smaragd
-  '#007850','#00845A','#007048','#008060','#006C44','#00785E',
-  // Kräftig-Bunt: Koralle/Karmin
-  '#C42830','#B82035','#CC2C28','#BE2438','#C82032','#BA2C35',
-  // Kräftig-Bunt: Saphir-Blau
-  '#1448B0','#1040A8','#1850C0','#1244AA','#164EB8','#1042B2',
-  // Sehr bunt – Regenbogen
-  '#E84020','#E05A10','#C87000','#A08000','#506000','#007040',
-  '#006878','#0058A8','#1830A0','#4010A0','#780C90','#A81060',
-  '#C0102A','#D02840','#D84820','#CC6000','#B07800','#707000'
-];
-
-/* Helle Palette für helle Themes */
-const TILE_COLORS_LIGHT=[
-  // Pastell-Blau
-  '#B8D4F0','#A8C8EC','#C0DCF8','#B0CCEC','#C8E0FA','#A0C4E8',
-  // Pastell-Grün
-  '#B0DCC0','#A8D4B8','#B8E4C8','#A0D0B0','#C0ECCC','#98D0A8',
-  // Pastell-Lila
-  '#D0B8F0','#C8ACE8','#D8C4F8','#C4A8E4','#DCC8FC','#BCA0E0',
-  // Pastell-Apricot/Peach
-  '#F8C8A0','#F4BC90','#FCCCA8','#F0B888','#F8C8B0','#ECAC80',
-  // Pastell-Rose
-  '#F4B0C0','#ECA4B4','#F8BCCC','#E8A0B0','#FCC0CC','#E098A8',
-  // Warm-Creme/Sand
-  '#F0DCA0','#ECD090','#F4E4AC','#E8CC88','#F2E0A8','#E4C880',
-  // Gedämpft-Türkis
-  '#80C8D8','#70BCCC','#88D0E0','#6CC0CC','#90D4E4','#68B8C8',
-  // Gedämpft-Lavendel
-  '#C0A8E0','#B49CD4','#CAB2EC','#B098D0','#D0BCEC','#A890C8',
-  // Mittel-Ton Blau-Grau
-  '#6890B8','#6088B0','#7098C4','#5880A8','#78A0C8','#5888B0',
-  // Mittel-Ton Grün-Grau
-  '#70A880','#68A078','#78B088','#60986C','#80B890','#609870',
-  // Kräftig für helle Themes
-  '#D4501C','#C84018','#E05824','#CC3C14','#D84C20','#C63810',
-  '#1870C0','#1068B8','#2078CC','#0C60B0','#1A78CA','#0C68BC',
-  '#2A9050','#229848','#30985C','#1E8844','#289054','#208048',
-  '#8828C0','#8020B8','#9030CC','#7818B0','#8A28C8','#7820B8',
-  '#C02840','#B82038','#C83050','#B01C30','#CC2848','#B41C38',
-  '#E07800','#D87000','#E88800','#CC6800','#E08000','#D06800'
-];
-
-/* Auto-Farb-Zuweisung wenn Farb-Modus aktiviert wird */
-function autoAssignTileColors(){
-  var lightThemeIds=['sonnendeck','mare_sereno','pergament','champagner','nicko'];
-  var isLight=lightThemeIds.includes(S.theme)||document.documentElement.classList.contains('sun-mode');
-  var palette=isLight?TILE_COLORS_LIGHT:TILE_COLORS;
-  var favIds=S.favOrder.length?[...S.favOrder]:[...S.favorites];
-  if(!S.favTileCustomColors)S.favTileCustomColors={};
-  // Nur Kacheln ohne Custom-Farbe bekommen Auto-Farbe
-  favIds.forEach(function(id,i){
-    if(!S.favTileCustomColors[id]){
-      S.favTileCustomColors[id]=palette[i%palette.length];
-    }
-  });
-}
-
-let _tcPickerId=null;
-
-function drinkTile(d){
-  var c=S.counts[d.id]||0,has=c>0,fl=S.flashId===d.id;
-  var col=catColor(d.cat);
-  var plusRight=S.btnLayout==='plus-right';
-  var swSide=plusRight?'left':'right';
-  var tileBg='';
-  if(S.favTileColors){
-    if(S.favTileCustomColors&&S.favTileCustomColors[d.id]){
-      tileBg=S.favTileCustomColors[d.id];
-    } else {
-      // Palette je nach Theme
-      var lightThemeIds=['sonnendeck','mare_sereno','pergament','champagner','nicko'];
-      var isLightPal=lightThemeIds.includes(S.theme)||document.documentElement.classList.contains('sun-mode');
-      var palette=isLightPal?TILE_COLORS_LIGHT:TILE_COLORS;
-      var allIds=S.favOrder.length?S.favOrder:[...S.favorites];
-      var idx=allIds.indexOf(d.id);
-      tileBg=palette[(idx>=0?idx:0)%palette.length];
-    }
-  }
-  var bgValue;
-  if(fl)          bgValue='rgba(255,255,255,0.14)';
-  else if(tileBg) bgValue=tileBg;
-  else if(has)    bgValue='rgba(255,255,255,0.07)';
-  else            bgValue='rgba(255,255,255,0.04)';
-  // Fix 2: border-top-color statt border-left-color
-  var inlineStyle='background:'+bgValue+';border-top-color:'+col+';';
-  var ea=S.favTileEditActive,em=S.favTileEditMode;
-  var isSortSel=ea&&em==='sort'&&S.favTileEditSortSel===d.id;
-  var isRemoveHint=ea&&em==='remove';
-  var isColorMode=ea&&em==='color';
-  var isSortMode=ea&&em==='sort';
-  var extraCls=(isSortSel?' tile-sort-sel':'')+(isRemoveHint?' tile-remove-hint':'');
-  // Fix O3: incl-dot etwas größer in der Kachel
-  var inclDot='<span class="incl-dot '+(d.included?'filled':'outline')+'" style="'+(d.included?'background:'+AI_COLOR+';width:9px;height:9px':'color:'+col+';width:9px;height:9px')+'" title="'+(d.included?(S.lang==='en'?'All Inclusive':'All Inclusive'):(S.lang==='en'?'Not included':'Nicht inklusive'))+'"></span>';
-  var editActive=S.favTileEditActive;
-  // Fix O1: colorHint nach oben links verlagert, damit Badge nicht überlagert wird
-  var colorHint=isColorMode&&S.favTileColors?'<div style="position:absolute;top:5px;left:6px;font-size:11px;opacity:.65;pointer-events:none">🎨</div>':'';
-  // Fix S1/S2: Drag-Handle im Sortiermodus (CSS-Klasse bereits vorhanden)
-  var dragHandle=isSortMode?'<div class="fav-tile-drag-handle-tile" data-tile-drag="'+esc(d.id)+'">⠿</div>':'';
-  // Fix 3: Badge oben rechts – pointer-events:none damit Kachel-Tap durchgeht
-  var badge='<div class="fav-tile-badge'+(has?'':' z')+'">'+c+'</div>';
-  return '<div class="drow-wrap" data-dswid="'+esc(d.id)+'" data-has="'+(has&&!editActive?'1':'')+'" data-swside="'+swSide+'" data-fav-tile="1">'+
-    '<div class="drow-swipe-bg"><span style="font-size:22px">↩</span><div style="font-size:10px;letter-spacing:.5px;margin-top:2px">UNDO</div></div>'+
-    '<div class="drow-strip" style="background:'+col+'"></div>'+
-    '<div class="drow fav-tile'+extraCls+(has?' has':'')+(fl?' fl':'')+'" style="'+inlineStyle+'" data-tile-plus="'+esc(d.id)+'" data-tile-id="'+esc(d.id)+'">'+
-      badge+
-      colorHint+
-      dragHandle+
-      '<div class="fav-tile-top">'+
-        '<div style="flex:1;min-width:0;padding-right:28px">'+
-          '<div class="fav-tile-name'+(has?' on':'')+'">'+esc(d.name)+'</div>'+
-          '<div class="fav-tile-cat"><span class="cdot" style="background:'+col+'"></span>'+esc(d.cat)+'</div>'+
-        '</div>'+
-      '</div>'+
-      '<div class="fav-tile-bottom">'+
-        '<div class="dprice" style="font-size:11px">'+eur(d.price)+inclDot+'</div>'+
-      '</div>'+
-    '</div>'+
-  '</div>';
-}
-
-/* ── renderFavTileEditPanel ── */
-function renderFavTileEditPanel(){
-  var el=document.getElementById('favTileEditPanel');
-  if(!el)return;
-  if(!S.favTileMode||!S.favTileEditActive){el.style.display='none';return;}
-  var L=S.lang==='en';
-  var em=S.favTileEditMode;
-  var sortOn=em==='sort',removeOn=em==='remove',colorOn=em==='color';
-  var hint='';
-  // S3/S4: Sortiermodus-Hinweis + Reset-Reihenfolge-Button
-  if(sortOn){
-    var hasOrder=S.favOrder&&S.favOrder.length>0;
-    hint='<div style="font-size:10px;color:var(--ac);margin-top:6px;padding:5px 8px;background:var(--ac-07);border-radius:8px;line-height:1.5;display:flex;align-items:center;justify-content:space-between;gap:8px">'+
-      '<span>'+(L?'Tap first tile → select, tap second → swap positions':'1. Kachel antippen → auswählen, 2. Kachel antippen → tauschen')+'</span>'+
-      (hasOrder?'<button class="fav-tile-edit-reset" style="white-space:nowrap;flex-shrink:0" onclick="event.stopPropagation();S.favOrder=[];saveState();renderDrinks(false);showToast(\''+(L?'↺ Default order restored':'↺ Standard-Reihenfolge wiederhergestellt')+'\')">'+(L?'↺ Default order':'↺ Standard')+'</button>':'')+
-    '</div>';
-  }
-  else if(removeOn){hint='<div style="font-size:10px;color:var(--col-err);margin-top:6px;padding:5px 8px;background:rgba(208,85,85,0.08);border-radius:8px">'+(L?'Tap a tile to remove from favourites':'Kachel tippen → aus Favoriten entfernen')+'</div>';}
-  else if(colorOn){hint='<div style="font-size:10px;color:var(--tx2);margin-top:6px;padding:5px 8px;background:var(--ac-07);border-radius:8px">'+(L?'Tap a tile to choose its colour':'Kachel tippen → Farbe wählen')+'</div>';}
-  // F2: Zwei Reset-Buttons im Farb-Modus: Custom-Reset und Standard-Reset
-  var resetBtns=colorOn?
-    '<button class="fav-tile-edit-reset" onclick="event.stopPropagation();resetAllTileColors()">↺ '+(L?'Reset custom':'Custom löschen')+'</button>'+
-    '<button class="fav-tile-edit-reset" onclick="event.stopPropagation();resetToDefaultColors()">↺ '+(L?'Default (like list)':'Standard (wie Liste)')+'</button>'
-    :'';
-  el.style.display='';
-  el.innerHTML='<div class="fav-tile-edit-panel">'+
-    '<button class="fav-tile-edit-opt'+(sortOn?' on':'')+'" onclick="event.stopPropagation();setFavTileEditMode(\'sort\')">⇅ '+(L?'Sort':'Sortieren')+'</button>'+
-    '<button class="fav-tile-edit-opt'+(removeOn?' on':'')+'" onclick="event.stopPropagation();setFavTileEditMode(\'remove\')">★ '+(L?'Remove':'Entfernen')+'</button>'+
-    '<button class="fav-tile-edit-opt'+(colorOn?' on':'')+'" onclick="event.stopPropagation();setFavTileEditMode(\'color\');if(!S.favTileColors){S.favTileColors=true;saveState();}renderDrinks(false);">🎨 '+(L?'Color':'Farbe')+'</button>'+
-    resetBtns+
-  '</div>'+hint;
-}
-
-/* ── Tile Color Picker ── */
-function openTileColorPicker(drinkId){
-  _tcPickerId=drinkId;
-  var d=S.drinks.find(function(x){return x.id===drinkId;});
-  var L=S.lang==='en';
-  var title=document.getElementById('tileColorTitle');
-  if(title)title.textContent='🎨 '+(d?d.name:(L?'Tile colour':'Kachelfarbe'));
-  var cl=document.getElementById('tileColorCloseLbl');if(cl)cl.textContent=L?'Close':'Schließen';
-  var rl=document.getElementById('tileColorResetLbl');if(rl)rl.textContent=L?'↺ Auto colour':'↺ Auto-Farbe';
-  var grid=document.getElementById('tileColorGrid');
-  if(!grid)return;
-  var cur=(S.favTileCustomColors&&S.favTileCustomColors[drinkId])||'';
-  // Alle Farben aus beiden Paletten zusammenführen – dunkle zuerst, dann helle/bunte
-  var allColors=TILE_COLORS.concat(TILE_COLORS_LIGHT);
-  // Deduplizieren
-  allColors=allColors.filter(function(c,i){return allColors.indexOf(c)===i;});
-  var html='';
-  allColors.forEach(function(clr){
-    html+='<div class="tile-cpicker-swatch'+(cur===clr?' sel':'')+'" style="background:'+clr+'" data-clr="'+clr+'" onclick="setTileColor(\''+drinkId+'\',\''+clr+'\')"></div>';
-  });
-  grid.style.display='grid';
-  grid.style.gridTemplateColumns='repeat(7,1fr)';
-  grid.style.maxHeight='280px';
-  grid.style.overflowY='auto';
-  grid.innerHTML=html;
-  document.getElementById('tileColorOv').className='ov show-center';
-}
-function setTileColor(drinkId,color){
-  if(!S.favTileCustomColors)S.favTileCustomColors={};
-  S.favTileCustomColors[drinkId]=color;
-  saveState();
-  document.querySelectorAll('#tileColorGrid .tile-cpicker-swatch').forEach(function(s){
-    s.classList.toggle('sel',s.dataset.clr===color);
-  });
-  renderDrinks(false);
-}
-function resetTileColor(){
-  if(_tcPickerId&&S.favTileCustomColors){delete S.favTileCustomColors[_tcPickerId];}
-  saveState();closeTileColorPicker();renderDrinks(false);
-}
-function closeTileColorPicker(){document.getElementById('tileColorOv').className='ov';_tcPickerId=null;}
-
 function renderDrinksDebounced(full){
   if(_renderDrinksTimer)clearTimeout(_renderDrinksTimer);
   _renderDrinksTimer=setTimeout(()=>renderDrinks(full),30);
 }
 function renderDrinks(forceSort){
   // 12.2: Skip re-render if nothing visually changed
-  const hash=JSON.stringify([S.drinks.length,S.catFilter,S.fz,S.lang,JSON.stringify([...S.favorites]),S.btnLayout,JSON.stringify(S.counts),S.favCollapsed,S.top10Collapsed,S.favSortMode,S.favTileMode,S.favTileColors,JSON.stringify(S.favTileCustomColors||{}),JSON.stringify(S.favOrder),JSON.stringify([...S.drinkExpandedCats]),S.selCat,S.drinks.filter(d=>d.included).length,S.favTileEditActive,S.favTileEditMode,S.favTileEditSortSel]);
+  const hash=JSON.stringify([S.drinks.length,S.catFilter,S.fz,S.lang,JSON.stringify([...S.favorites]),S.btnLayout,JSON.stringify(S.counts),S.favCollapsed,S.top10Collapsed,S.favSortMode,JSON.stringify(S.favOrder),JSON.stringify([...S.drinkExpandedCats]),S.selCat,S.drinks.filter(d=>d.included).length]);
   if(!forceSort&&hash===_lastDrinksHash){return;}
   _lastDrinksHash=hash;
   // Scroll-Position aus dem echten Scroll-Container (#p0) retten
@@ -5794,31 +5282,15 @@ function renderDrinks(forceSort){
     const favListEl=document.getElementById('favList');
     const favTitleEl=document.getElementById('favTitle');
     const arr=S.favCollapsed?'▶':'▼';
-    const tileActive=S.favTileMode;
-    const editActive=S.favTileEditActive;
-    const editLbl=S.lang==='en'?'···':'···';
-    // Button row: ★ Fav title (flex:1) | … (only tile mode) | View-Toggle Pill
-    const editBtn=tileActive?`<button class="fav-tile-edit-btn${editActive?' active':''}" onclick="event.stopPropagation();toggleFavTileEdit()" title="${S.lang==='en'?(editActive?'Exit edit mode':'Edit tiles'):(editActive?'Bearbeiten beenden':'Kacheln bearbeiten')}">${editLbl}</button>`:'';
-    // Fix 6: Pill-Toggle statt einzelnem Icon-Button
-    const viewToggle=`<div class="fav-view-toggle"><button class="fav-view-btn${!tileActive?' on':''}" onclick="event.stopPropagation();if(S.favTileMode){_favListFade(function(){toggleFavTileMode();});}" title="${S.lang==='en'?'List view':'Listenansicht'}">☰</button><button class="fav-view-btn${tileActive?' on':''}" onclick="event.stopPropagation();if(!S.favTileMode){_favListFade(function(){toggleFavTileMode();});}" title="${S.lang==='en'?'Tile view':'Kachelansicht'}">⊞</button></div>`;
-    favTitleEl.innerHTML=`<span style="cursor:pointer;display:flex;align-items:center;gap:5px;flex:1" data-fav-toggle="1"><span>${arr}</span><span>${T('fav.title')}</span></span>${editBtn}${viewToggle}`;
-    renderFavTileEditPanel();
+    const sortLbl=S.lang==='en'?'Sort':'Sortieren';
+    const sortActive=S.favSortMode;
+    favTitleEl.innerHTML=`<span style="cursor:pointer;display:flex;align-items:center;gap:5px;flex:1" data-fav-toggle="1"><span>${arr}</span><span>${T('fav.title')}</span></span><button class="fav-sort-btn${sortActive?' active':''}" onclick="event.stopPropagation();toggleFavSortMode()">⇅ ${sortLbl}</button>`;
     favListEl.style.display=S.favCollapsed?'none':'';
     if(!S.favCollapsed){
-      if(S.favTileMode){
-        favListEl.className='fav-tile-grid';
-        favListEl.style.padding='';
-        favListEl.innerHTML=favFiltered.map(d=>drinkTile(d)).join('');
-        // S1/S2: Tile-Drag nach dem Render initialisieren
-        initTileDrag();
-      }else if(S.favSortMode){
-        favListEl.className='dlist';
-        favListEl.style.padding='0';
+      if(S.favSortMode){
         favListEl.innerHTML=favFiltered.map(d=>`<div class="fav-sort-item" data-favid="${esc(d.id)}"><div class="fav-drag-handle" data-drag="${esc(d.id)}">⠿</div><div style="flex:1;min-width:0">${drinkRow(d,-1,true)}</div></div>`).join('');
         initFavDrag();
       }else{
-        favListEl.className='dlist';
-        favListEl.style.padding='0';
         favListEl.innerHTML=favFiltered.map(d=>drinkRow(d,-1,true)).join('');
       }
     }
@@ -5854,15 +5326,9 @@ function renderDrinks(forceSort){
 function handleDrinkClick(e){
   const t=e.target;
   // Favoriten-Titel: nur über data-Attribut, kein onclick → kein Doppel-Auslösen
-  if(t.closest('[data-fav-toggle]')&&!t.closest('.fav-tile-btn')&&!t.closest('.fav-tile-edit-btn')&&!t.closest('.fav-view-toggle')){e.preventDefault();toggleFavSection();return;}
+  if(t.closest('[data-fav-toggle]')&&!t.closest('.fav-sort-btn')){e.preventDefault();toggleFavSection();return;}
   // Top10-Titel
   if(t.closest('[data-top10-toggle]')){e.preventDefault();toggleTop10Section();return;}
-  // Kachel: edit-mode → editTap; normal → tapPlus
-  const tile=t.closest('[data-tile-plus]');
-  if(tile&&!t.closest('[data-fav]')&&!t.closest('[data-plus]')&&!t.closest('[data-minus]')){
-    if(S.favTileMode&&S.favTileEditActive){favTileEditTap(tile.dataset.tilePlus);return;}
-    tapPlus(tile.dataset.tilePlus);return;
-  }
   const fav=t.closest('[data-fav]'),plus=t.closest('[data-plus]'),minus=t.closest('[data-minus]'),hdr=t.closest('[data-dc]');
   if(fav&&!plus&&!minus){toggleFav(fav.dataset.fav);return;}
   if(hdr&&!fav&&!plus&&!minus){e.preventDefault();const ci=parseInt(hdr.dataset.dc),cat=allCats()[ci];if(cat!==undefined){S.drinkExpandedCats.has(cat)?S.drinkExpandedCats.delete(cat):S.drinkExpandedCats.add(cat);renderDrinks(false);}return;}
@@ -5880,16 +5346,9 @@ function handleDrinkClick(e){
     const tc=e.changedTouches[0];
     if(tc&&(Math.abs(tc.clientY-_tY)>10||Math.abs(tc.clientX-_tX)>10))return;
     // Favoriten-Toggle
-    if(t.closest('[data-fav-toggle]')&&!t.closest('.fav-tile-btn')&&!t.closest('.fav-tile-edit-btn')&&!t.closest('.fav-view-toggle')){e.preventDefault();toggleFavSection();return;}
+    if(t.closest('[data-fav-toggle]')&&!t.closest('.fav-sort-btn')){e.preventDefault();toggleFavSection();return;}
     // Top10-Toggle
     if(t.closest('[data-top10-toggle]')){e.preventDefault();toggleTop10Section();return;}
-    // Kachel: edit-mode → editTap; normal → tapPlus
-    const tile=t.closest('[data-tile-plus]');
-    if(tile&&!t.closest('[data-fav]')&&!t.closest('[data-plus]')&&!t.closest('[data-minus]')){
-      if(window._tileLpBlock){e.preventDefault();return;} // long-press war aktiv → kein tapPlus
-      if(S.favTileMode&&S.favTileEditActive){e.preventDefault();favTileEditTap(tile.dataset.tilePlus);return;}
-      e.preventDefault();tapPlus(tile.dataset.tilePlus);return;
-    }
     const hdr=t.closest('[data-dc]');
     if(hdr&&!t.closest('[data-fav]')&&!t.closest('[data-plus]')&&!t.closest('[data-minus]')){
       e.preventDefault();
@@ -5900,111 +5359,6 @@ function handleDrinkClick(e){
 });
 setInterval(()=>{const n=Date.now();Object.keys(S.plusDebounce).forEach(k=>{if(n-S.plusDebounce[k]>60000)delete S.plusDebounce[k];});},300000);
 setInterval(updateClock,1000);
-
-/* ── O5: Long-Press Kontextmenü für Kacheln ── */
-(function(){
-  var _lpTimer=null,_lpId=null,_lpMoved=false,_lpStartX=0,_lpStartY=0;
-
-  function _openTileCtx(id,x,y){
-    var d=S.drinks.find(function(xx){return xx.id===id;});if(!d)return;
-    var L=S.lang==='en';
-    // Altes Menü entfernen
-    var ex=document.getElementById('tileCtxMenu');if(ex)ex.remove();
-    var menu=document.createElement('div');
-    menu.id='tileCtxMenu';
-    menu.style.cssText='position:fixed;z-index:8000;background:var(--bg2);border:1px solid var(--ac-27);border-radius:14px;padding:6px 0;min-width:196px;box-shadow:0 8px 28px rgba(0,0,0,.65);font-family:Georgia,serif;touch-action:manipulation;';
-    var maxX=window.innerWidth-210,maxY=window.innerHeight-240;
-    menu.style.left=Math.max(8,Math.min(x-24,maxX))+'px';
-    menu.style.top=Math.max(8,Math.min(y-10,maxY))+'px';
-
-    function row(ico,lbl,fn){
-      var btn=document.createElement('button');
-      btn.style.cssText='display:flex;align-items:center;gap:12px;width:100%;padding:13px 18px;border:none;background:transparent;color:var(--tx0);font-family:Georgia,serif;font-size:14px;cursor:pointer;text-align:left;touch-action:manipulation;-webkit-user-select:none;line-height:1.2;';
-      btn.innerHTML='<span style="font-size:17px;width:22px;text-align:center;flex-shrink:0">'+ico+'</span><span>'+lbl+'</span>';
-      function _act(e){
-        e.preventDefault();e.stopPropagation();
-        var cur=document.getElementById('tileCtxMenu');if(cur)cur.remove();
-        window._tileLpBlock=false;
-        fn();
-      }
-      btn.addEventListener('touchend',_act,{passive:false});
-      btn.addEventListener('click',_act);
-      menu.appendChild(btn);
-    }
-
-    var isFav=S.favorites.has(id);
-    row('\u2605',L?(isFav?'Remove from favourites':'Add to favourites'):(isFav?'Aus Favoriten entfernen':'Zu Favoriten hinzuf\xfcgen'),function(){toggleFav(id);});
-    row('\U0001f3a8',L?'Tile colour':'Kachelfarbe',function(){
-      if(!S.favTileColors){
-        S.favTileColors=true;
-        autoAssignTileColors();
-        saveState();
-        renderDrinks(false);
-      }
-      openTileColorPicker(id);
-    });
-    row('\u270f\ufe0f',L?'Edit drink':'Getr\xe4nk bearbeiten',function(){openEditDrink&&openEditDrink(id);});
-    var sep=document.createElement('div');
-    sep.style.cssText='height:0.5px;background:var(--ac-20);margin:4px 0';
-    menu.appendChild(sep);
-    row('\u2715',L?'Close':'Schlie\xdfen',function(){});
-    document.body.appendChild(menu);
-    try{if(typeof navigator.vibrate==='function')navigator.vibrate([12,8,12]);}catch(_e){}
-
-    // Dismiss: erst nach 650ms registrieren – iOS generiert ~300ms nach touchend einen
-    // synthetischen click-Event; der wuerde das Menu sofort schliessen.
-    var _openTs=Date.now();
-    function _dismiss(ev){
-      // Jetzt erst reagieren wenn genuegend Zeit vergangen
-      if(Date.now()-_openTs<650)return;
-      var cur=document.getElementById('tileCtxMenu');
-      if(!cur)return;
-      if(cur.contains(ev.target))return;
-      cur.remove();
-      window._tileLpBlock=false;
-      document.removeEventListener('touchstart',_dismiss,true);
-      document.removeEventListener('click',_dismiss,true);
-    }
-    // Touchstart sofort – aber mit Zeitpruefung innen
-    document.addEventListener('touchstart',_dismiss,true);
-    // Click nach 650ms – deckt synthetischen click ab
-    setTimeout(function(){
-      document.addEventListener('click',_dismiss,true);
-    },650);
-  }
-
-  var fs=document.getElementById('favSection');
-  if(!fs)return;
-
-  fs.addEventListener('touchstart',function(e){
-    var tile=e.target.closest('[data-tile-id]');
-    if(!tile)return;
-    if(e.target.closest('.fav-tile-drag-handle-tile')||e.target.closest('.fav-view-toggle'))return;
-    _lpId=tile.dataset.tileId;
-    _lpMoved=false;
-    _lpStartX=e.touches[0].clientX;
-    _lpStartY=e.touches[0].clientY;
-    var _cx=e.touches[0].clientX,_cy=e.touches[0].clientY;
-    _lpTimer=setTimeout(function(){
-      if(_lpMoved||!_lpId)return;
-      window._tileLpBlock=true;
-      setTimeout(function(){window._tileLpBlock=false;},900);
-      _openTileCtx(_lpId,_cx,_cy);
-    },700);
-  },{passive:true});
-
-  fs.addEventListener('touchmove',function(e){
-    if(!_lpTimer)return;
-    var tc=e.touches[0];
-    if(Math.abs(tc.clientX-_lpStartX)>10||Math.abs(tc.clientY-_lpStartY)>10){
-      _lpMoved=true;clearTimeout(_lpTimer);_lpTimer=null;
-    }
-  },{passive:true});
-
-  fs.addEventListener('touchend',function(){
-    clearTimeout(_lpTimer);_lpTimer=null;
-  },{passive:true});
-})();
 
 /* FIX V47+: Pro-Getränk-Debounce statt globaler 600ms-Sperre (Multi-User-sicher) */
 var _tapPlusLast={};
@@ -6028,11 +5382,6 @@ function tapPlus(id){
   if(S.dailyGoal>0){const t=logicalTodayStr();const dt=S.log.filter(e=>entryLogicalDayStr(e)===t).reduce((s,e)=>s+(e.price||0),0); // FIX V32 K-3
 if(dt>=S.dailyGoal){const justCrossed=(dt-d.price)<S.dailyGoal;if(justCrossed){showToast(T('goal.reached'),'error',4000);}else if(S.limitShownToday!==logicalTodayStr()){showToast(T('goal.exceeded'),'warn',3500);S.limitShownToday=logicalTodayStr();}updateLimitBanner();}}
   S.flashId=id;renderDrinks(false);
-  // O1: tap-flash auch auf der Kachel selbst (nicht nur auf .bplus)
-  requestAnimationFrame(function(){
-    var tileEl=document.querySelector('[data-tile-id="'+id+'"]');
-    if(tileEl){tileEl.classList.add('tap-flash');setTimeout(function(){tileEl.classList.remove('tap-flash');},200);}
-  });
   setTimeout(()=>{S.flashId=null;renderDrinks(false);},280);
   clearTimeout(S.sortTimer);S.sortTimer=setTimeout(()=>{S.stableOrder=[];renderDrinks(true);},7000);
   clearTimeout(S.top10Timer);S.top10Timer=setTimeout(()=>{S.stableTop10=[];renderDrinks(false);},5000);
@@ -6335,62 +5684,6 @@ function renderUserStatsCard(fl){
     return `<div class="stat-user-row" style="flex-direction:column;align-items:stretch"><div style="display:flex;align-items:center;gap:8px"><div class="stat-user-avatar" style="background:${u.color}22;color:${u.color}">${esc(u.name.slice(0,1))}</div><div class="stat-user-info"><div class="stat-user-name">${esc(u.name)}</div><div class="stat-user-sub">${fmtNum(stat.count)}× · ${stat.days.size} ${L?'Days':'Tage'} · ∅ ${eur(avgDay)}/${L?'Day':'Tag'}</div></div><div class="stat-user-total">${eur(stat.total)}</div></div>${shareBar}${budgetHtml}</div>`;
   }).join('');
   return `<div class="stat-card" data-sc="byuser"><div class="stat-card-title">👥 ${L?'By Person':'Nach Nutzer'}</div>${rows}</div>`;
-}
-
-/* ── O6: Fade-Helper für Ansichtswechsel Liste ↔ Kacheln ── */
-function _favListFade(cb){
-  var el=document.getElementById('favList');
-  if(!el){cb();return;}
-  el.classList.add('tile-fade');
-  setTimeout(function(){cb();el.classList.remove('tile-fade');},130);
-}
-
-/* ── S1/S2: Tile-Drag (Sortiermodus Kacheln) ── */
-let _tfd={active:false,id:null,el:null,lastOver:null};
-function initTileDrag(){
-  if(!S.favTileEditActive||S.favTileEditMode!=='sort')return;
-  document.querySelectorAll('.fav-tile-drag-handle-tile').forEach(function(handle){
-    if(handle._tfdi)return;handle._tfdi=true;
-    handle.addEventListener('touchstart',function(e){
-      var wrap=handle.closest('.drow-wrap');if(!wrap)return;
-      _tfd.active=true;_tfd.id=wrap.dataset.dswid;_tfd.el=wrap;_tfd.lastOver=null;
-      wrap.classList.add('tile-drag-active');
-      e.preventDefault();e.stopPropagation();
-    },{passive:false});
-    handle.addEventListener('touchmove',function(e){
-      if(!_tfd.active)return;
-      e.preventDefault();e.stopPropagation();
-      var x=e.touches[0].clientX,y=e.touches[0].clientY;
-      var tiles=[...document.querySelectorAll('.fav-tile-grid .drow-wrap')];
-      var target=null;
-      tiles.forEach(function(t){t.classList.remove('tile-drag-over-mark');});
-      for(var i=0;i<tiles.length;i++){
-        var t=tiles[i];if(t===_tfd.el)continue;
-        var r=t.getBoundingClientRect();
-        if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom){target=t;break;}
-      }
-      if(target){target.classList.add('tile-drag-over-mark');_tfd.lastOver=target;}
-      else{_tfd.lastOver=null;}
-    },{passive:false});
-    handle.addEventListener('touchend',function(){
-      if(!_tfd.active)return;_tfd.active=false;
-      if(_tfd.el)_tfd.el.classList.remove('tile-drag-active');
-      document.querySelectorAll('.fav-tile-grid .drow-wrap').forEach(function(t){t.classList.remove('tile-drag-over-mark');});
-      if(_tfd.lastOver&&_tfd.id){
-        var fromId=_tfd.id;
-        var toId=_tfd.lastOver.dataset.dswid;
-        if(fromId&&toId&&fromId!==toId){
-          var allFavIds=[...S.favorites];
-          var base=S.favOrder.length?[...S.favOrder]:[...allFavIds];
-          allFavIds.forEach(function(fid){if(!base.includes(fid))base.push(fid);});
-          var a=base.indexOf(fromId),b=base.indexOf(toId);
-          if(a!==-1&&b!==-1){var tmp=base[a];base[a]=base[b];base[b]=tmp;}
-          S.favOrder=base;saveState();renderDrinks(false);
-        }
-      }
-      _tfd={active:false,id:null,el:null,lastOver:null};
-    },{passive:true});
-  });
 }
 
 /* Touch drag-and-drop for favorites reordering */
@@ -6776,8 +6069,6 @@ function initSwipeDelete(){
 function initDrinkSwipe(){
   document.querySelectorAll('.drow-wrap').forEach(wrap=>{
     if(wrap._dsi)return;
-    // skip tiles in sort mode – drag-handles take priority
-    if(wrap.closest('.fav-tile-grid')&&wrap.querySelector('[data-tile-drag]'))return;
     wrap._dsi=true;
     const row=wrap.querySelector('.drow');
     const bg=wrap.querySelector('.drow-swipe-bg');
@@ -9298,13 +8589,10 @@ function renderHelp(){
 
     <div class="hlp-card">
       <div class="hlp-card-title">★ ${h('Favoriten','Favourites')}</div>
-      <div class="hlp-row"><span class="hlp-badge gold">★ ${h('Stern-Symbol','Star icon')}</span><span>${h('Das Stern-Symbol (☆/★) an einem Getränke-Button tippen → das Getränk erscheint dauerhaft im <strong>★ Favoriten</strong>-Bereich ganz oben. Erneut tippen → aus Favoriten entfernen.','Tap the star icon (☆/★) on a drink button → the drink permanently appears in the <strong>★ Favourites</strong> section at the top. Tap again → remove from favourites.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge gold">★ ${h('Stern-Symbol','Star icon')}</span><span>${h('Das Stern-Symbol an einem Getränke-Button tippen → das Getränk erscheint dauerhaft im <strong>★ Favoriten</strong>-Bereich ganz oben (goldener Rahmen). Erneut tippen → aus Favoriten entfernen.','Tap the star icon on a drink button → the drink permanently appears in the gold-bordered <strong>★ Favourites</strong> section at the top. Tap again → remove from favourites.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">▶/▼ ${h('Ein-/Ausklappen','Expand/Collapse')}</span><span>${h('Den Titel <strong>★ Favoriten</strong> antippen → Bereich ein- oder ausklappen. Zustand wird gespeichert und bleibt nach Neustart erhalten.','Tap the <strong>★ Favourites</strong> title → expand or collapse the section. State is saved and persists after restart.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge gold">⊞ ${h('Kachelansicht','Tile view')}</span><span>${h('Schaltfläche <strong>⊞</strong> (ganz rechts) antippen → wechselt zwischen Listen- und Kachelansicht. 2 Favoriten nebeneinander, gleiche feste Höhe. Symbol → <strong>☰</strong> = zurück zur Listenansicht.','Tap <strong>⊞</strong> (far right) → switch between list and tile view. 2 favourites side by side at equal height. Icon → <strong>☰</strong> = back to list view.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge gold">${h('Kachel antippen','Tap tile')}</span><span>${h('Antippen → Getränk sofort erfassen. Jede Kachel zeigt: Name, Kategorie (Farbbalken links), Preis, Inklusiv-Punkt, Zähler. Links wischen (Zähler > 0) → letzten Eintrag rückgängig. Stern ★ oben rechts → Favorit entfernen.','Tap → record the drink immediately. Each tile shows: name, category (colour bar left), price, included indicator, counter. Swipe left (counter > 0) → undo last entry. Star ★ top right → remove from favourites.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge gold">··· ${h('Bearbeitungs-Menü','Edit menu')}</span><span>${h('Schaltfläche <strong>···</strong> (links von ⊞) antippen → Bearbeitungsmodus. <strong>Keine Getränke werden erfasst.</strong> Drei Optionen:<br>• <strong>⇅ Sortieren</strong>: 1. Kachel tippen (goldener Rahmen) → 2. Kachel tippen → Positionen tauschen.<br>• <strong>★ Entfernen</strong>: Kachel tippen → sofort aus Favoriten entfernt.<br>• <strong>🎨 Farbe</strong>: schaltet Kachelfarben ein, dann Kachel tippen → Farbauswahl (42 Farben, 7 Gruppen). <strong>↺ Alle zurücksetzen</strong> löscht alle Farben. <strong>↺ Keine Farbe</strong> im Dialog entfernt die Farbe dieser Kachel. Farben bleiben gespeichert wenn Farbmodus aus ist und erscheinen bei erneutem Einschalten wieder. Erneut <strong>···</strong> tippen → Bearbeitung beenden.','Tap <strong>···</strong> (left of ⊞) → edit mode. <strong>No drinks are recorded.</strong> Three options:<br>• <strong>⇅ Sort</strong>: tap 1st tile (gold border) → tap 2nd tile → swap positions.<br>• <strong>★ Remove</strong>: tap a tile → removed from favourites immediately.<br>• <strong>🎨 Color</strong>: enables tile colours, then tap a tile → colour picker (42 colours, 7 groups). <strong>↺ Reset all</strong> clears all colours. <strong>↺ No colour</strong> removes colour for that tile. Individual colours persist when colour mode is off and reappear when switched back on. Tap <strong>···</strong> again → exit edit mode.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge gold">⇅ ${h('Reihenfolge sortieren','Sort order')}</span><span>${h('Schaltfläche <strong>⇅ Sortieren</strong> neben dem Favoriten-Titel antippen → Sortiermodus aktiv (wechselt automatisch in Listenansicht). An jedem Favorit erscheint ein <strong>⠿ Anfasser</strong> am linken Rand. Den Anfasser gedrückt halten und nach oben oder unten ziehen → Reihenfolge ändern. Schaltfläche erneut tippen → Sortiermodus beenden. Reihenfolge wird automatisch gespeichert.','Tap <strong>⇅ Sort</strong> next to the Favourites title → sort mode active (automatically switches to list view). Each favourite shows a <strong>⠿ handle</strong> on the left. Hold and drag the handle up or down → reorder. Tap button again → exit sort mode. Order is automatically saved.')}</span></div>
-      <div class="hlp-tip">💡 ${h('Tipp: Kachelansicht für schnelles Erfassen, <strong>···</strong> für alle Verwaltungsaufgaben (Sortieren, Entfernen, Farben). Im normalen Modus ohne <strong>···</strong> werden Getränke direkt durch Antippen erfasst.','Tip: Use tile view for quick recording, <strong>···</strong> for all management tasks (sort, remove, colours). In normal mode without <strong>···</strong>, drinks are recorded directly by tapping.')}</div>
+      <div class="hlp-row"><span class="hlp-badge gold">⇅ ${h('Reihenfolge sortieren','Sort order')}</span><span>${h('Schaltfläche <strong>⇅ Sortieren</strong> neben dem Favoriten-Titel antippen → Sortiermodus aktiv. An jedem Favorit erscheint ein <strong>≡ Anfasser</strong> am linken Rand. Den Anfasser gedrückt halten und nach oben oder unten ziehen → Reihenfolge ändern. Schaltfläche erneut tippen → Sortiermodus beenden. Reihenfolge wird automatisch gespeichert.','Tap <strong>⇅ Sort</strong> next to the Favourites title → sort mode active. Each favourite shows a <strong>≡ handle</strong> on the left. Hold and drag the handle up or down → reorder. Tap button again → exit sort mode. Order is automatically saved.')}</span></div>
+      <div class="hlp-tip">💡 ${h('Empfehlung: Die Getränke, die am häufigsten bestellt werden, als Favoriten markieren. So sind sie immer sofort sichtbar, auch wenn die Getränkeliste lang ist.','Recommendation: mark the most frequently ordered drinks as favourites. They are then always instantly visible, even when the drink list is long.')}</div>
     </div>
 
     <div class="hlp-card">
