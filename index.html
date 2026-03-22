@@ -1950,7 +1950,7 @@ window.addEventListener('unhandledrejection', function(e) {
 /* ═══════════════════════════════════════════════════════════════
    TRANSLATIONS – Complete DE / EN
 ═══════════════════════════════════════════════════════════════ */
-const APP_VERSION = 'V48';
+const APP_VERSION = 'V48.1';
 const I18N = {
   de:{
     'tab.drinks':'Getränke','tab.log':'Protokoll','tab.stats':'Statistik','tab.manage':'Einstellungen','tab.help':'Hilfe',
@@ -4696,7 +4696,7 @@ async function saveBackupInternal(){
       users:S.users||[],activeUserId:S.activeUserId||'',userBudgets:S.userBudgets||{},
       voyageRoute:S.voyageRoute||[],currentLocation:S.currentLocation||'',
       serviceCharge:S.serviceCharge||0,customThemes:S.customThemes||[],btnLayout:S.btnLayout||'plus-left',
-      conceptFavorites:S.conceptFavorites||['kapitaensbuch','atelier','sonnendeck'],conceptTheme:S.conceptTheme||'kapitaensbuch'};
+      conceptFavorites:S.conceptFavorites||['kapitaensbuch','atelier','sonnendeck'],conceptTheme:S.conceptTheme||'kapitaensbuch',iconLib:getIconLib()}; // FIX V48 B3
     const jsonStr=JSON.stringify(data,null,2);
     const sizeKb=Math.round(jsonStr.length/1024*10)/10;
     const now=new Date();
@@ -5395,8 +5395,9 @@ if(dt>=S.dailyGoal){const justCrossed=(dt-d.price)<S.dailyGoal;if(justCrossed){s
   try{if(typeof navigator.vibrate==='function')navigator.vibrate(15);}catch(_){}
   if(plusBtn){plusBtn.classList.add('tap-flash');setTimeout(()=>plusBtn.classList.remove('tap-flash'),200);}
   try{
-    const _AC=window.AudioContext||window.webkitAudioContext;
-    if(_AC){const _ac=new _AC();const _b=_ac.createBuffer(1,1,22050);const _s=_ac.createBufferSource();_s.buffer=_b;_s.connect(_ac.destination);_s.start(0);setTimeout(()=>_ac.close(),100);}
+    // FIX V48 B5: Singleton AudioContext – verhindert Speicherleck bei schnellem Tippen
+    if(!window._tapAC){const _AC=window.AudioContext||window.webkitAudioContext;if(_AC)window._tapAC=new _AC();}
+    if(window._tapAC){const _b=window._tapAC.createBuffer(1,1,22050);const _s=window._tapAC.createBufferSource();_s.buffer=_b;_s.connect(window._tapAC.destination);_s.start(0);}
   }catch(_){}
 }
 
@@ -5421,7 +5422,7 @@ function tapMinus(id){
   clearTimeout(S.top10Timer);S.top10Timer=setTimeout(()=>{S.stableTop10=[];renderDrinks(false);},5000);
   if(removed){
     const d=S.drinks.find(x=>x.id===id);
-    showToastUndo(esc(d?d.name:(S.lang==='en'?'Entry':'Eintrag'))+' entfernt',()=>{
+    showToastUndo(esc(d?d.name:(S.lang==='en'?'Entry':'Eintrag'))+' '+(S.lang==='en'?'removed':'entfernt'),()=>{
       /* FIX V47+ #3: Zeitstempel-basiertes Einfügen statt altem Index (korrekte Reihenfolge) */
       const removedTime=new Date(removed.time).getTime();
       const restoreIdx=S.log.findIndex(e=>new Date(e.time).getTime()<removedTime);
@@ -9433,7 +9434,7 @@ function exportBackupSilent(){const nm=appNameClean();
 tzMode:S.tzMode||'auto',tzOffset:S.tzOffset||0,tzChangeLog:S.tzChangeLog||[],drinks:S.drinks,log:S.log,favorites:[...S.favorites],favOrder:S.favOrder||[], // FIX V32 M-1: Favoritenreihenfolge sichern
 lang:S.lang,fontSize:S.fontSize,dailyGoal:S.dailyGoal,currency:S.currency,catColorMap:S.ccm,dayEndHour:S.dayEndHour||0,dayEndMinute:S.dayEndMinute||0,users:S.users||[],activeUserId:S.activeUserId||'',userBudgets:S.userBudgets||{},
 voyageRoute:S.voyageRoute||[],currentLocation:S.currentLocation||'',
-serviceCharge:S.serviceCharge||0,customThemes:S.customThemes||[],btnLayout:S.btnLayout||'plus-left',conceptFavorites:S.conceptFavorites||['kapitaensbuch','atelier','sonnendeck'],conceptTheme:S.conceptTheme||'kapitaensbuch'};
+serviceCharge:S.serviceCharge||0,customThemes:S.customThemes||[],btnLayout:S.btnLayout||'plus-left',conceptFavorites:S.conceptFavorites||['kapitaensbuch','atelier','sonnendeck'],conceptTheme:S.conceptTheme||'kapitaensbuch',iconLib:getIconLib()}; // FIX V48 B3: Icon-Library im Backup
   const dateStr=new Date().toLocaleDateString(S.lang==='en'?'en-US':'de-DE');
   const _bfh=Math.floor(Math.abs(appOffset())/60),_bfm=Math.abs(appOffset())%60;const _bfTag='_UTC'+(appOffset()>=0?'+':'-')+_bfh+(_bfm?'-'+String(_bfm).padStart(2,'0'):'');
   const _fname='Backup_'+nm+'_'+dateStr.replace(/[/.]/g,'-')+_bfTag+'.json';
@@ -9581,7 +9582,7 @@ async function shareBackup(){
     users:S.users||[],activeUserId:S.activeUserId||'',userBudgets:S.userBudgets||{},
     voyageRoute:S.voyageRoute||[],currentLocation:S.currentLocation||'',
     serviceCharge:S.serviceCharge||0,customThemes:S.customThemes||[],btnLayout:S.btnLayout||'plus-left',
-    conceptFavorites:S.conceptFavorites||['kapitaensbuch','atelier','sonnendeck'],conceptTheme:S.conceptTheme||'kapitaensbuch'};
+    conceptFavorites:S.conceptFavorites||['kapitaensbuch','atelier','sonnendeck'],conceptTheme:S.conceptTheme||'kapitaensbuch',iconLib:getIconLib()}; // FIX V48 B3
   const dateStr=new Date().toLocaleDateString(L?'en-US':'de-DE');
   const _bfh=Math.floor(Math.abs(appOffset())/60),_bfm=Math.abs(appOffset())%60;
   const _bfTag='_UTC'+(appOffset()>=0?'+':'-')+_bfh+(_bfm?'-'+String(_bfm).padStart(2,'0'):'');
@@ -9873,6 +9874,8 @@ function doImport(mode){
     if(data.conceptTheme&&typeof data.conceptTheme==='string')S.conceptTheme=data.conceptTheme;
     // FIX M-01: Theme (Farbschema) aus Backup wiederherstellen
     if(data.theme&&typeof data.theme==='string'){S.theme=data.theme;syncCustomThemesToRuntime();applyTheme(data.theme);}
+    // FIX V48 B3: Icon-Library aus Backup wiederherstellen
+    if(data.iconLib&&Array.isArray(data.iconLib)&&data.iconLib.length){saveIconLib(data.iconLib);}
     // Restore user profiles: keep existing fixed-slot names unless importProfiles checked, add extra backup users
     if(backupUsers.length){
       // If importProfiles checkbox was ticked, overwrite fixed-slot names/colors from backup
@@ -11010,7 +11013,8 @@ async function initApp(){
             serviceCharge:S.serviceCharge||0,customThemes:S.customThemes||[],
             btnLayout:S.btnLayout||'plus-left',
             conceptFavorites:S.conceptFavorites||['kapitaensbuch','atelier','sonnendeck'],
-            conceptTheme:S.conceptTheme||'kapitaensbuch'};
+            conceptTheme:S.conceptTheme||'kapitaensbuch',
+            iconLib:getIconLib()}; // FIX V48 B3: Icon-Library in internem Backup
           const jsonStr=JSON.stringify(data);
           const sizeKb=Math.round(jsonStr.length/1024*10)/10;
           const nowD=new Date();
