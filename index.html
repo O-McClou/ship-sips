@@ -459,6 +459,8 @@ body{height:100%;background:var(--bg);font-family:Georgia,serif;color:var(--tx0)
    translate3d(0,0,0) erzwingt eigene GPU-Compositing-Ebene → korrekte Positionierung iOS Safari.
    padding-bottom füllt den Home-Indicator-Bereich farbig aus. */
 .tabs{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:200;display:flex;border-top:1px solid var(--ac-20);background:var(--bg);padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -3px 18px rgba(0,0,0,0.45)}
+/* FIX V48 B-OV: Tab-Leiste ausblenden wenn ein Modal-Overlay offen ist */
+body.ov-open .tabs{visibility:hidden;pointer-events:none}
 .tab{flex:1;padding:7px 0 8px;background:transparent;color:var(--tx2);border:none;cursor:pointer;font-family:Georgia,serif;font-size:9px;letter-spacing:0.5px;transition:color .2s,background .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;-webkit-user-select:none;touch-action:manipulation;position:relative}
 .tab.on{background:var(--ac-07);color:var(--ac);font-weight:bold}
 .tab.on::after{content:'';position:absolute;top:0;left:25%;right:25%;height:2px;background:var(--ac);border-radius:0 0 2px 2px}
@@ -1803,7 +1805,7 @@ details.hlp-acc summary:active{opacity:.75}
     <div class="cfm-title" id="resetAll1Title" style="color:#e05555">⚠️ Alles zurücksetzen?</div>
     <div id="resetAll1Msg" style="font-size:12px;color:#8aa3c7;margin-bottom:16px;line-height:1.65"></div>
     <div class="cfm-btns">
-      <button class="cfm-no" onclick="document.getElementById('resetAllOv1').className='ov'" id="resetAll1CancelBtn">Abbrechen</button>
+      <button class="cfm-no" onclick="_ovHide('resetAllOv1')" id="resetAll1CancelBtn">Abbrechen</button>
       <button class="cfm-yes" id="resetAll1YesBtn" onclick="openResetAll2()" style="background:#c0392b"></button>
     </div>
   </div>
@@ -1828,7 +1830,7 @@ details.hlp-acc summary:active{opacity:.75}
     <div style="font-size:11px;color:var(--tx2);margin-bottom:14px;line-height:1.55" id="resetPartialSubtitle">Wähle, welche Bereiche zurückgesetzt werden sollen.</div>
     <div id="resetPartialList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px"></div>
     <div style="display:flex;gap:10px;margin-top:4px;padding-bottom:max(4px,env(safe-area-inset-bottom,4px))">
-      <button onclick="document.getElementById('resetPartialOv').className='ov'" id="resetPartialCancelBtn" style="flex:1;padding:12px;background:transparent;border:1px solid var(--ac-27);border-radius:10px;color:var(--tx2);font-family:Georgia,serif;font-size:13px;cursor:pointer;touch-action:manipulation">Abbrechen</button>
+      <button onclick="_ovHide('resetPartialOv')" id="resetPartialCancelBtn" style="flex:1;padding:12px;background:transparent;border:1px solid var(--ac-27);border-radius:10px;color:var(--tx2);font-family:Georgia,serif;font-size:13px;cursor:pointer;touch-action:manipulation">Abbrechen</button>
       <button onclick="confirmPartialReset()" id="resetPartialConfirmBtn" style="flex:2;padding:12px;background:#c07a20;border:none;border-radius:10px;color:#fff;font-family:Georgia,serif;font-size:13px;font-weight:bold;cursor:pointer;touch-action:manipulation;opacity:.4;pointer-events:none">Zurücksetzen</button>
     </div>
   </div>
@@ -1950,7 +1952,7 @@ window.addEventListener('unhandledrejection', function(e) {
 /* ═══════════════════════════════════════════════════════════════
    TRANSLATIONS – Complete DE / EN
 ═══════════════════════════════════════════════════════════════ */
-const APP_VERSION = 'V48.2';
+const APP_VERSION = 'V48.3';
 const I18N = {
   de:{
     'tab.drinks':'Getränke','tab.log':'Protokoll','tab.stats':'Statistik','tab.manage':'Einstellungen','tab.help':'Hilfe',
@@ -2599,9 +2601,9 @@ function openCustomThemeEditor(editId){
     _ctEdit={editId:null,name:L?'My Concept':'Mein Konzept',icon:'⚓',baseKey:'navy',acHex:'#C9A84C',advOpen:false,basicMode:true,advVars:null,customBg:null,_iconTab:'fav',_iconSearch:''};
   }
   renderCustomThemeEditor();
-  document.getElementById('customThemeEditorOv').className='ov show-bottom';
+  _ovShow('customThemeEditorOv','show-bottom');
 }
-function closeCustomThemeEditor(){document.getElementById('customThemeEditorOv').className='ov';}
+function closeCustomThemeEditor(){_ovHide('customThemeEditorOv');}
 
 /* ══ ICON-BIBLIOTHEK (Custom Import, max. 20) ════════════════════════════ */
 // [PUNKT-E] getIconLib – bleibt synchron aus localStorage
@@ -3147,7 +3149,7 @@ function copyConceptAsCustom(id){
   const conceptIconMap={kapitaensbuch:'⚓',atelier:'🎩',sonnendeck:'☀️',original:'✦',nautical_noir:'🎩',mare_sereno:'🌊',capitaine:'⚓',pergament:'📜',tiefsee:'🌑',champagner:'🥂',aida:'builtin:brand_aida',nicko:'builtin:brand_nicko',mein_schiff:'builtin:brand_mein_schiff'};
   _ctEdit={editId:null,name:T('theme.'+id)+(L?' (Copy)':' (Kopie)'),icon:conceptIconMap[id]||'✨',baseKey,acHex,advOpen:false,advVars:null,customBg:null,_iconTab:'fav',_iconSearch:''};
   renderCustomThemeEditor();
-  document.getElementById('customThemeEditorOv').className='ov show-bottom';
+  _ovShow('customThemeEditorOv','show-bottom');
 }
 
 /* ── Theme Export / Import ── */
@@ -3179,7 +3181,7 @@ function showThemeCodeModal(label,code,isBundle){
   sheet.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div style="font-size:15px;font-weight:bold;color:var(--ac)">📤 ${isBundle?(L?'Export All Concepts':'Alle Konzepte exportieren'):(L?'Export Concept':'Konzept exportieren')}</div>
-      <button onclick="document.getElementById('themeCodeModalOv').className='ov'" style="background:transparent;border:none;color:var(--tx2);font-size:22px;cursor:pointer;padding:0 4px;line-height:1" aria-label="Schließen">✕</button><!-- [PUNKT-F] -->
+      <button onclick="_ovHide('themeCodeModalOv')" style="background:transparent;border:none;color:var(--tx2);font-size:22px;cursor:pointer;padding:0 4px;line-height:1" aria-label="Schließen">✕</button><!-- [PUNKT-F] -->
     </div>
     <div style="font-size:11px;color:var(--tx2);margin-bottom:8px">${isBundle?(L?'Bundle code for all custom concepts':'Bundle-Code für alle eigenen Konzepte'):(L?'Code for concept:':'Code für Konzept:')} <strong style="color:var(--tx0)">${esc(label)}</strong></div>
     <div style="font-size:11px;color:var(--tx2);margin-bottom:10px;line-height:1.5">${L?'Tap the code field → hold → Select All → Copy.':'Code-Feld antippen → gedrückt halten → Alles auswählen → Kopieren.'}</div>
@@ -3240,7 +3242,7 @@ function importCustomTheme(){
   sheet.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div style="font-size:15px;font-weight:bold;color:var(--ac)">📥 ${L?'Import Concept':'Konzept importieren'}</div>
-      <button onclick="document.getElementById('themeCodeModalOv').className='ov'" style="background:transparent;border:none;color:var(--tx2);font-size:22px;cursor:pointer;padding:0 4px;line-height:1" aria-label="Schließen">✕</button><!-- [PUNKT-F] -->
+      <button onclick="_ovHide('themeCodeModalOv')" style="background:transparent;border:none;color:var(--tx2);font-size:22px;cursor:pointer;padding:0 4px;line-height:1" aria-label="Schließen">✕</button><!-- [PUNKT-F] -->
     </div>
     <div style="font-size:12px;color:var(--tx2);margin-bottom:10px;line-height:1.6">${L?'Paste the export code below (single concept or bundle):':'Export-Code hier einfügen (einzelnes Konzept oder Bundle):'}</div>
     <textarea id="themeImportTA" placeholder="${L?'Paste code here…':'Code hier einfügen…'}" style="width:100%;height:110px;background:var(--bg3);border:2px solid var(--ac-27);border-radius:10px;color:var(--tx1);font-family:monospace;font-size:11px;padding:10px;resize:none;outline:none;box-sizing:border-box;-webkit-appearance:none;word-break:break-all" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
@@ -3275,7 +3277,7 @@ function doThemeImport(){
         count++;
       });
       syncCustomThemesToRuntime();saveState();
-      document.getElementById('themeCodeModalOv').className='ov';
+      _ovHide('themeCodeModalOv');
       if(renderVerwaltung&&document.getElementById('vwpane')&&document.getElementById('p3').style.display!=='none')renderVerwaltung();
       showToast('\u2705 '+count+' '+(L?'concepts imported!':'Konzepte importiert!'),'info',2500);
     } else {
@@ -3284,7 +3286,7 @@ function doThemeImport(){
       const vars=generateCustomVars(payload.bk||'navy',payload.ac||'#C9A84C',payload.av||null);
       S.customThemes.push({id:newId,name:payload.n||'Import',icon:payload.i||'\u2728',baseKey:payload.bk||'navy',acHex:payload.ac||'#C9A84C',advVars:payload.av||null,vars});
       syncCustomThemesToRuntime();saveState();
-      document.getElementById('themeCodeModalOv').className='ov';
+      _ovHide('themeCodeModalOv');
       if(renderVerwaltung&&document.getElementById('vwpane')&&document.getElementById('p3').style.display!=='none')renderVerwaltung();
       showToast('\u2705 '+(L?'Concept imported!':'Konzept importiert!'),'info',2200);
     }
@@ -4058,6 +4060,21 @@ function loadState(){
 let _tt=null;
 function showToast(msg,type,dur){const el=document.getElementById('toast');el.innerHTML=esc(msg);el.className='show'+(type==='error'?' error':type==='info'?' info':type==='warn'?' warn':'');clearTimeout(_tt);_tt=setTimeout(()=>{el.className='';},dur||2800);}
 
+/* FIX V48 B-OV: Tab-Leiste bei Overlays ausblenden/einblenden
+   _ovCount zählt geöffnete Overlays (für verschachtelte Dialoge) */
+let _ovCount=0;
+function _ovShow(id,cls){
+  const el=document.getElementById(id);if(!el)return;
+  el.className='ov '+cls;
+  _ovCount++;document.body.classList.add('ov-open');
+}
+function _ovHide(id){
+  const el=document.getElementById(id);if(!el)return;
+  el.className='ov';
+  _ovCount=Math.max(0,_ovCount-1);
+  if(_ovCount===0)document.body.classList.remove('ov-open');
+}
+
 /* ═══ V34 UNDO-STACK (max. 3 gleichzeitige Undos) ══════════════
    Jede Aktion erhält eine eigene schwebende Karte.
    Nach 12 s verfällt eine Karte automatisch.
@@ -4161,6 +4178,7 @@ function showUrgentBackupDialog(){
   const L=S.lang==='en';
   const ov=document.createElement('div');
   ov.id='urgentBackupDialog';
+  _ovCount++;document.body.classList.add('ov-open');
   ov.style.cssText='position:fixed;inset:0;z-index:19999;background:rgba(0,0,0,0.72);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;touch-action:none;';
   // Kein Klick auf Backdrop schließt den Dialog:
   ov.addEventListener('click',function(e){e.stopPropagation();});
@@ -4185,12 +4203,12 @@ function showUrgentBackupDialog(){
   document.body.appendChild(ov);
   // [PUNKT-G] "Backup jetzt erstellen" → shareBackup() (iOS PWA-kompatibel); exportBackup() als Fallback
   document.getElementById('urgentBkpNowBtn').addEventListener('click',function(){
-    ov.remove();
+    ov.remove();_ovCount=Math.max(0,_ovCount-1);if(_ovCount===0)document.body.classList.remove('ov-open');
     shareBackup().catch(()=>exportBackup());
   });
   // [PUNKT-G] "Später erinnern (1h)" → Dialog schließen, Timer auf 1h setzen
   document.getElementById('urgentBkpLaterBtn').addEventListener('click',function(){
-    ov.remove();
+    ov.remove();_ovCount=Math.max(0,_ovCount-1);if(_ovCount===0)document.body.classList.remove('ov-open');
     const warnKey='a4_bkp_warn_day';
     // Hinweis für 1h unterdrücken: Key auf heute setzen (verhindert erneutes Zeigen in dieser Session)
     try{localStorage.setItem(warnKey,logicalTodayStr());}catch(e){}
@@ -4463,7 +4481,7 @@ function openTitleEdit(){
   titleSetFocus('titleLine1');
   // Icon preview
   updateTitleIconPreview();
-  document.getElementById('titleOv').className='ov show-bottom';
+  _ovShow('titleOv','show-bottom');
   try{_swzPause();}catch(e){}
 }
 function saveTitleEdit(){
@@ -4472,7 +4490,7 @@ function saveTitleEdit(){
   S.appTitle1=l1;S.appTitle2=l2;
   saveState();applyTitle();closeTitleEdit();
 }
-function closeTitleEdit(){document.getElementById('titleOv').className='ov';try{_swzResume();}catch(e){}}
+function closeTitleEdit(){_ovHide('titleOv');try{_swzResume();}catch(e){}}
 
 /* ═══ LANGUAGE ══════════════════════════════════════════════ */
 function setLang(l){S.lang=l;document.getElementById('htmlRoot').lang=l;saveState();applyLang();renderDrinks(false);if(S.activeTab===1)renderLog();else if(S.activeTab===2)renderStats();else if(S.activeTab===3)renderVerwaltung();else if(S.activeTab===4)renderHelp();}
@@ -5167,9 +5185,9 @@ let _csv=null;
 function onDrinkCSVFile(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{let t=ev.target.result;if(t.charCodeAt(0)===0xFEFF)t=t.slice(1);const lines=t.split(/\r?\n/).filter(l=>l.trim()!=='');if(lines.length<2){showToast('⚠️ '+(S.lang==='en'?'No drink data found.':'Die Datei enthält keine Getränkedaten.'),'error',4000);return;}let sl=0,nt1=null,nt2=null,importedCurrency=null;if(lines[0].startsWith('#TITEL;')){const cf=csvParse(lines[0].slice(1));nt1=(cf[1]||'').trim()||null;nt2=(cf[2]!==undefined?cf[2]:'').trim();sl=1;}if(sl<lines.length&&lines[sl].startsWith('#CURRENCY;')){const cf=csvParse(lines[sl].slice(1));importedCurrency=(cf[1]||'').trim()||null;sl++;}const hf=csvParse(lines[sl]).map(f=>f.trim().toLowerCase());const iI=hf.findIndex(f=>f==='id'),iC=hf.findIndex(f=>f==='kategorie'),iN=hf.findIndex(f=>f==='name'),iP=hf.findIndex(f=>f==='preis');const iIncl=hf.findIndex(f=>f==='inklusive'||f==='included'||f==='inbegriffen');if(iC===-1||iN===-1||iP===-1){showToast('⚠️ '+(S.lang==='en'?'Invalid CSV. Expected columns: ID;Kategorie;Name;Preis':'Ungültige CSV. Erwartete Spalten: ID;Kategorie;Name;Preis'),'error',5000);return;}const drinks=[],errors=[],prev=[];for(let i=sl+1;i<lines.length;i++){const f=csvParse(lines[i]);const cat=(f[iC]||'').trim(),name=(f[iN]||'').trim(),pr=(f[iP]||'').trim();
 // FIX V33 F4: Intelligenter Preisparser: Deutsch (9,80) und Englisch (9.80) korrekt erkennen
 const price=pr.includes(',')?parseFloat(pr.replace(/\./g,'').replace(',','.')):parseFloat(pr);
-const rawId=iI!==-1?(f[iI]||'').trim():'';if(!cat||!name){errors.push('Zeile '+(i+1)+': fehlt');continue;}if(isNaN(price)||price<0){errors.push('Zeile '+(i+1)+': Preis ungültig');continue;}const dr={id:rawId||uid(),cat:cat.slice(0,100),name:name.slice(0,200),price:Math.round(price*100)/100};if(iIncl!==-1){const iv=(f[iIncl]||'').trim();if(iv==='●'||iv==='1'||iv.toLowerCase()==='ja'||iv.toLowerCase()==='yes'||iv.toLowerCase()==='true')dr.included=true;}if(!isVD(dr)){errors.push('Zeile '+(i+1)+': Validierung');continue;}drinks.push(dr);if(prev.length<5)prev.push(dr);}if(!drinks.length){showToast('⚠️ '+(S.lang==='en'?'No valid drinks found.':'Keine gültigen Getränke.')+(errors.length?' ('+fmtNum(errors.length)+' Fehler)':''),'error',5000);return;}_csv={drinks,nt1,nt2,importedCurrency};const cCount=new Set(drinks.map(d=>d.cat)).size;const inclCount=drinks.filter(d=>d.included).length;let html=`<strong>${fmtNum(drinks.length)} ${T('tab.drinks')}</strong> in <strong>${cCount} ${S.lang==='en'?'Categories':'Kategorien'}</strong>.`;if(inclCount>0)html+=` <span style="color:var(--ac)">⬤ ${fmtNum(inclCount)} ${S.lang==='en'?'included':'inklusive'}</span>`;html+='<br>';if(nt1&&(nt1!==S.appTitle1||nt2!==S.appTitle2))html+=`📛 Titel: <strong style="color:${CV.ac}">${esc(nt1)}</strong>${nt2?' · '+esc(nt2):''}<br>`;if(importedCurrency&&importedCurrency!==S.currency)html+=`💱 ${T('settings.currency')}: <strong style="color:${CV.ac}">${esc(importedCurrency)}</strong><br>`;html+=`<span class="csv-warn">⚠️ ${S.lang==='en'?'Current list':'Aktuelle Liste'} (${fmtNum(S.drinks.length)}) ${S.lang==='en'?'will be replaced.':'wird ersetzt.'}</span>`;if(errors.length)html+=`<br>⚠️ ${fmtNum(errors.length)} übersprungen`;document.getElementById('csvInfo').innerHTML=html;document.getElementById('csvModalTitle').textContent=T('modal.csv.import');document.getElementById('csvPrevLabel').textContent=T('csv.preview');document.getElementById('csvImportBtn').textContent=T('csv.replace.btn');document.getElementById('csvCancelBtn').textContent=T('modal.cancel');const pw=document.getElementById('csvPrevWrap'),pt=document.getElementById('csvPrevTable');pt.innerHTML='<tr><th>Kategorie</th><th>Name</th><th>Preis</th><th>⬤</th></tr>'+prev.map(r=>`<tr><td>${esc(r.cat)}</td><td>${esc(r.name)}</td><td>${eur(r.price)}</td><td>${r.included?'⬤':''}</td></tr>`).join('');pw.style.display='';document.getElementById('csvOv').className='ov show-bottom';}catch(err){showToast('⚠️ Fehler: '+err.message,'error',5000);}};r.readAsText(f,'UTF-8');inp.value='';}
+const rawId=iI!==-1?(f[iI]||'').trim():'';if(!cat||!name){errors.push('Zeile '+(i+1)+': fehlt');continue;}if(isNaN(price)||price<0){errors.push('Zeile '+(i+1)+': Preis ungültig');continue;}const dr={id:rawId||uid(),cat:cat.slice(0,100),name:name.slice(0,200),price:Math.round(price*100)/100};if(iIncl!==-1){const iv=(f[iIncl]||'').trim();if(iv==='●'||iv==='1'||iv.toLowerCase()==='ja'||iv.toLowerCase()==='yes'||iv.toLowerCase()==='true')dr.included=true;}if(!isVD(dr)){errors.push('Zeile '+(i+1)+': Validierung');continue;}drinks.push(dr);if(prev.length<5)prev.push(dr);}if(!drinks.length){showToast('⚠️ '+(S.lang==='en'?'No valid drinks found.':'Keine gültigen Getränke.')+(errors.length?' ('+fmtNum(errors.length)+' Fehler)':''),'error',5000);return;}_csv={drinks,nt1,nt2,importedCurrency};const cCount=new Set(drinks.map(d=>d.cat)).size;const inclCount=drinks.filter(d=>d.included).length;let html=`<strong>${fmtNum(drinks.length)} ${T('tab.drinks')}</strong> in <strong>${cCount} ${S.lang==='en'?'Categories':'Kategorien'}</strong>.`;if(inclCount>0)html+=` <span style="color:var(--ac)">⬤ ${fmtNum(inclCount)} ${S.lang==='en'?'included':'inklusive'}</span>`;html+='<br>';if(nt1&&(nt1!==S.appTitle1||nt2!==S.appTitle2))html+=`📛 Titel: <strong style="color:${CV.ac}">${esc(nt1)}</strong>${nt2?' · '+esc(nt2):''}<br>`;if(importedCurrency&&importedCurrency!==S.currency)html+=`💱 ${T('settings.currency')}: <strong style="color:${CV.ac}">${esc(importedCurrency)}</strong><br>`;html+=`<span class="csv-warn">⚠️ ${S.lang==='en'?'Current list':'Aktuelle Liste'} (${fmtNum(S.drinks.length)}) ${S.lang==='en'?'will be replaced.':'wird ersetzt.'}</span>`;if(errors.length)html+=`<br>⚠️ ${fmtNum(errors.length)} übersprungen`;document.getElementById('csvInfo').innerHTML=html;document.getElementById('csvModalTitle').textContent=T('modal.csv.import');document.getElementById('csvPrevLabel').textContent=T('csv.preview');document.getElementById('csvImportBtn').textContent=T('csv.replace.btn');document.getElementById('csvCancelBtn').textContent=T('modal.cancel');const pw=document.getElementById('csvPrevWrap'),pt=document.getElementById('csvPrevTable');pt.innerHTML='<tr><th>Kategorie</th><th>Name</th><th>Preis</th><th>⬤</th></tr>'+prev.map(r=>`<tr><td>${esc(r.cat)}</td><td>${esc(r.name)}</td><td>${eur(r.price)}</td><td>${r.included?'⬤':''}</td></tr>`).join('');pw.style.display='';_ovShow('csvOv','show-bottom');}catch(err){showToast('⚠️ Fehler: '+err.message,'error',5000);}};r.readAsText(f,'UTF-8');inp.value='';}
 function doCSVImport(){if(!_csv){closeCSV();return;}const{drinks,nt1,nt2,importedCurrency}=_csv;_csv=null;S.drinks=drinks;invCC();if(nt1){S.appTitle1=nt1;S.appTitle2=nt2!==null?nt2:S.appTitle2;applyTitle();}if(importedCurrency){S.currency=importedCurrency.slice(0,6);}rebuildCounts();saveState();S.stableOrder=[];S.drinkExpandedCats=new Set();_lastDrinksHash='';closeCSV();renderVerwaltung();renderDrinks(true);updateHeader();switchTab(0);showToast('✅ Getränkeliste '+T('toast.imported'));}
-function closeCSV(){document.getElementById('csvOv').className='ov';_csv=null;}
+function closeCSV(){_ovHide('csvOv');_csv=null;}
 
 /* ═══ TABS ═══════════════════════════════════════════════════ */
 function switchTab(i){S.activeTab=i;const _mtLabels=S.lang==='en'?['Drinks','Log','Stats','Settings','Help']:['Getränke','Protokoll','Statistik','Einstellungen','Hilfe'];['mt0','mt1','mt2','mt3','mt4'].forEach(function(id,j){const el=document.getElementById(id);if(el)el.textContent=_mtLabels[j];});['p0','p1','p2','p3','p4'].forEach((id,j)=>document.getElementById(id).style.display=j===i?'':'none');['t0','t1','t2','t3','t4'].forEach((id,j)=>document.getElementById(id).className='tab'+(j===i?' on':''));['mt0','mt1','mt2','mt3','mt4'].forEach((id,j)=>{const el=document.getElementById(id);if(el)el.className='mini-tab'+(j===i?' on':'');});const sb=document.getElementById('drinkSbar');if(sb)sb.style.display=i===0?'':'none';if(i!==1){const _fp=document.getElementById('logFilterPanel');if(_fp)_fp.style.display='none';closeLogMoreMenu();updateLogFilterBadge();}if(i===0){renderDrinks(false);checkBackupReminder();updateLimitBanner();renderCurrentLocationBar();updatePortQuickBar();checkShipTimeWarning();}else if(i===1){renderLog();maybeShowSwipeLegend();}else if(i===2)renderStats();else if(i===3)renderVerwaltung();else if(i===4)renderHelp();}
@@ -5508,7 +5526,7 @@ function openUserManagement(){
     ?'ℹ️ <strong>Users 1-4 are fixed slots</strong> (always position 1, 2, 3 and 4). Names and colours can be changed freely and appear throughout the app.<br>⚠️ <strong>When importing a backup, names of slots 1-4 are not overwritten.</strong> Log entries are assigned to the correct slot. Additional users from the backup are added.'
     :'ℹ️ <strong>Nutzer 1–4 sind feste Plätze</strong> (immer Position 1, 2, 3 und 4). Ihre Namen und Farben können frei geändert werden und erscheinen überall in der App.<br>⚠️ <strong>Beim Backup-Import werden die Namen der Plätze 1–4 nicht überschrieben.</strong> Protokolleinträge werden der richtigen Position zugeordnet. Zusätzliche Nutzer aus dem Backup werden ergänzt.';
   renderUserProfileList();
-  document.getElementById('userOv').className='ov show-bottom';
+  _ovShow('userOv','show-bottom');
   // Setup-Assistent-Banner verstecken damit Speichern-Button nicht verdeckt wird
   try{_swzPause();}catch(e){}
 }
@@ -5557,7 +5575,7 @@ function confirmDeleteUser(i){
 function deleteUser(i){const uid=S.users[i].id;if(S.users.length<=1){showToast('Mindestens 1 Nutzer muss vorhanden sein.','error');return;}S.users.splice(i,1);if(S.activeUserId===uid)S.activeUserId=S.users[0].id;renderUserProfileList();}
 function saveUsers(){saveState();closeUserModal();renderActiveUserBar();updateHeaderUserDot();renderLog();}
 function closeUserModal(){
-  document.getElementById('userOv').className='ov';
+  _ovHide('userOv');
   // Setup-Assistent-Banner wieder einblenden
   try{_swzResume();}catch(e){}
 }
@@ -5566,14 +5584,14 @@ function openUserSwitcher(){
   const el=document.getElementById('userSwitchList');
   if(!el)return;
   el.innerHTML=S.users.map(u=>`<button onclick="setActiveUser('${u.id}');closeUserSwitcher()" style="display:flex;align-items:center;gap:12px;width:100%;padding:13px 16px;background:${u.id===S.activeUserId?u.color+'22':'var(--bg3)'};border:1px solid ${u.id===S.activeUserId?u.color+'66':'var(--ac-13)'};border-radius:12px;cursor:pointer;font-family:Georgia,serif;text-align:left;transition:all .15s;touch-action:manipulation"><span style="width:14px;height:14px;border-radius:50%;background:${u.color};flex-shrink:0;display:inline-block;box-shadow:0 0 0 3px ${u.color}33"></span><span style="flex:1;font-size:16px;font-weight:${u.id===S.activeUserId?'bold':'normal'};color:${u.id===S.activeUserId?u.color:'var(--tx0)'}">${esc(u.name)}</span>${u.id===S.activeUserId?'<span style="color:'+u.color+';font-size:18px">✓</span>':''}</button>`).join('');
-  document.getElementById('userSwitchOv').className='ov show-bottom';
+  _ovShow('userSwitchOv','show-bottom');
 }
-function closeUserSwitcher(){document.getElementById('userSwitchOv').className='ov';}
+function closeUserSwitcher(){_ovHide('userSwitchOv');}
 
 function openMergeUsers(){
   if(S.users.length<2){showToast('Mindestens 2 Nutzer für Zusammenführung nötig.','error');return;}
   // Close user modal first to avoid dual-overlay conflicts on iOS
-  document.getElementById('userOv').className='ov';
+  _ovHide('userOv');
   const opts=S.users.map(u=>`<option value="${u.id}">${esc(u.name)}</option>`).join('');
   document.getElementById('mergeUserA').innerHTML=opts;
   document.getElementById('mergeUserB').innerHTML=opts;
@@ -5592,12 +5610,12 @@ function openMergeUsers(){
   if(_lb)_lb.textContent=_L?'User B (takes all entries)':'Nutzer B (übernimmt alle Einträge)';
   const _btn=document.getElementById('mergeUserBtn');
   if(_btn)_btn.innerHTML=_L?'🔀 Merge':'🔀 Zusammenführen';
-  document.getElementById('mergeUserOv').className='ov show-bottom';
+  _ovShow('mergeUserOv','show-bottom');
 }
 function closeMergeUsers(){
-  document.getElementById('mergeUserOv').className='ov';
+  _ovHide('mergeUserOv');
   // Reopen user modal after cancel
-  document.getElementById('userOv').className='ov show-bottom';
+  _ovShow('userOv','show-bottom');
 }
 function doMergeUsers(){
   const selA=document.getElementById('mergeUserA').value;
@@ -5626,8 +5644,8 @@ function doMergeUsers(){
       // Reset log filter if it was pointing at the merged-away user
       if(S.logUserFilter===selA)S.logUserFilter='all';
       saveState();
-      document.getElementById('mergeUserOv').className='ov';
-      document.getElementById('userOv').className='ov';
+      _ovHide('mergeUserOv');
+      _ovHide('userOv');
       renderActiveUserBar();
       updateHeaderUserDot();
       renderLog();
@@ -5838,11 +5856,11 @@ function openResetAll(){
     :'Möchtest du wirklich <strong>ALLES löschen</strong> und zur Ersteinrichtung zurückkehren? Dies löscht alle Einträge, alle Einstellungen, alle Nutzer-Profile, die gesamte Getränkeliste und die Reiseroute.';
   document.getElementById('resetAll1YesBtn').textContent=L?'Yes, continue':'Ja, weiter';
   document.getElementById('resetAll1CancelBtn').textContent=L?'Cancel':'Abbrechen';
-  document.getElementById('resetAllOv1').className='ov show-bottom';
+  _ovShow('resetAllOv1','show-bottom');
 }
 var _resetCountdownTimer=null;
 function openResetAll2(){
-  document.getElementById('resetAllOv1').className='ov';
+  _ovHide('resetAllOv1');
   const L=S.lang==='en';
   document.getElementById('resetAll2Title').textContent=L?'🚨 Final Warning':'🚨 Letzte Warnung';
   document.getElementById('resetAll2Msg').innerHTML=L
@@ -5866,15 +5884,15 @@ function openResetAll2(){
       yesBtn.textContent=(L?'Delete all (':'Alles löschen (')+sec+')';
     }
   },1000);
-  document.getElementById('resetAllOv2').className='ov show-bottom';
+  _ovShow('resetAllOv2','show-bottom');
 }
 function closeResetAll2(){
   clearInterval(_resetCountdownTimer);
-  document.getElementById('resetAllOv2').className='ov';
+  _ovHide('resetAllOv2');
 }
 function doResetAll(){
   clearInterval(_resetCountdownTimer);
-  document.getElementById('resetAllOv2').className='ov';
+  _ovHide('resetAllOv2');
   exportBackupSilent();
   // V46 Fix: auch IndexedDB vollständig leeren (localStorage allein reicht nicht mehr)
   setTimeout(async ()=>{
@@ -5919,7 +5937,7 @@ function openResetPartial(){
       ${L?item.labelEN:item.labelDE}
     </label>`).join('');
   updatePartialResetBtn();
-  document.getElementById('resetPartialOv').className='ov show-bottom';
+  _ovShow('resetPartialOv','show-bottom');
 }
 function updatePartialResetBtn(){
   const anyChecked=_partialResetItems.some(item=>{const el=document.getElementById(item.id);return el&&el.checked;});
@@ -6309,10 +6327,10 @@ function openMultiEdit(){
   const mefLocEl=document.getElementById('mefLoc');if(mefLocEl)mefLocEl.value='';
   // hide the action bar so it doesn't cover the modal buttons (z-index conflict)
   const bar=document.getElementById('mselBar');if(bar)bar.style.display='none';
-  document.getElementById('multiEditOv').className='ov show-bottom';
+  _ovShow('multiEditOv','show-bottom');
 }
 function closeMultiEdit(){
-  document.getElementById('multiEditOv').className='ov';
+  _ovHide('multiEditOv');
   // restore the action bar only if still in multi-select mode
   if(S.logMultiSelect)updateMselBar();
   else document.getElementById('mselBar').style.display='none';
@@ -6777,7 +6795,7 @@ function openAddEntry(){S.meEditId=null;document.getElementById('meTitle').textC
   const meTzLblEl=document.getElementById('meTzLbl');if(meTzLblEl)meTzLblEl.textContent=T('modal.entry.tz')||'Schiffszeit';
   const meUserEl=document.getElementById('meUser');if(meUserEl)meUserEl.innerHTML=buildMeUserSel(S.activeUserId||S.users[0].id);
   const meUserLblEl=document.getElementById('meUserLbl');if(meUserLblEl)meUserLblEl.textContent='Nutzer';
-  document.getElementById('meOv').className='ov show-bottom';}
+  _ovShow('meOv','show-bottom');}
 function openEditEntry(id){const e=S.log.find(x=>x.id===id);if(!e)return;S.meEditId=id;document.getElementById('meTitle').textContent=T('modal.entry.edit');document.getElementById('meSelLbl').textContent=T('modal.entry.sel');document.getElementById('meNameLbl').textContent=T('modal.entry.name');document.getElementById('mePriceLbl').textContent=T('modal.entry.price');document.getElementById('meTimeLbl').textContent=T('modal.entry.time');document.getElementById('meCancelBtn').textContent=T('modal.cancel');document.getElementById('meSaveBtn').textContent=T('modal.save');const ps=document.getElementById('mePriceSuffix');if(ps)ps.textContent=S.currency||'€';document.getElementById('meSel').innerHTML=buildMeSel(e.drinkId||'');document.getElementById('meName').value=e.name||'';document.getElementById('mePrice').value=e.price||'';const _eTz=entryTz(e);
   document.getElementById('meTime').value=toLocalWithTz(e.time,_eTz);
   const meTzElEd=document.getElementById('meTz');if(meTzElEd)meTzElEd.innerHTML=buildMeTzSel(_eTz);
@@ -6789,7 +6807,7 @@ function openEditEntry(id){const e=S.log.find(x=>x.id===id);if(!e)return;S.meEdi
   const meNLed=document.getElementById('meNoteLbl');if(meNLed)meNLed.textContent=T('modal.entry.note');
   const meUserEl=document.getElementById('meUser');if(meUserEl)meUserEl.innerHTML=buildMeUserSel(e.userId||S.activeUserId||S.users[0].id);
   const meUserLblEl=document.getElementById('meUserLbl');if(meUserLblEl)meUserLblEl.textContent='Nutzer';
-  document.getElementById('meOv').className='ov show-bottom';}
+  _ovShow('meOv','show-bottom');}
 function saveMe(){
   const name=document.getElementById('meName').value.trim();
   const price=Math.max(0,parseFloat(document.getElementById('mePrice').value)||0); // FIX V40: kein negativer Preis
@@ -6817,7 +6835,7 @@ function saveMe(){
   sortLog();rebuildCounts();saveState();updateHeader();closeMe();renderLog();
   if(S.activeTab===0)renderDrinks(false);
 }
-function closeMe(){document.getElementById('meOv').className='ov';}
+function closeMe(){_ovHide('meOv');}
 
 /* ═══ STATS TAB – ENHANCED ════════════════════════════════════ */
 function filterLog(){
@@ -8441,15 +8459,15 @@ function drinkMgmtClick(e){
   const ad=e.target.closest('[data-ad]');if(ad){openAddDrink(S.catIndex[parseInt(ad.dataset.ad)]||'');return;}
 }
 
-function openAddDrink(pc){S.mdMode='add';S.mdId=null;document.getElementById('mdTitle').textContent=T('modal.drink.add');document.getElementById('mdNameLbl').textContent=T('modal.drink.name');document.getElementById('mdPriceLbl').textContent=T('modal.drink.price');document.getElementById('mdCatLbl').textContent=T('modal.drink.cat');document.getElementById('mdCancelBtn').textContent=T('modal.cancel');document.getElementById('mdSaveBtn').textContent=T('modal.save');const ps=document.getElementById('mdPriceSuffix');if(ps)ps.textContent=S.currency||'€';document.getElementById('mdName').value='';document.getElementById('mdPrice').value='';document.getElementById('mdCat').value=pc||'';document.getElementById('catDL').innerHTML=allCats().map(c=>`<option value="${esc(c)}">`).join('');document.getElementById('mdOv').className='ov show-bottom';}
-function openEditDrink(id){const d=S.drinks.find(x=>x.id===id);if(!d)return;S.mdMode='edit';S.mdId=id;document.getElementById('mdTitle').textContent=T('modal.drink.edit');document.getElementById('mdNameLbl').textContent=T('modal.drink.name');document.getElementById('mdPriceLbl').textContent=T('modal.drink.price');document.getElementById('mdCatLbl').textContent=T('modal.drink.cat');document.getElementById('mdCancelBtn').textContent=T('modal.cancel');document.getElementById('mdSaveBtn').textContent=T('modal.save');const ps=document.getElementById('mdPriceSuffix');if(ps)ps.textContent=S.currency||'€';document.getElementById('mdName').value=d.name;document.getElementById('mdPrice').value=d.price;document.getElementById('mdCat').value=d.cat;document.getElementById('catDL').innerHTML=allCats().map(c=>`<option value="${esc(c)}">`).join('');document.getElementById('mdOv').className='ov show-bottom';}
+function openAddDrink(pc){S.mdMode='add';S.mdId=null;document.getElementById('mdTitle').textContent=T('modal.drink.add');document.getElementById('mdNameLbl').textContent=T('modal.drink.name');document.getElementById('mdPriceLbl').textContent=T('modal.drink.price');document.getElementById('mdCatLbl').textContent=T('modal.drink.cat');document.getElementById('mdCancelBtn').textContent=T('modal.cancel');document.getElementById('mdSaveBtn').textContent=T('modal.save');const ps=document.getElementById('mdPriceSuffix');if(ps)ps.textContent=S.currency||'€';document.getElementById('mdName').value='';document.getElementById('mdPrice').value='';document.getElementById('mdCat').value=pc||'';document.getElementById('catDL').innerHTML=allCats().map(c=>`<option value="${esc(c)}">`).join('');_ovShow('mdOv','show-bottom');}
+function openEditDrink(id){const d=S.drinks.find(x=>x.id===id);if(!d)return;S.mdMode='edit';S.mdId=id;document.getElementById('mdTitle').textContent=T('modal.drink.edit');document.getElementById('mdNameLbl').textContent=T('modal.drink.name');document.getElementById('mdPriceLbl').textContent=T('modal.drink.price');document.getElementById('mdCatLbl').textContent=T('modal.drink.cat');document.getElementById('mdCancelBtn').textContent=T('modal.cancel');document.getElementById('mdSaveBtn').textContent=T('modal.save');const ps=document.getElementById('mdPriceSuffix');if(ps)ps.textContent=S.currency||'€';document.getElementById('mdName').value=d.name;document.getElementById('mdPrice').value=d.price;document.getElementById('mdCat').value=d.cat;document.getElementById('catDL').innerHTML=allCats().map(c=>`<option value="${esc(c)}">`).join('');_ovShow('mdOv','show-bottom');}
 function saveMd(){const name=document.getElementById('mdName').value.trim(),price=parseFloat(document.getElementById('mdPrice').value)||0,cat=document.getElementById('mdCat').value.trim();if(!name){showToast('⚠️ '+(S.lang==='en'?'Please enter a name.':'Bitte Namen eingeben.'),'warn',3000);return;}if(!cat){showToast('⚠️ '+(S.lang==='en'?'Please enter a category.':'Bitte Kategorie eingeben.'),'warn',3000);return;}if(S.mdMode==='add')S.drinks.push({id:uid(),cat,name,price});else{const d=S.drinks.find(x=>x.id===S.mdId);if(d){d.name=name;d.price=price;d.cat=cat;}}invCC();saveState();closeMd();renderVerwaltung();if(S.activeTab===0){S.stableOrder=[];renderDrinks(true);}showToast(T('toast.saved'));}
-function closeMd(){document.getElementById('mdOv').className='ov';}
+function closeMd(){_ovHide('mdOv');}
 function askDelDrink(id){const d=S.drinks.find(x=>x.id===id);if(!d)return;showCfm(T('confirm.del.drink.title'),`„${d.name}" ${S.lang==='en'?'will be removed.':'wird entfernt.'}`,T('modal.delete'),()=>{S.drinks=S.drinks.filter(x=>x.id!==id);invCC();saveState();renderVerwaltung();if(S.activeTab===0){S.stableOrder=[];renderDrinks(true);}showToast('✅ '+T('toast.deleted'));});}
-function openRenameCat(ci){const cat=S.catIndex[ci];if(cat===undefined)return;S.mrMode='rename';S.mrOld=cat;document.getElementById('mrTitle').textContent=T('modal.cat.rename');document.getElementById('mrNameLbl').textContent=T('modal.cat.name');document.getElementById('mrCancelBtn').textContent=T('modal.cancel');document.getElementById('mrSaveBtn').textContent=T('modal.save');document.getElementById('mrName').value=cat;S.expandedCats.add(cat);document.getElementById('mrOv').className='ov show-bottom';}
-function openNewCat(){S.mrMode='new';S.mrOld='';document.getElementById('mrTitle').textContent=T('modal.cat.new');document.getElementById('mrNameLbl').textContent=T('modal.cat.name');document.getElementById('mrCancelBtn').textContent=T('modal.cancel');document.getElementById('mrSaveBtn').textContent=T('modal.save');document.getElementById('mrName').value='';document.getElementById('mrOv').className='ov show-bottom';}
+function openRenameCat(ci){const cat=S.catIndex[ci];if(cat===undefined)return;S.mrMode='rename';S.mrOld=cat;document.getElementById('mrTitle').textContent=T('modal.cat.rename');document.getElementById('mrNameLbl').textContent=T('modal.cat.name');document.getElementById('mrCancelBtn').textContent=T('modal.cancel');document.getElementById('mrSaveBtn').textContent=T('modal.save');document.getElementById('mrName').value=cat;S.expandedCats.add(cat);_ovShow('mrOv','show-bottom');}
+function openNewCat(){S.mrMode='new';S.mrOld='';document.getElementById('mrTitle').textContent=T('modal.cat.new');document.getElementById('mrNameLbl').textContent=T('modal.cat.name');document.getElementById('mrCancelBtn').textContent=T('modal.cancel');document.getElementById('mrSaveBtn').textContent=T('modal.save');document.getElementById('mrName').value='';_ovShow('mrOv','show-bottom');}
 function saveMr(){const n=document.getElementById('mrName').value.trim();if(!n){showToast('⚠️ '+(S.lang==='en'?'Please enter a name.':'Bitte Namen eingeben.'),'warn',3000);return;}if(S.mrMode==='rename'){S.drinks.forEach(d=>{if(d.cat===S.mrOld)d.cat=n;});if(S.expandedCats.has(S.mrOld)){S.expandedCats.delete(S.mrOld);S.expandedCats.add(n);}if(S.ccm[S.mrOld]!==undefined){S.ccm[n]=S.ccm[S.mrOld];delete S.ccm[S.mrOld];}invCC();saveState();closeMr();renderVerwaltung();if(S.activeTab===0){S.stableOrder=[];renderDrinks(true);}}else{closeMr();openAddDrink(n);}}
-function closeMr(){document.getElementById('mrOv').className='ov';}
+function closeMr(){_ovHide('mrOv');}
 function askDelCat(ci){const cat=S.catIndex[ci];if(cat===undefined)return;const n=S.drinks.filter(d=>d.cat===cat).length;showCfm(T('confirm.del.cat.title'),`„${cat}" ${S.lang==='en'?`and all ${n} drinks will be deleted.`:`und alle ${n} Getränke werden gelöscht.`}`,T('cat.delete.btn'),()=>{S.drinks=S.drinks.filter(d=>d.cat!==cat);S.expandedCats.delete(cat);invCC();saveState();renderVerwaltung();if(S.activeTab===0){S.stableOrder=[];renderDrinks(true);}showToast('✅ '+T('toast.deleted'));});}
 
 
@@ -9424,9 +9442,9 @@ function renderHelp(){
 
 /* ═══ CONFIRM MODAL ══════════════════════════════════════════ */
 let _cb=null;
-function showCfm(t,m,y,cb){_cb=cb;document.getElementById('cfmTitle').textContent=t;document.getElementById('cfmMsg').textContent=m;document.getElementById('cfmYes').textContent=y;document.getElementById('cfmNoBtn').textContent=T('modal.cancel');document.getElementById('cfmOv').className='ov show-bottom';}
-function cfmDo(){document.getElementById('cfmOv').className='ov';const cb=_cb;_cb=null;if(cb)cb();}
-function cfmNo(){document.getElementById('cfmOv').className='ov';_cb=null;}
+function showCfm(t,m,y,cb){_cb=cb;document.getElementById('cfmTitle').textContent=t;document.getElementById('cfmMsg').textContent=m;document.getElementById('cfmYes').textContent=y;document.getElementById('cfmNoBtn').textContent=T('modal.cancel');_ovShow('cfmOv','show-bottom');}
+function cfmDo(){_ovHide('cfmOv');const cb=_cb;_cb=null;if(cb)cb();}
+function cfmNo(){_ovHide('cfmOv');_cb=null;}
 
 /* ═══ BACKUP ═════════════════════════════════════════════════ */
 function exportBackupSilent(){const nm=appNameClean();
@@ -9628,7 +9646,7 @@ async function shareBackup(){
    ──────────────────────────────────────────────────────────────────────── */
 function buildAppHTMLBlob(){
   // V45: Alle offenen Overlays schließen vor dem Export (verhindert dass Modals im Snapshot festgehalten werden)
-  document.querySelectorAll('.ov.show-bottom,.ov.show-center,.ov.show-top,.ov.show').forEach(el=>{el.className='ov';});
+  document.querySelectorAll('.ov.show-bottom,.ov.show-center,.ov.show-top,.ov.show').forEach(el=>{el.className='ov';});_ovCount=0;document.body.classList.remove('ov-open');
   // V46: Vor dem Export sicherstellen dass localStorage aktuell ist (für file://-Kompatibilität des Exports)
   _saveStateLocalStorageFallback();
   // 1. Alle a4_* Schlüssel aus localStorage sammeln
@@ -9777,7 +9795,7 @@ function onBkpFile(inp){
           profCb.checked=false;
         }
       }
-      document.getElementById('bkpOv').className='ov show-bottom';
+      _ovShow('bkpOv','show-bottom');
     }catch(err){showToast('⚠️ Fehler beim Lesen: '+err.message,'error',5000);}
   };
   r.readAsText(f);inp.value='';
@@ -10039,7 +10057,7 @@ function doImport(mode){
   autoApplyRouteLocation();updateCurrentLocBar();renderCurrentLocationBar();
   const _itL=S.lang==='en';const _itLbl=appOffsetLabel();showToast('✅ '+(_itL?'Backup imported':'Backup importiert')+' · '+(_itL?"Ship's time adopted: ":"Schiffszeit übernommen: ")+_itLbl+' ('+(S.tzMode==='fixed'?(_itL?'Manual':'Manuell'):(_itL?'Automatic':'Automatisch'))+')','info',5000);
 }
-function closeBkp(){document.getElementById('bkpOv').className='ov';_bkp=null;}
+function closeBkp(){_ovHide('bkpOv');_bkp=null;}
 
 /* ═══════════════════════════════════════════════════════════════
    V34 V1: DATUMSGRENZE-ASSISTENT
@@ -10076,9 +10094,9 @@ function checkDatelineCrossing(oldOff,newOff){
       :(L?'⬅️ Clocks moved <strong>back</strong>: one calendar day was <strong>repeated</strong>. Entries from both passes are correctly recorded.'
           :'⬅️ Uhr <strong>zurückgestellt</strong>: ein Kalendertag wurde <strong>wiederholt</strong>. Einträge beider Passagen sind korrekt erfasst.')
     )+`<br><br>${L?'💡 Each entry stores its own timezone offset – no data was lost.':'💡 Jeder Eintrag speichert seinen eigenen Zeitzonenwert – kein Datenverlust.'}`;
-  document.getElementById('datelineInfoOv').className='ov show-center';
+  _ovShow('datelineInfoOv','show-center');
 }
-function closeDatelineInfo(){document.getElementById('datelineInfoOv').className='ov';}
+function closeDatelineInfo(){_ovHide('datelineInfoOv');}
 
 /* ═══════════════════════════════════════════════════════════════
    V34 V3: REISE-KALENDER (Statistik-Tab)
@@ -10219,7 +10237,7 @@ function openUmapDialog(slots,cb){
       <span class="umap-to">${esc(s.backupName)}</span>
       <button class="umap-toggle on" id="umapTog_${i}" onclick="toggleUmapSlot(${i})">${L?'Rename':'Umbenennen'}</button>
     </div>`).join('');
-  document.getElementById('umapOv').className='ov show-bottom';
+  _ovShow('umapOv','show-bottom');
 }
 function toggleUmapSlot(i){
   if(!_umapData)return;
@@ -10229,17 +10247,17 @@ function toggleUmapSlot(i){
   if(btn){btn.classList.toggle('on',_umapData.slots[i].rename);btn.textContent=_umapData.slots[i].rename?(L?'Rename':'Umbenennen'):(L?'Keep':'Behalten');}
 }
 function umapApply(){
-  if(!_umapData){document.getElementById('umapOv').className='ov';return;}
+  if(!_umapData){_ovHide('umapOv');return;}
   _umapData.slots.forEach(s=>{
     if(s.rename){const u=S.users.find(x=>x.id===s.userId);if(u)u.name=s.backupName;}
   });
   saveState();renderActiveUserBar();updateHeaderUserDot();
-  document.getElementById('umapOv').className='ov';
+  _ovHide('umapOv');
   if(_umapData.cb)_umapData.cb();
   _umapData=null;
 }
 function umapSkip(){
-  document.getElementById('umapOv').className='ov';
+  _ovHide('umapOv');
   if(_umapData&&_umapData.cb)_umapData.cb();
   _umapData=null;
 }
@@ -10349,7 +10367,7 @@ function openTzWiz(){
   // ── UTC-Offset-Select
   const sel=document.getElementById('tzWizSel');
   if(sel)sel.innerHTML=buildMeTzSel(cur);
-  document.getElementById('tzWizOv').className='ov show-bottom';
+  _ovShow('tzWizOv','show-bottom');
   try{_swzPause();}catch(e){}
 }
 function tzWizFromPort(el){
@@ -10387,7 +10405,7 @@ function applyTzWiz(){
   // V34 V1: Datumsgrenzprüfung nach TZ-Wechsel
   if(oldOff!==off)checkDatelineCrossing(oldOff,off);
 }
-function closeTzWiz(){document.getElementById('tzWizOv').className='ov';_tzWizSelOff=null;try{_swzResume();}catch(e){}}
+function closeTzWiz(){_ovHide('tzWizOv');_tzWizSelOff=null;try{_swzResume();}catch(e){}}
 
 /* ═══════════════════════════════════════════════════════════════
    REISEROUTE – Import / Export / Editor
@@ -10469,7 +10487,7 @@ function openRouteEditor(){
   if(el)el.innerHTML=S.lang==='en'
     ?'📅 Tap <strong>date</strong> → date picker opens. Port empty = sea day.<br>🗑 Delete: following dates −1 day · ＋ Insert: following dates +1 day.<br>⚠️ Red fields = missing or duplicate date. Cleaned automatically on save.'
     :'📅 <strong>Datum</strong> antippen → Datumsauswahl öffnet sich. Hafen leer = Seetag.<br>🗑 Löschen: Folgedaten −1 Tag · ＋ Einfügen: Folgedaten +1 Tag.<br>⚠️ Rote Felder = fehlendes oder doppeltes Datum. Wird beim Speichern bereinigt.';
-  document.getElementById('routeOv').className='ov show-bottom';
+  _ovShow('routeOv','show-bottom');
 }
 function _updateRouteEditorCount(){
   const el=document.getElementById('routeEditorCount');
@@ -10486,7 +10504,7 @@ function _updateRouteEditorCount(){
   if(invalidCount>0)html+=` <span style="color:#e05555">· ${invalidCount} ungültiges Datum</span>`;
   el.innerHTML=html;
 }
-function closeRouteEditor(){document.getElementById('routeOv').className='ov';}
+function closeRouteEditor(){_ovHide('routeOv');}
 
 /* Rendert Eintrags-Liste im Editor */
 function renderRouteEditorBody(){
@@ -11076,6 +11094,7 @@ function _showPWAHint(){
   const L=S.lang==='en';
   const ov=document.createElement('div');
   ov.id='pwaHintOv';
+  _ovCount++;document.body.classList.add('ov-open');
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9995;display:flex;align-items:flex-end;justify-content:center;padding:0 0 max(20px,env(safe-area-inset-bottom,20px))';
   ov.innerHTML=`<div style="background:var(--bg1);border-radius:18px 18px 14px 14px;padding:22px 20px 18px;max-width:380px;width:100%;font-family:Georgia,serif;border:1px solid var(--ac-27);box-shadow:0 -4px 30px rgba(0,0,0,0.5)">
     <div style="font-size:22px;text-align:center;margin-bottom:6px">📲</div>
@@ -11087,10 +11106,10 @@ function _showPWAHint(){
       <strong>3.</strong> ${L?'Tap "Add" – done!':'„Hinzufügen" tippen – fertig!'}
     </div>
     <div style="display:flex;gap:8px">
-      <button onclick="document.getElementById('pwaHintOv').remove();try{localStorage.setItem('a4_pwa_seen','1');}catch(e){}" style="flex:1;padding:11px;background:var(--ac);color:var(--ac-fg);border:none;border-radius:10px;font-family:Georgia,serif;font-size:13px;font-weight:bold;cursor:pointer;touch-action:manipulation">
+      <button onclick="(function(){var _e=document.getElementById('pwaHintOv');if(_e){_e.remove();_ovCount=Math.max(0,_ovCount-1);if(!_ovCount)document.body.classList.remove('ov-open');}try{localStorage.setItem('a4_pwa_seen','1');}catch(e){}})()" style="flex:1;padding:11px;background:var(--ac);color:var(--ac-fg);border:none;border-radius:10px;font-family:Georgia,serif;font-size:13px;font-weight:bold;cursor:pointer;touch-action:manipulation">
         ${L?'Got it':'Verstanden'} ✓
       </button>
-      <button onclick="document.getElementById('pwaHintOv').remove();" style="padding:11px 14px;background:transparent;color:var(--tx2);border:1px solid var(--ac-20);border-radius:10px;font-family:Georgia,serif;font-size:12px;cursor:pointer;touch-action:manipulation">
+      <button onclick="(function(){var _e=document.getElementById('pwaHintOv');if(_e){_e.remove();_ovCount=Math.max(0,_ovCount-1);if(!_ovCount)document.body.classList.remove('ov-open');}})()" style="padding:11px 14px;background:transparent;color:var(--tx2);border:1px solid var(--ac-20);border-radius:10px;font-family:Georgia,serif;font-size:12px;cursor:pointer;touch-action:manipulation">
         ${L?'Later':'Später'}
       </button>
     </div>
@@ -11244,7 +11263,7 @@ function _swzShowWelcome(){
     ov.innerHTML='<div id="swzWelcomeBox"></div>';
     document.body.appendChild(ov);
     _swzRenderWelcome();
-    setTimeout(function(){ov.classList.add('show');},40);
+    setTimeout(function(){ov.classList.add('show');_ovCount++;document.body.classList.add('ov-open');},40);
   }catch(e){}
 }
 function _swzRenderWelcome(){
@@ -11273,10 +11292,10 @@ function _swzRenderWelcome(){
 }
 function _swzSkipAll(){
   try{localStorage.setItem('a4_setup_done','1');db.setCfg('setupDone','1').catch(()=>{});}catch(e){}
-  try{var ov=document.getElementById('swzWelcomeOv');if(ov)ov.remove();}catch(e){}
+  try{var ov=document.getElementById('swzWelcomeOv');if(ov){ov.remove();_ovCount=Math.max(0,_ovCount-1);if(_ovCount===0)document.body.classList.remove('ov-open');}}catch(e){}
 }
 function _swzStart(){
-  try{var ov=document.getElementById('swzWelcomeOv');if(ov)ov.remove();}catch(e){}
+  try{var ov=document.getElementById('swzWelcomeOv');if(ov){ov.remove();_ovCount=Math.max(0,_ovCount-1);if(_ovCount===0)document.body.classList.remove('ov-open');}}catch(e){}
   _swzShow(1);
 }
 
@@ -11555,7 +11574,8 @@ function showPwaGuide(){
   const ov=document.createElement('div');
   ov.className='ov show-center';
   ov.id='pwaGuideOv';
-  ov.innerHTML=`<div class="modal-box" style="max-width:380px"><div class="cfm-title" style="margin-bottom:4px">📱 ${L?'Add App to Home Screen':'App zum Home-Bildschirm hinzufügen'}</div><div style="font-size:11px;color:var(--tx2);margin-bottom:12px">${L?'Step-by-step guide for iPhone (iOS / Safari):':'Schritt-für-Schritt-Anleitung für iPhone (iOS / Safari):'}</div>${stepsHtml}<div style="margin-top:14px;padding:9px 12px;background:var(--bg3);border-radius:8px;border:1px solid var(--ac-13);font-size:11px;color:var(--tx1);line-height:1.55">💡 ${L?'<strong>Note:</strong> The app works perfectly without a home screen icon. This step is optional.':'<strong>Hinweis:</strong> Die App funktioniert auch ohne Home-Screen-Icon einwandfrei. Dieser Schritt ist optional.'}</div><div style="display:flex;gap:8px;margin-top:14px"><button class="cfm-yes" style="background:var(--ac);color:var(--bg);flex:2" onclick="document.getElementById('pwaGuideOv').remove()">✓ ${L?'Got it':'Verstanden'}</button><button class="cfm-no" onclick="dismissPwa();document.getElementById('pwaGuideOv').remove()">✕ ${L?"Don't show again":'Nicht mehr zeigen'}</button></div></div>`;
+  _ovCount++;document.body.classList.add('ov-open');
+  ov.innerHTML=`<div class="modal-box" style="max-width:380px"><div class="cfm-title" style="margin-bottom:4px">📱 ${L?'Add App to Home Screen':'App zum Home-Bildschirm hinzufügen'}</div><div style="font-size:11px;color:var(--tx2);margin-bottom:12px">${L?'Step-by-step guide for iPhone (iOS / Safari):':'Schritt-für-Schritt-Anleitung für iPhone (iOS / Safari):'}</div>${stepsHtml}<div style="margin-top:14px;padding:9px 12px;background:var(--bg3);border-radius:8px;border:1px solid var(--ac-13);font-size:11px;color:var(--tx1);line-height:1.55">💡 ${L?'<strong>Note:</strong> The app works perfectly without a home screen icon. This step is optional.':'<strong>Hinweis:</strong> Die App funktioniert auch ohne Home-Screen-Icon einwandfrei. Dieser Schritt ist optional.'}</div><div style="display:flex;gap:8px;margin-top:14px"><button class="cfm-yes" style="background:var(--ac);color:var(--bg);flex:2" onclick="(function(){var _e=document.getElementById('pwaGuideOv');if(_e){_e.remove();_ovCount=Math.max(0,_ovCount-1);if(_ovCount===0)document.body.classList.remove('ov-open');}})()">✓ ${L?'Got it':'Verstanden'}</button><button class="cfm-no" onclick="dismissPwa();(function(){var _e=document.getElementById('pwaGuideOv');if(_e){_e.remove();_ovCount=Math.max(0,_ovCount-1);if(_ovCount===0)document.body.classList.remove('ov-open');}})()">✕ ${L?"Don't show again":'Nicht mehr zeigen'}</button></div></div>`;
   document.body.appendChild(ov);
 }
 function dismissPwa(){
