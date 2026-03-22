@@ -1125,6 +1125,7 @@ html .fav-section .drow.fl{background:rgba(255,255,255,0.07);border-left-color:v
 .fav-tile-bottom{
   display:flex;align-items:center;width:100%;
   margin-top:auto;padding-top:5px;
+  align-self:stretch;
 }
 /* ── Tile Minus Button ── */
 .fav-tile-minus{
@@ -1140,7 +1141,7 @@ html .fav-section .drow.fl{background:rgba(255,255,255,0.07);border-left-color:v
 .fav-tile-minus.z{opacity:.22;pointer-events:none;}
 /* ── Tile Drag-Handle (Sortiermodus) ── */
 .fav-tile-drag-handle-tile{
-  position:absolute;bottom:5px;right:5px;
+  position:absolute;bottom:5px;left:5px;
   width:20px;height:20px;
   display:flex;align-items:center;justify-content:center;
   font-size:13px;color:var(--ac-60);cursor:grab;
@@ -1158,11 +1159,11 @@ html .fav-tile-grid .drow-wrap.tile-drag-over-mark{
 #favList.tile-fade{opacity:0;}
 /* ── Favorites Tile Grid ────────────────────────────────────── */
 .fav-tile-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:2px 0 6px;align-items:start}
-html .fav-tile-grid .drow-wrap{margin-bottom:0;min-height:106px;overflow:visible}
-html .fav-tile-grid .drow-wrap .drow-strip{opacity:.55;top:6px;bottom:6px}
+html .fav-tile-grid .drow-wrap{margin-bottom:0;min-height:106px;overflow:hidden}
+html .fav-tile-grid .drow-wrap .drow-strip{display:none}
 html .fav-tile-grid .drow.fav-tile{
   flex-direction:column;align-items:flex-start;gap:0;
-  padding:8px 9px 8px 10px;min-height:106px;height:auto;cursor:pointer;
+  padding:8px 9px 8px 10px;min-height:106px;height:100%;cursor:pointer;
   justify-content:flex-start;position:relative;
   border-radius:10px;
   background:rgba(255,255,255,0.04);
@@ -5530,7 +5531,9 @@ function favTileEditTap(id){
     }
   } else if(mode==='remove'){
     toggleFav(id);
-  } else if(mode==='color'&&S.favTileColors){
+  } else if(mode==='color'){
+    // Farbe immer öffnen – S.favTileColors wird ggf. in renderFavTileEditPanel aktiviert
+    if(!S.favTileColors){S.favTileColors=true;saveState();}
     openTileColorPicker(id);
   }
 }
@@ -5585,8 +5588,9 @@ function drinkTile(d){
   var dragHandle=isSortMode?'<div class="fav-tile-drag-handle-tile" data-tile-drag="'+esc(d.id)+'">⠿</div>':'';
   // Fix 3: Badge oben rechts – pointer-events:none damit Kachel-Tap durchgeht
   var badge='<div class="fav-tile-badge'+(has?'':' z')+'">'+c+'</div>';
-  // Fix 4: Minus-Button unten rechts (deaktiviert wenn c=0)
-  var minusBtn='<button class="fav-tile-minus'+(has?'':' z')+'" data-minus="'+esc(d.id)+'" aria-label="'+(S.lang==='en'?'Remove one':'Einen entfernen')+'" onclick="event.stopPropagation();tapMinus(\''+esc(d.id)+'\')">−</button>';
+  // Fix 4: Minus-Button unten rechts (deaktiviert wenn c=0; nicht im Sortiermodus)
+  var minusBtn=isSortMode?'':
+    '<button class="fav-tile-minus'+(has?'':' z')+'" data-minus="'+esc(d.id)+'" aria-label="'+(S.lang==='en'?'Remove one':'Einen entfernen')+'" onclick="event.stopPropagation();tapMinus(\''+esc(d.id)+'\')">−</button>';
   return '<div class="drow-wrap" data-dswid="'+esc(d.id)+'" data-has="'+(has&&!editActive?'1':'')+'" data-swside="'+swSide+'" data-fav-tile="1">'+
     '<div class="drow-swipe-bg"><span style="font-size:22px">↩</span><div style="font-size:10px;letter-spacing:.5px;margin-top:2px">UNDO</div></div>'+
     '<div class="drow-strip" style="background:'+col+'"></div>'+
@@ -5787,7 +5791,7 @@ function renderDrinks(forceSort){
 function handleDrinkClick(e){
   const t=e.target;
   // Favoriten-Titel: nur über data-Attribut, kein onclick → kein Doppel-Auslösen
-  if(t.closest('[data-fav-toggle]')&&!t.closest('.fav-tile-btn')&&!t.closest('.fav-tile-edit-btn')){e.preventDefault();toggleFavSection();return;}
+  if(t.closest('[data-fav-toggle]')&&!t.closest('.fav-tile-btn')&&!t.closest('.fav-tile-edit-btn')&&!t.closest('.fav-view-toggle')){e.preventDefault();toggleFavSection();return;}
   // Top10-Titel
   if(t.closest('[data-top10-toggle]')){e.preventDefault();toggleTop10Section();return;}
   // Kachel: edit-mode → editTap; normal → tapPlus
@@ -5813,7 +5817,7 @@ function handleDrinkClick(e){
     const tc=e.changedTouches[0];
     if(tc&&(Math.abs(tc.clientY-_tY)>10||Math.abs(tc.clientX-_tX)>10))return;
     // Favoriten-Toggle
-    if(t.closest('[data-fav-toggle]')&&!t.closest('.fav-tile-btn')&&!t.closest('.fav-tile-edit-btn')){e.preventDefault();toggleFavSection();return;}
+    if(t.closest('[data-fav-toggle]')&&!t.closest('.fav-tile-btn')&&!t.closest('.fav-tile-edit-btn')&&!t.closest('.fav-view-toggle')){e.preventDefault();toggleFavSection();return;}
     // Top10-Toggle
     if(t.closest('[data-top10-toggle]')){e.preventDefault();toggleTop10Section();return;}
     // Kachel: edit-mode → editTap; normal → tapPlus
