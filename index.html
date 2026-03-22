@@ -4148,6 +4148,9 @@ async function _saveStateAsync(){
     {key:'statOpen',   value:JSON.stringify(S.statOpen||{})},
     {key:'syncEnabled',value:S.syncEnabled?'1':''},
     {key:'lastSyncDate',value:S.lastSyncDate||''},
+    {key:'favTileMode',  value:S.favTileMode?'1':''},
+    {key:'favTileColors',value:S.favTileColors?'1':''},
+    {key:'favTileCustomColors',value:JSON.stringify(S.favTileCustomColors||{})},
   ];
   await db.config.bulkPut(cfgPairs);
   // Logs: upsert via bulkPut (kein clear nötig, vermeidet kurzzeitigen Datenverlust)
@@ -4196,7 +4199,10 @@ function _saveStateLocalStorageFallback(){
     ['a4_statdayshow',JSON.stringify(S.statDayShow||{})],
     ['a4_statopen',JSON.stringify(S.statOpen||{})],
     ['a4_syncenabled',S.syncEnabled?'1':''],
-    ['a4_lastsync',S.lastSyncDate||'']];
+    ['a4_lastsync',S.lastSyncDate||''],
+    ['a4_tilemode',S.favTileMode?'1':''],
+    ['a4_tilecolors',S.favTileColors?'1':''],
+    ['a4_tilecustomcolors',JSON.stringify(S.favTileCustomColors||{})]];
   for(const[k,v]of pairs){try{localStorage.setItem(k,v);}catch(e){break;}}
 }
 let _saveTimer=null;
@@ -4266,6 +4272,10 @@ function loadState(){
   try{const _so=JSON.parse(localStorage.getItem('a4_statopen')||'null');S.statOpen=_so&&typeof _so==='object'?_so:{overview:true,topdrinks:true,byday:true};}catch(e){S.statOpen={overview:true,topdrinks:true,byday:true};} // Nr.5
   S.syncEnabled=localStorage.getItem('a4_syncenabled')==='1';
   S.lastSyncDate=localStorage.getItem('a4_lastsync')||null;
+  // Kachel-Einstellungen laden
+  S.favTileMode=localStorage.getItem('a4_tilemode')==='1';
+  S.favTileColors=localStorage.getItem('a4_tilecolors')==='1';
+  try{const tc=JSON.parse(localStorage.getItem('a4_tilecustomcolors')||'{}');S.favTileCustomColors=typeof tc==='object'&&tc!==null?tc:{};}catch(e){S.favTileCustomColors={};}
   syncCustomThemesToRuntime();
   // Sync favOrder with actual favorites (remove stale, append new)
   S.favOrder=S.favOrder.filter(id=>S.favorites.has(id));
@@ -5876,6 +5886,7 @@ function handleDrinkClick(e){
     // Kachel: edit-mode → editTap; normal → tapPlus
     const tile=t.closest('[data-tile-plus]');
     if(tile&&!t.closest('[data-fav]')&&!t.closest('[data-plus]')&&!t.closest('[data-minus]')){
+      if(window._tileLpBlock){e.preventDefault();return;} // long-press war aktiv → kein tapPlus
       if(S.favTileMode&&S.favTileEditActive){e.preventDefault();favTileEditTap(tile.dataset.tilePlus);return;}
       e.preventDefault();tapPlus(tile.dataset.tilePlus);return;
     }
@@ -5892,85 +5903,107 @@ setInterval(updateClock,1000);
 
 /* ── O5: Long-Press Kontextmenü für Kacheln ── */
 (function(){
-  var _lpTimer=null,_lpId=null,_lpMoved=false,_lpFired=false,_lpStartX=0,_lpStartY=0;
+  var _lpTimer=null,_lpId=null,_lpMoved=false,_lpStartX=0,_lpStartY=0;
+
   function _openTileCtx(id,x,y){
     var d=S.drinks.find(function(xx){return xx.id===id;});if(!d)return;
     var L=S.lang==='en';
+    // Altes Menü entfernen
     var ex=document.getElementById('tileCtxMenu');if(ex)ex.remove();
     var menu=document.createElement('div');
     menu.id='tileCtxMenu';
-    menu.style.cssText='position:fixed;z-index:8000;background:var(--bg2);border:1px solid var(--ac-27);border-radius:14px;padding:6px 0;min-width:186px;box-shadow:0 8px 28px rgba(0,0,0,.55);font-family:Georgia,serif;touch-action:manipulation;';
-    var maxX=window.innerWidth-200,maxY=window.innerHeight-220;
-    menu.style.left=Math.max(8,Math.min(x-20,maxX))+'px';
+    menu.style.cssText='position:fixed;z-index:8000;background:var(--bg2);border:1px solid var(--ac-27);border-radius:14px;padding:6px 0;min-width:196px;box-shadow:0 8px 28px rgba(0,0,0,.65);font-family:Georgia,serif;touch-action:manipulation;';
+    var maxX=window.innerWidth-210,maxY=window.innerHeight-240;
+    menu.style.left=Math.max(8,Math.min(x-24,maxX))+'px';
     menu.style.top=Math.max(8,Math.min(y-10,maxY))+'px';
+
     function row(ico,lbl,fn){
       var btn=document.createElement('button');
-      btn.style.cssText='display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;border:none;background:transparent;color:var(--tx0);font-family:Georgia,serif;font-size:14px;cursor:pointer;text-align:left;touch-action:manipulation;-webkit-user-select:none;';
-      btn.innerHTML='<span style="font-size:16px;width:20px;text-align:center;flex-shrink:0">'+ico+'</span><span>'+lbl+'</span>';
-      // touchend mit stopPropagation damit dismiss nicht gleichzeitig feuert
-      btn.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();menu.remove();_cleanupDismiss();fn();},{passive:false});
-      btn.addEventListener('click',function(e){e.stopPropagation();menu.remove();_cleanupDismiss();fn();});
+      btn.style.cssText='display:flex;align-items:center;gap:12px;width:100%;padding:13px 18px;border:none;background:transparent;color:var(--tx0);font-family:Georgia,serif;font-size:14px;cursor:pointer;text-align:left;touch-action:manipulation;-webkit-user-select:none;line-height:1.2;';
+      btn.innerHTML='<span style="font-size:17px;width:22px;text-align:center;flex-shrink:0">'+ico+'</span><span>'+lbl+'</span>';
+      function _act(e){
+        e.preventDefault();e.stopPropagation();
+        var cur=document.getElementById('tileCtxMenu');if(cur)cur.remove();
+        window._tileLpBlock=false;
+        fn();
+      }
+      btn.addEventListener('touchend',_act,{passive:false});
+      btn.addEventListener('click',_act);
       menu.appendChild(btn);
     }
+
     var isFav=S.favorites.has(id);
-    row('★',L?(isFav?'Remove from favourites':'Add to favourites'):(isFav?'Aus Favoriten entfernen':'Zu Favoriten hinzufügen'),function(){toggleFav(id);});
-    row('🎨',L?'Tile colour':'Kachelfarbe',function(){
-      if(!S.favTileColors){S.favTileColors=true;autoAssignTileColors();saveState();renderDrinks(false);}
+    row('\u2605',L?(isFav?'Remove from favourites':'Add to favourites'):(isFav?'Aus Favoriten entfernen':'Zu Favoriten hinzuf\xfcgen'),function(){toggleFav(id);});
+    row('\U0001f3a8',L?'Tile colour':'Kachelfarbe',function(){
+      if(!S.favTileColors){
+        S.favTileColors=true;
+        autoAssignTileColors();
+        saveState();
+        renderDrinks(false);
+      }
       openTileColorPicker(id);
     });
-    row('✏️',L?'Edit drink':'Getränk bearbeiten',function(){openEditDrink&&openEditDrink(id);});
-    var sep=document.createElement('div');sep.style.cssText='height:1px;background:var(--ac-13);margin:4px 0';menu.appendChild(sep);
-    row('✕',L?'Close':'Schließen',function(){});
+    row('\u270f\ufe0f',L?'Edit drink':'Getr\xe4nk bearbeiten',function(){openEditDrink&&openEditDrink(id);});
+    var sep=document.createElement('div');
+    sep.style.cssText='height:0.5px;background:var(--ac-20);margin:4px 0';
+    menu.appendChild(sep);
+    row('\u2715',L?'Close':'Schlie\xdfen',function(){});
     document.body.appendChild(menu);
-    // Haptic
-    try{if(typeof navigator.vibrate==='function')navigator.vibrate([15,10,15]);}catch(err){}
-    // Dismiss-Handler mit Verzögerung und Flag-Schutz
+    try{if(typeof navigator.vibrate==='function')navigator.vibrate([12,8,12]);}catch(_e){}
+
+    // Dismiss: erst nach 650ms registrieren – iOS generiert ~300ms nach touchend einen
+    // synthetischen click-Event; der wuerde das Menu sofort schliessen.
+    var _openTs=Date.now();
     function _dismiss(ev){
-      if(menu.contains(ev.target))return;
-      menu.remove();_cleanupDismiss();
-    }
-    function _cleanupDismiss(){
+      // Jetzt erst reagieren wenn genuegend Zeit vergangen
+      if(Date.now()-_openTs<650)return;
+      var cur=document.getElementById('tileCtxMenu');
+      if(!cur)return;
+      if(cur.contains(ev.target))return;
+      cur.remove();
+      window._tileLpBlock=false;
       document.removeEventListener('touchstart',_dismiss,true);
       document.removeEventListener('click',_dismiss,true);
     }
-    // Verzögerung länger: 300ms – erst nach dem touchend des long-press
+    // Touchstart sofort – aber mit Zeitpruefung innen
+    document.addEventListener('touchstart',_dismiss,true);
+    // Click nach 650ms – deckt synthetischen click ab
     setTimeout(function(){
-      document.addEventListener('touchstart',_dismiss,true);
       document.addEventListener('click',_dismiss,true);
-    },300);
+    },650);
   }
-  // Attach long-press to favSection
+
   var fs=document.getElementById('favSection');
-  if(fs){
-    fs.addEventListener('touchstart',function(e){
-      var tile=e.target.closest('[data-tile-id]');
-      if(!tile||e.target.closest('.fav-tile-drag-handle-tile')||e.target.closest('.fav-view-toggle'))return;
-      _lpId=tile.dataset.tileId;_lpMoved=false;_lpFired=false;
-      _lpStartX=e.touches[0].clientX;_lpStartY=e.touches[0].clientY;
-      var ex=e.touches[0].clientX,ey=e.touches[0].clientY;
-      _lpTimer=setTimeout(function(){
-        if(!_lpMoved&&_lpId){
-          _lpFired=true;
-          _openTileCtx(_lpId,ex,ey);
-        }
-      },700); // 700ms – deutlich länger als normaler Tap
-    },{passive:true});
-    fs.addEventListener('touchmove',function(e){
-      if(_lpTimer){
-        // Nur als bewegt markieren wenn wirklich mehr als 8px Abweichung
-        var tc=e.touches[0];
-        if(Math.abs(tc.clientX-_lpStartX)>8||Math.abs(tc.clientY-_lpStartY)>8){
-          _lpMoved=true;clearTimeout(_lpTimer);_lpTimer=null;
-        }
-      }
-    },{passive:true});
-    fs.addEventListener('touchend',function(e){
-      clearTimeout(_lpTimer);_lpTimer=null;
-      // Wenn long-press gefeuert hat → tapPlus blockieren
-      if(_lpFired){e.preventDefault();}
-      _lpFired=false;
-    },{passive:false});
-  }
+  if(!fs)return;
+
+  fs.addEventListener('touchstart',function(e){
+    var tile=e.target.closest('[data-tile-id]');
+    if(!tile)return;
+    if(e.target.closest('.fav-tile-drag-handle-tile')||e.target.closest('.fav-view-toggle'))return;
+    _lpId=tile.dataset.tileId;
+    _lpMoved=false;
+    _lpStartX=e.touches[0].clientX;
+    _lpStartY=e.touches[0].clientY;
+    var _cx=e.touches[0].clientX,_cy=e.touches[0].clientY;
+    _lpTimer=setTimeout(function(){
+      if(_lpMoved||!_lpId)return;
+      window._tileLpBlock=true;
+      setTimeout(function(){window._tileLpBlock=false;},900);
+      _openTileCtx(_lpId,_cx,_cy);
+    },700);
+  },{passive:true});
+
+  fs.addEventListener('touchmove',function(e){
+    if(!_lpTimer)return;
+    var tc=e.touches[0];
+    if(Math.abs(tc.clientX-_lpStartX)>10||Math.abs(tc.clientY-_lpStartY)>10){
+      _lpMoved=true;clearTimeout(_lpTimer);_lpTimer=null;
+    }
+  },{passive:true});
+
+  fs.addEventListener('touchend',function(){
+    clearTimeout(_lpTimer);_lpTimer=null;
+  },{passive:true});
 })();
 
 /* FIX V47+: Pro-Getränk-Debounce statt globaler 600ms-Sperre (Multi-User-sicher) */
