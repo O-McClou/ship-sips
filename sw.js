@@ -8,13 +8,14 @@
    skipWaiting() bleibt aktiv damit der neue Cache sofort greift.
    ═══════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'ship-sips-v48';
+const CACHE_NAME = 'ship-sips-v49';
 
 const ASSETS = [
   './index.html',
   './manifest.json',
   './icon-192.png',
-  './icon-512.png'
+  './icon-512.png',
+  './jspdf.umd.min.js'  /* FIX V48 PDF-Offline: lokale jsPDF-Bibliothek cachen */
 ];
 
 /* ── Install: cachen + sofort übernehmen ──────────────────────── */

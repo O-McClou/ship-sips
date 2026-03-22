@@ -2606,21 +2606,22 @@ function closeCustomThemeEditor(){document.getElementById('customThemeEditorOv')
 /* ══ ICON-BIBLIOTHEK (Custom Import, max. 20) ════════════════════════════ */
 // [PUNKT-E] getIconLib – bleibt synchron aus localStorage
 function getIconLib(){try{const r=localStorage.getItem('a4_iconlib');return r?JSON.parse(r):[];}catch(e){return[];}}
-// [PUNKT-E] saveIconLib – schreibt in localStorage UND async in IndexedDB
+// [PUNKT-E] saveIconLib – schreibt ausschließlich in IndexedDB
+// FIX V48 Icon-Storage: localStorage-Write für DataURLs entfernt.
+// Große DataURLs im localStorage fressen das 5-MB-iOS-Limit auf und lassen
+// nachfolgende Saves (a4_log etc.) lautlos scheitern.
 function saveIconLib(lib){
-  try{localStorage.setItem('a4_iconlib',JSON.stringify(lib));}catch(e){}
-  // FIX V47 F9: TrackerDB-Wrapper statt direktem indexedDB.open()
+  // Nur IndexedDB – kein localStorage (DataURLs sind zu groß)
   db.iconlib.put({key:'data',value:JSON.stringify(lib)}).catch(ex=>console.warn('[PUNKT-E] iconlib save failed',ex));
 }
 // [PUNKT-E] syncIconLibFromIDB – stellt Icon-Library aus IndexedDB wieder her
 async function syncIconLibFromIDB(){
   try{
-    const lsVal=localStorage.getItem('a4_iconlib');
-    if(lsVal&&lsVal!=='[]')return; // localStorage hat Daten → kein Restore nötig
-    // FIX V47 F9: TrackerDB-Wrapper statt direktem indexedDB.open()
+    // FIX V48: localStorage wird für Icons nicht mehr genutzt → immer aus IDB laden
     const rec=await db.iconlib.get('data');
     if(rec&&rec.value){
-      localStorage.setItem('a4_iconlib',rec.value);
+      // Für Abwärtskompatibilität mit getIconLib() (liest localStorage) temporär setzen
+      try{localStorage.setItem('a4_iconlib',rec.value);}catch(e){}
       console.log('[PUNKT-E] Icon-Library aus IndexedDB wiederhergestellt');
     }
   }catch(ex){console.warn('[PUNKT-E] syncIconLibFromIDB Fehler',ex);}
@@ -7221,22 +7222,40 @@ function renderStats(){
 
 /* ═══ FEATURE 15: PDF-REISEBERICHT MIT HAFEN-TIMELINE (V48) ═══════════ */
 /*
- * Lädt jsPDF dynamisch von cdnjs und erzeugt einen mehrsprachigen
- * Reisebericht mit Hafen-Timeline, Ausgaben-Übersicht und Kategorie-
- * auswertung. Komplett offline nach einmaligem Laden der Bibliothek.
+ * Lädt jsPDF aus der lokalen Projektdatei (./jspdf.umd.min.js) – offline-fähig.
+ * FIX V48 PDF-Offline: Kein CDN mehr als primäre Quelle. Die Datei
+ * jspdf.umd.min.js muss neben index.html liegen und ist in sw.js gecacht.
+ * Nur wenn die lokale Datei fehlt, wird das CDN als Notfall-Fallback versucht.
  */
 function exportVoyagePDF(){
   const L=S.lang==='en';
   showToast((L?'⏳ Preparing PDF…':'⏳ PDF wird vorbereitet…'),'info',3000);
 
-  // jsPDF dynamisch laden (einmalig, dann gecacht im Scope)
+  // jsPDF laden: zuerst lokal (offline-fähig), dann CDN als Notfall-Fallback
   function _withJsPDF(cb){
     if(window.jspdf&&window.jspdf.jsPDF){cb(window.jspdf.jsPDF);return;}
-    const script=document.createElement('script');
-    script.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-    script.onload=function(){cb(window.jspdf.jsPDF);};
-    script.onerror=function(){showToast((L?'⚠️ PDF library could not be loaded. Check internet connection.':'⚠️ PDF-Bibliothek konnte nicht geladen werden. Internetverbindung prüfen.'),'error',6000);};
-    document.head.appendChild(script);
+    // 1. Lokale Datei versuchen (gecacht durch Service Worker)
+    const scriptLocal=document.createElement('script');
+    scriptLocal.src='./jspdf.umd.min.js';
+    scriptLocal.onload=function(){
+      if(window.jspdf&&window.jspdf.jsPDF){cb(window.jspdf.jsPDF);}
+      else{_loadCDN();}
+    };
+    scriptLocal.onerror=function(){_loadCDN();};
+    document.head.appendChild(scriptLocal);
+    // 2. CDN-Fallback (nur mit Internetzugang verfügbar)
+    function _loadCDN(){
+      const scriptCDN=document.createElement('script');
+      scriptCDN.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      scriptCDN.onload=function(){cb(window.jspdf.jsPDF);};
+      scriptCDN.onerror=function(){
+        showToast((L
+          ?'⚠️ PDF library unavailable. Place jspdf.umd.min.js next to index.html or connect to the internet.'
+          :'⚠️ PDF-Bibliothek nicht verfügbar. jspdf.umd.min.js neben index.html ablegen oder Internetverbindung herstellen.'),
+          'error',8000);
+      };
+      document.head.appendChild(scriptCDN);
+    }
   }
 
   _withJsPDF(function(JsPDF){
@@ -9169,7 +9188,7 @@ function renderHelp(){
 
     <div class="hlp-card">
       <div class="hlp-card-title">💽 ${h('Speicherlimits','Storage limits')}</div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('Maximaler Speicher','Maximum storage')}</span><span>${h('Alle Einträge werden primär in <strong>localStorage</strong> gespeichert. LocalStorage kann bei sehr niedrigem Gerätespeicher durch iOS gelöscht werden – <strong>regelmäßige Backups sind daher essenziell!</strong> Die Icon-Library wird zusätzlich in IndexedDB gesichert.','All entries are stored primarily in <strong>localStorage</strong>. LocalStorage can be deleted by iOS under very low device storage – <strong>regular backups are therefore essential!</strong> The icon library is additionally backed up in IndexedDB.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('Maximaler Speicher','Maximum storage')}</span><span>${h('Alle Einträge werden primär in der <strong>IndexedDB</strong> gespeichert – kein 5-MB-Limit. LocalStorage dient nur als Fallback für ältere Umgebungen. IndexedDB kann bei sehr niedrigem Gerätespeicher durch iOS gelöscht werden – <strong>regelmäßige Backups sind daher essenziell!</strong> Die Icon-Library wird ebenfalls in IndexedDB gesichert.','All entries are stored primarily in <strong>IndexedDB</strong> – no 5 MB limit. LocalStorage serves only as a fallback for older environments. IndexedDB can be deleted by iOS under very low device storage – <strong>regular backups are therefore essential!</strong> The icon library is also stored in IndexedDB.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('Hartes Limit','Hard limit')}</span><span>${h('Maximale Anzahl aktiver Einträge: <strong>30.000</strong>. Bei Annäherung erscheint eine Warnung. Abhilfe: Backup erstellen, dann Reset.','Maximum number of active entries: <strong>30,000</strong>. A warning appears when approaching. Solution: create backup, then reset.')}</span></div>
     </div>
 
@@ -9192,7 +9211,7 @@ function renderHelp(){
         <div class="hlp-step"><div class="hlp-step-num">2</div><span>${h('Safari-Menü unten (Teilen-Symbol □↑) antippen → <strong>Zum Home-Bildschirm</strong>. Kurzen Namen eingeben → <strong>Hinzufügen</strong>.','Tap the Safari share button (□↑) at the bottom → <strong>Add to Home Screen</strong>. Enter a short name → <strong>Add</strong>.')}</span></div>
         <div class="hlp-step"><div class="hlp-step-num">3</div><span>${h('Ein Icon erscheint auf dem Home-Bildschirm. Antippen → App öffnet sich direkt als PWA (ohne Browser-Rahmen).','An icon appears on the home screen. Tap → the app opens directly as a PWA (without browser chrome).')}</span></div>
       </div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('Wichtig: Daten bleiben erhalten','Important: data is preserved')}</span><span>${h('Die Daten liegen in der <strong>IndexedDB</strong> des Browsers (+ localStorage als Fallback). Wird die App vom Home-Bildschirm geöffnet, werden dieselben Daten verwendet. Wird Safari-Verlauf gelöscht oder das iPhone zurückgesetzt, können Daten verloren gehen – deshalb regelmäßig Backups erstellen!','Data is stored in the browser\'s <strong>IndexedDB</strong> (+ localStorage as fallback). When opened from the home screen, the same data is used. If Safari history is cleared or the iPhone is reset, data may be lost – so create regular backups!')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('Wichtig: Daten bleiben erhalten','Important: data is preserved')}</span><span>${h('Die Daten liegen primär in der <strong>IndexedDB</strong> (kein 5-MB-Limit) – localStorage dient nur als Fallback. Wird die App vom Home-Bildschirm geöffnet, werden dieselben Daten verwendet. Wird Safari-Verlauf gelöscht oder das iPhone zurückgesetzt, können Daten verloren gehen – deshalb regelmäßig Backups erstellen!','Data is stored primarily in <strong>IndexedDB</strong> (no 5 MB limit) – localStorage serves only as a fallback. When opened from the home screen, the same data is used. If Safari history is cleared or the iPhone is reset, data may be lost – so create regular backups!')}</span></div>
     </div>
 
     <div class="hlp-card">
@@ -9626,24 +9645,78 @@ async function shareBackup(){
    Beim Öffnen der Datei werden alle Daten sofort aus dem eingebetteten
    Preload-Script wiederhergestellt – keine externe Verbindung nötig.
    ──────────────────────────────────────────────────────────────────────── */
-function buildAppHTMLBlob(){
-  // V45: Alle offenen Overlays schließen vor dem Export (verhindert dass Modals im Snapshot festgehalten werden)
+async function buildAppHTMLBlob(){
+  // FIX V48 HTML-Export: Primärdaten aus IndexedDB lesen (nicht aus dem
+  // ggf. überlaufenden localStorage). Bei 1.650+ Einträgen überschreitet
+  // a4_log allein das 5-MB-iOS-Limit → localStorage-Fallback ist unvollständig.
+  // Ablauf:
+  //   1. Alle offenen Overlays schließen
+  //   2. config + logs + iconlib aus IndexedDB lesen
+  //   3. Daraus vollständige a4_*-Schlüssel rekonstruieren
+  //   4. Preload-Script in den HTML-Snapshot injizieren
+
+  // 1. Offene Overlays schließen (verhindert eingefrierene Modals im Snapshot)
   document.querySelectorAll('.ov.show-bottom,.ov.show-center,.ov.show-top,.ov.show').forEach(el=>{el.className='ov';});
-  // V46: Vor dem Export sicherstellen dass localStorage aktuell ist (für file://-Kompatibilität des Exports)
-  _saveStateLocalStorageFallback();
-  // 1. Alle a4_* Schlüssel aus localStorage sammeln
+
+  // 2. IndexedDB-Daten lesen (Primärquelle)
+  let cfgMap={}, logsArr=[], iconlibRec=null;
+  try{cfgMap=await db.getAllCfg();}catch(e){console.warn('[Export] config IDB read failed',e);}
+  try{logsArr=await db.logs.toArray();}catch(e){console.warn('[Export] logs IDB read failed',e);}
+  try{iconlibRec=await db.iconlib.get('data');}catch(e){}
+
+  // 3a. IDB-config-Schlüssel → a4_*-localStorage-Schlüssel (Mapping wie in saveState / _saveStateLocalStorageFallback)
+  const cfgToA4={
+    appTitle1:'a4_title1', appTitle2:'a4_title2', titleIcon:'a4_titleicon',
+    lastBackupDate:'a4_lastbkp', lastBackupReminderDate:'a4_lastbkpreminder',
+    favorites:'a4_favs', favOrder:'a4_favorder',
+    tzMode:'a4_tzmode', tzOffset:'a4_tzoffset', tzChangeLog:'a4_tzchangelog',
+    lang:'a4_lang', fontSize:'a4_fz', dailyGoal:'a4_goal', currency:'a4_currency',
+    serviceCharge:'a4_svc', ccm:'a4_ccm', btnLayout:'a4_btnlayout',
+    theme:'a4_theme', conceptTheme:'a4_concepttheme', conceptFavorites:'a4_conceptfavs',
+    dayEnd:'a4_dayend', headerCollapsed:'a4_hdrcoll',
+    users:'a4_users', activeUserId:'a4_activeuser', userBudgets:'a4_userbudgets',
+    currentLocation:'a4_curloc', voyageRoute:'a4_voyageroute',
+    customThemes:'a4_customthemes', statDaySort:'a4_statdaysort',
+    statDayShow:'a4_statdayshow', statOpen:'a4_statopen',
+    syncEnabled:'a4_syncenabled', lastSyncDate:'a4_lastsync',
+    onboardingDone:'a4_onboarding_done', setupDone:'a4_setup_done',
+    swipeLegendSeen:'a4_swipelegend_seen', swipeHintShown:'a4_swipe_hint_shown',
+    shipTimeWarnDay:'a4_shiptime_warn_day',
+  };
   const stateKeys={};
-  for(let i=0;i<localStorage.length;i++){
-    const k=localStorage.key(i);
-    if(k&&(k.startsWith('a4_')||k==='a4_theme')){
-      try{stateKeys[k]=localStorage.getItem(k);}catch(e){}
+  for(const[idbKey,a4Key]of Object.entries(cfgToA4)){
+    if(cfgMap[idbKey]!==undefined&&cfgMap[idbKey]!==null){
+      stateKeys[a4Key]=cfgMap[idbKey];
     }
   }
-  // 2. Preload-Script bauen
+  // 3b. Getränkeliste aus S (immer vollständig im RAM)
+  try{stateKeys['a4_drinks']=JSON.stringify(S.drinks||[]);}catch(e){}
+  // 3c. Vollständiges Log aus IndexedDB (der kritische Datenpunkt)
+  if(logsArr.length>0){
+    // IDB-Logs enthalten ein 'id'-Feld als KeyPath – für den Export nicht nötig, schadet aber nicht
+    stateKeys['a4_log']=JSON.stringify(logsArr);
+  } else {
+    // Fallback: RAM-State (sollte identisch sein)
+    try{stateKeys['a4_log']=JSON.stringify(S.log||[]);}catch(e){}
+  }
+  // 3d. Icon-Library aus IDB
+  if(iconlibRec&&iconlibRec.value){
+    stateKeys['a4_iconlib']=iconlibRec.value;
+  }
+  // 3e. Verbleibende a4_*-Schlüssel aus localStorage (z. B. seltene Flags)
+  //     als Ergänzung – bereits gesetzte Schlüssel werden NICHT überschrieben
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k&&(k.startsWith('a4_'))&&!(k in stateKeys)){
+        try{const v=localStorage.getItem(k);if(v!==null)stateKeys[k]=v;}catch(_){}
+      }
+    }
+  }catch(_){}
+
+  // 4. Preload-Script und HTML-Snapshot erstellen
   const preloadContent=`(function(){var d=${JSON.stringify(stateKeys)};for(var k in d){try{localStorage.setItem(k,d[k]);}catch(e){}}})();`;
-  // 3. Aktuelles HTML holen und nur das Preload-Script ersetzen
   let html=document.documentElement.outerHTML;
-  // Den Inhalt des Preload-Script-Tags ersetzen
   html=html.replace(/<script id="a4StatePreload">[^<]*<\/script>/,
     '<script id="a4StatePreload">'+preloadContent+'<\/script>');
   return new Blob([html],{type:'text/html;charset=utf-8'});
@@ -9653,10 +9726,11 @@ function htmlExportFilename(){
   const dateStr=new Date().toLocaleDateString(S.lang==='en'?'en-US':'de-DE').replace(/[/.]/g,'-');
   return nm+'_Export_'+dateStr+'.html';
 }
-function exportAppAsHTML(){
+async function exportAppAsHTML(){
   const L=S.lang==='en';
   try{
-    const blob=buildAppHTMLBlob();
+    showToast('⏳ '+(L?'Preparing export…':'Export wird vorbereitet…'),'info',3000);
+    const blob=await buildAppHTMLBlob();
     const u=URL.createObjectURL(blob);
     const a=document.createElement('a');
     a.href=u;a.download=htmlExportFilename();
@@ -9671,7 +9745,10 @@ async function shareAppAsHTML(){
   const L=S.lang==='en';
   const filename=htmlExportFilename();
   let blob;
-  try{blob=buildAppHTMLBlob();}catch(e){
+  try{
+    showToast('⏳ '+(L?'Preparing export…':'Export wird vorbereitet…'),'info',3000);
+    blob=await buildAppHTMLBlob();
+  }catch(e){
     showToast('⚠️ '+(L?'Export failed: ':'Export fehlgeschlagen: ')+e.message,'error',5000);return;
   }
   const file=new File([blob],filename,{type:'text/html'});
@@ -9682,11 +9759,11 @@ async function shareAppAsHTML(){
     }catch(e){
       if(e.name!=='AbortError'){
         // Fallback: Download
-        exportAppAsHTML();
+        await exportAppAsHTML();
       }
     }
   }else{
-    exportAppAsHTML();
+    await exportAppAsHTML();
   }
 }
 
@@ -10202,6 +10279,13 @@ function rcalTip(el,ev){
   t.style.left=x+'px';t.style.top=y+'px';
 }
 function rcalHideTip(){const t=document.getElementById('rcalTooltip');if(t)t.style.display='none';}
+// FIX V48 Touch-Tooltip: Globaler touchstart-Handler schließt den Kalender-Tooltip,
+// wenn außerhalb eines Kalender-Tags getippt wird (onmouseleave greift auf iOS nicht).
+(function(){
+  document.addEventListener('touchstart',function(e){
+    if(!e.target.closest('.rcal-cell'))rcalHideTip();
+  },{passive:true});
+})();
 
 /* ═══════════════════════════════════════════════════════════════
    V34 V4: NUTZER-MAPPING beim Backup-Import
@@ -11033,14 +11117,8 @@ async function initApp(){
 }
 
 function _initUI(){
-  // V46: Onboarding beim ersten Start (nach loadStateFromDB)
-  setTimeout(function(){
-    try{
-      if(!localStorage.getItem('a4_onboarding_done') && !window._idbOnboardingDone){
-        showOnboarding();
-      }
-    }catch(e){}
-  },300);
+  // FIX V48 Onboarding: Das alte 3-Schritte-Modal (showOnboarding) wurde entfernt.
+  // Einziger Onboarding-Einstiegspunkt ist der 10-Schritte-Setup-Wizard (_swzTryStart).
   // applyTitle/applyFontSize/applyLang/applyTheme – bereits in loadStateFromDB aufgerufen
   applyHeaderCollapse();
   initHeaderSwipe();
@@ -11205,8 +11283,8 @@ setTimeout(function(){
     if(localStorage.getItem('a4_setup_done'))return;
     function _swzTryStart(attempt){
       try{
-        var obOv=document.getElementById('onboardingOv');
-        if((obOv&&obOv.classList.contains('show-center'))||document.querySelector('.ov.show-center')){
+        // FIX V48: onboardingOv wurde entfernt – prüfe nur ob ein anderes Overlay offen ist
+        if(document.querySelector('.ov.show-center')){
           if(attempt<10)setTimeout(function(){_swzTryStart(attempt+1);},2000);
           return;
         }
@@ -11567,91 +11645,6 @@ function dismissPwa(){
   window._applyAutoSystemTheme=()=>{if(typeof _applyAutoSystemTheme==='function')_applyAutoSystemTheme();};
 })();
 
-/* ══════════════════════════════════════════════════════════
-   ONBOARDING – Erstnutzer-Modal (10 Schritte)
-══════════════════════════════════════════════════════════ */
-function showOnboarding(){
-  try{
-    var ov=document.getElementById('onboardingOv');
-    if(!ov)return;
-    var L=S&&S.lang==='en';
-    // Schritt 1
-    var s1=document.getElementById('obStep1');
-    if(s1)s1.innerHTML=
-      '<div style="font-size:52px;text-align:center;margin-bottom:10px">🍹</div>'+
-      '<div class="cfm-title" style="text-align:center;margin-bottom:10px">'+(L?'Welcome to your Drink Tracker!':'Willkommen beim Getränke-Tracker!')+'</div>'+
-      '<div style="font-size:13px;color:var(--tx1);line-height:1.65;margin-bottom:16px">'+(L
-        ?'Track your drinks on cruises and long voyages – up to <strong>160+ days</strong>.<br>Works completely <strong>offline</strong> on your iPhone, no internet needed.'
-        :'Zähle deine Getränke auf Kreuzfahrten und langen Reisen – bis zu <strong>160+ Tagen</strong>.<br>Funktioniert vollständig <strong>offline</strong> auf deinem iPhone, ganz ohne Internet.'
-      )+'</div>'+
-      '<div style="text-align:right;font-size:11px;color:var(--tx2);margin-bottom:10px">1 / 3</div>'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'+
-      '<button class="mbtn-ok" style="flex:1" onclick="_obNext(1)">'+(L?'Next →':'Weiter →')+'</button>'+
-      '<button onclick="_obSkip()" style="background:transparent;border:none;color:var(--tx2);font-size:12px;cursor:pointer;padding:6px 4px;touch-action:manipulation">'+(L?'Skip':'Überspringen')+'</button>'+
-      '</div>';
-    // Schritt 2
-    var s2=document.getElementById('obStep2');
-    if(s2)s2.innerHTML=
-      '<div style="font-size:52px;text-align:center;margin-bottom:10px">➕</div>'+
-      '<div class="cfm-title" style="text-align:center;margin-bottom:10px">'+(L?'Add drinks easily':'Getränke einfach hinzufügen')+'</div>'+
-      '<div style="font-size:13px;color:var(--tx1);line-height:1.65;margin-bottom:16px">'+(L
-        ?'Tap <strong>＋</strong> next to any drink to count it. Use <strong>★ Favourites</strong> to pin your top drinks. Made a mistake? An <strong>Undo</strong> toast appears for 12 seconds after every entry. With multiple users: always activate the correct user in the coloured bar first – the <strong>−</strong> button only deletes your own entries.'
-        :'Tippe auf <strong>＋</strong> neben einem Getränk, um es zu zählen. Pinne deine Lieblingsgetränke mit <strong>★ Favoriten</strong> ganz oben an. Tippfehler? Der <strong>Rückgängig</strong>-Toast erscheint 12 Sekunden lang direkt nach jeder Erfassung. Bei mehreren Personen: immer zuerst den richtigen Nutzer in der farbigen Leiste aktivieren – der <strong>−</strong>-Button löscht nur eigene Einträge.'
-      )+'</div>'+
-      '<div style="text-align:right;font-size:11px;color:var(--tx2);margin-bottom:10px">2 / 3</div>'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'+
-      '<button class="mbtn-ok" style="flex:1" onclick="_obNext(2)">'+(L?'Next →':'Weiter →')+'</button>'+
-      '<button onclick="_obSkip()" style="background:transparent;border:none;color:var(--tx2);font-size:12px;cursor:pointer;padding:6px 4px;touch-action:manipulation">'+(L?'Skip':'Überspringen')+'</button>'+
-      '</div>';
-    // Schritt 3
-    var s3=document.getElementById('obStep3');
-    if(s3)s3.innerHTML=
-      '<div style="font-size:52px;text-align:center;margin-bottom:10px">💾</div>'+
-      '<div class="cfm-title" style="text-align:center;margin-bottom:10px">'+(L?'Back up your data weekly':'Wöchentlich Backup erstellen')+'</div>'+
-      '<div style="font-size:13px;color:var(--tx1);line-height:1.65;margin-bottom:16px">'+(L
-        ?'Your data is stored in a local <strong>database</strong> – no limit, no cloud upload, completely private.<br><br>💡 <strong>Backup tip:</strong> Create a backup after every session in the <strong>Settings</strong> tab. The app will remind you automatically.<br><br>👥 <strong>Multiple users:</strong> Create profiles with unique <em>names</em>. When importing a backup, users are matched automatically by name – regardless of their order on any device.<br><br>🔄 Merge logs via <strong>Smart Sync</strong> (AirDrop) without overwriting anyone&#39;s settings.'
-        :'Deine Daten werden in einer lokalen <strong>Datenbank</strong> gespeichert – kein Limit, kein Cloud-Upload, vollständig privat.<br><br>💡 <strong>Backup-Empfehlung:</strong> Erstelle nach jeder Schicht ein Backup im Tab <strong>Einstellungen</strong>. Die App erinnert dich automatisch.<br><br>👥 <strong>Mehrere Personen:</strong> Nutzerprofile mit eindeutigen <em>Namen</em> anlegen. Beim Backup-Import werden Nutzer automatisch anhand des Namens erkannt – egal auf welchem Gerät.<br><br>🔄 Protokolle per <strong>Smart Sync</strong> (AirDrop) zusammenführen, ohne fremde Einstellungen zu überschreiben.'
-      )+'</div>'+
-      '<div style="text-align:right;font-size:11px;color:var(--tx2);margin-bottom:10px">3 / 3</div>'+
-      '<button class="mbtn-ok" style="width:100%" onclick="_obDone()">'+(L?'✓ Let\'s go!':'✓ Los geht\'s!')+'</button>';
-    // Nur Schritt 1 sichtbar
-    if(s1)s1.style.display='';
-    if(s2)s2.style.display='none';
-    if(s3)s3.style.display='none';
-    ov.classList.add('show-center');
-  }catch(e){}
-}
-function _obNext(step){
-  try{
-    var s1=document.getElementById('obStep1');
-    var s2=document.getElementById('obStep2');
-    var s3=document.getElementById('obStep3');
-    if(step===1){if(s1)s1.style.display='none';if(s2)s2.style.display='';}
-    else if(step===2){if(s2)s2.style.display='none';if(s3)s3.style.display='';}
-  }catch(e){}
-}
-function _obDone(){
-  try{localStorage.setItem('a4_onboarding_done','1');db.setCfg('onboardingDone','1').catch(()=>{});}catch(e){}
-  try{
-    var ov=document.getElementById('onboardingOv');
-    if(ov)ov.classList.remove('show-center');
-  }catch(e){}
-  // Nr.25: Header nach Onboarding automatisch einklappen
-  try{
-    if(!S.headerCollapsed){
-      S.headerCollapsed=true;
-      try{localStorage.setItem('a4_hdrcoll','1');}catch(e){}
-      applyHeaderCollapse();
-    }
-  }catch(e){}
-}
-function _obSkip(){
-  try{localStorage.setItem('a4_onboarding_done','1');}catch(e){}
-  try{
-    var ov=document.getElementById('onboardingOv');
-    if(ov)ov.classList.remove('show-center');
-  }catch(e){}
-}
 
 /* ── Design-Toggle (Header-Button) ── */
 function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
@@ -11671,15 +11664,6 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
 })();
 
 </script>
-
-<!-- MODAL: Onboarding (Erstnutzer) -->
-<div class="ov" id="onboardingOv">
-  <div class="modal-box" style="max-width:360px;border-radius:20px">
-    <div id="obStep1"></div>
-    <div id="obStep2" style="display:none"></div>
-    <div id="obStep3" style="display:none"></div>
-  </div>
-</div>
 
 <!-- MODAL: Reiseroute Editor -->
 <div class="ov" id="routeOv">
