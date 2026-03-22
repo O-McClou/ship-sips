@@ -291,6 +291,51 @@ html[data-theme="champagner"] .sumbox{background:linear-gradient(135deg,#FFFFFF,
 html[data-theme="champagner"] .adm-card{background:#FFFFFF}
 html[data-theme="champagner"] .bplus{border-radius:50%}
 
+/* ── Kachel-Schutzregeln: schlagen alle html[data-theme] .drow Overrides ──
+   Spezifität html .fav-tile-grid .drow.fav-tile (0,0,3,1) > html[data-theme] .drow (0,1,1,1)
+   → border-top, border-radius, flex-direction bleiben für Kacheln immer korrekt. ── */
+html .fav-tile-grid .drow.fav-tile{
+  border-left:none!important;
+  border-top:3px solid var(--ac-13)!important;
+  border-radius:10px!important;
+  flex-direction:column!important;
+  padding:8px 9px 8px 10px!important;
+  background:rgba(255,255,255,0.04)!important;
+}
+html .fav-tile-grid .drow.fav-tile.has{
+  border-top-color:var(--ac)!important;
+  background:var(--ac-07)!important;
+}
+html .fav-tile-grid .drow.fav-tile.fl{
+  border-top-color:var(--ac)!important;
+  background:var(--ac-13)!important;
+}
+html .fav-tile-grid .drow.fav-tile.tile-sort-sel{
+  border-top-color:var(--ac)!important;
+  background:var(--ac-13)!important;
+}
+html .fav-tile-grid .drow.fav-tile.tile-remove-hint{
+  border-top-color:var(--col-err)!important;
+}
+/* Helle Themes: weißer Kachel-Hintergrund für bessere Lesbarkeit */
+html[data-theme="sonnendeck"]  .fav-tile-grid .drow.fav-tile,
+html[data-theme="pergament"]   .fav-tile-grid .drow.fav-tile,
+html[data-theme="mare_sereno"] .fav-tile-grid .drow.fav-tile,
+html[data-theme="nicko"]       .fav-tile-grid .drow.fav-tile,
+html[data-theme="champagner"]  .fav-tile-grid .drow.fav-tile{
+  background:#FFFFFF!important;
+  border:1.5px solid rgba(0,0,0,.08)!important;
+  border-top:3px solid var(--ac-13)!important;
+}
+html[data-theme="sonnendeck"]  .fav-tile-grid .drow.fav-tile.has,
+html[data-theme="pergament"]   .fav-tile-grid .drow.fav-tile.has,
+html[data-theme="mare_sereno"] .fav-tile-grid .drow.fav-tile.has,
+html[data-theme="nicko"]       .fav-tile-grid .drow.fav-tile.has,
+html[data-theme="champagner"]  .fav-tile-grid .drow.fav-tile.has{
+  background:#FFFBEF!important;
+  border-top-color:var(--ac)!important;
+}
+
 /* ── Sonnenmodus (helles Theme) ── */
 html.sun-mode {
   --bg:   #FAF3E8;
@@ -1050,29 +1095,93 @@ html .fav-section .drow.fl{background:rgba(255,255,255,0.07);border-left-color:v
   flex-shrink:0;line-height:1.4;
 }
 .fav-tile-btn.active{background:var(--ac-13);color:var(--ac);border-color:var(--ac-40)}
+/* ── View-Toggle Pill (Liste ☰ / Kacheln ⊞) ── */
+.fav-view-toggle{
+  display:flex;background:var(--bg3);border:1px solid var(--ac-13);
+  border-radius:10px;padding:2px;gap:2px;flex-shrink:0;margin-left:4px;
+}
+.fav-view-btn{
+  padding:3px 10px;border-radius:7px;font-size:11px;cursor:pointer;
+  border:none;background:transparent;color:var(--tx2);
+  font-family:Georgia,serif;touch-action:manipulation;-webkit-user-select:none;
+  transition:background .15s,color .15s;min-height:26px;line-height:1.2;
+}
+.fav-view-btn.on{background:var(--ac);color:var(--ac-fg);font-weight:bold;}
+/* ── Tile Badge (Zähler oben rechts) ── */
+.fav-tile-badge{
+  position:absolute;top:6px;right:6px;
+  min-width:22px;height:22px;border-radius:11px;
+  background:var(--ac);color:var(--ac-fg);
+  font-size:11px;font-weight:bold;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 5px;line-height:1;pointer-events:none;
+  box-shadow:0 1px 4px rgba(0,0,0,.35);transition:background .15s;
+}
+.fav-tile-badge.z{
+  background:rgba(255,255,255,.08);color:rgba(255,255,255,.20);
+  font-size:10px;box-shadow:none;
+}
+/* ── Tile Bottom Row ── */
+.fav-tile-bottom{
+  display:flex;align-items:center;width:100%;
+  margin-top:auto;padding-top:5px;
+}
+/* ── Tile Minus Button ── */
+.fav-tile-minus{
+  width:28px;height:28px;min-width:28px;border-radius:50%;
+  background:var(--bg4);border:1.5px solid var(--ac-40);
+  color:var(--ac);font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;line-height:1;margin-left:auto;
+  touch-action:manipulation;-webkit-user-select:none;
+  transition:background .15s,opacity .15s;
+}
+.fav-tile-minus:active{background:var(--ac-20)}
+.fav-tile-minus.z{opacity:.22;pointer-events:none;}
+/* ── Tile Drag-Handle (Sortiermodus) ── */
+.fav-tile-drag-handle-tile{
+  position:absolute;bottom:5px;right:5px;
+  width:20px;height:20px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:var(--ac-60);cursor:grab;
+  -webkit-user-select:none;user-select:none;touch-action:none;
+  -webkit-touch-callout:none;letter-spacing:-2px;line-height:1;z-index:5;
+  background:var(--ac-09);border-radius:4px;
+}
+.fav-tile-drag-handle-tile:active{color:var(--ac);cursor:grabbing}
+/* ── Tile Grid: Drag-Over indicator ── */
+html .fav-tile-grid .drow-wrap.tile-drag-over-mark{
+  box-shadow:0 0 0 2px var(--ac);border-radius:10px;
+}
+/* ── Tile Grid fade on switch ── */
+#favList{transition:opacity .13s ease;}
+#favList.tile-fade{opacity:0;}
 /* ── Favorites Tile Grid ────────────────────────────────────── */
 .fav-tile-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:2px 0 6px;align-items:start}
-html .fav-tile-grid .drow-wrap{margin-bottom:0;height:106px;overflow:hidden}
+html .fav-tile-grid .drow-wrap{margin-bottom:0;min-height:106px;overflow:visible}
 html .fav-tile-grid .drow-wrap .drow-strip{opacity:.55;top:6px;bottom:6px}
 html .fav-tile-grid .drow.fav-tile{
-  flex-direction:column;align-items:flex-start;gap:5px;
-  padding:9px 9px 9px 10px;height:100%;cursor:pointer;
-  justify-content:space-between;position:relative;
+  flex-direction:column;align-items:flex-start;gap:0;
+  padding:8px 9px 8px 10px;min-height:106px;height:auto;cursor:pointer;
+  justify-content:flex-start;position:relative;
   border-radius:10px;
   background:rgba(255,255,255,0.04);
   border:1px solid rgba(255,255,255,0.07);
-  border-left:4px solid var(--ac-13);
-  transition:opacity .15s,transform .1s;
+  border-left:none!important;
+  border-top:3px solid var(--ac-13);
+  transition:opacity .15s,transform .1s,border-top-color .15s,background .15s;
   box-sizing:border-box;
   -webkit-user-select:none;user-select:none;
   -webkit-touch-callout:none;
 }
 html .fav-tile-grid .drow.fav-tile.has{
-  border-left-color:var(--ac);
+  border-top-color:var(--ac);
+  background:var(--ac-07);
   box-shadow:var(--shadow-card);
 }
 html .fav-tile-grid .drow.fav-tile.fl{
-  border-left-color:var(--ac);
+  border-top-color:var(--ac);
+  background:var(--ac-13);
 }
 html .fav-tile-grid .drow.fav-tile:active{opacity:.72;transform:scale(0.96)}
 /* Sort mode overlay */
@@ -1097,12 +1206,12 @@ html .fav-tile-grid .drow.fav-tile.tile-drag-over{box-shadow:0 0 0 2px var(--ac)
   color:var(--ac);line-height:1;flex-shrink:0;touch-action:manipulation;
   -webkit-user-select:none;opacity:.85;margin-top:-1px}
 .fav-tile-star:active{opacity:.45;transform:scale(.8)}
-.fav-tile-cat{font-size:9px;color:var(--tx2);display:flex;align-items:center;gap:3px;margin-top:2px;overflow:hidden;white-space:nowrap}
+.fav-tile-cat{font-size:10px;color:var(--tx2);display:flex;align-items:center;gap:3px;margin-top:3px;overflow:hidden;white-space:nowrap}
 .fav-tile-meta{display:flex;align-items:center;gap:4px;width:100%;margin-top:auto}
 /* Font-size scaling — tile name only, height stays fixed via drow-wrap */
 body.fz-small  .fav-tile-name{font-size:12px}
 body.fz-large  .fav-tile-name{font-size:17px}
-body.fz-xlarge .fav-tile-name{font-size:21px}
+body.fz-xlarge .fav-tile-name{font-size:16px!important}
 /* ── Tile Edit-Panel "…" ────────────────────────────────────── */
 .fav-tile-edit-btn{
   background:transparent;border:1px solid var(--ac-27);border-radius:12px;
@@ -1133,12 +1242,14 @@ body.fz-xlarge .fav-tile-name{font-size:21px}
 /* Sort mode: selected tile */
 html .fav-tile-grid .drow.fav-tile.tile-sort-sel{
   box-shadow:0 0 0 2px var(--ac)!important;
-  border-left-color:var(--ac)!important;
+  border-top-color:var(--ac)!important;
+  background:var(--ac-13)!important;
   opacity:1;
 }
 /* Remove mode: subtle warning tint */
 html .fav-tile-grid .drow.fav-tile.tile-remove-hint{
-  border-left-color:var(--col-err)!important;
+  border-top-color:var(--col-err)!important;
+  opacity:.8;
 }
 .tile-cpicker-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:4px 0 8px}
 .tile-cpicker-swatch{
@@ -5373,11 +5484,32 @@ function toggleFavTileEdit(){
 function setFavTileEditMode(mode){
   S.favTileEditMode=(S.favTileEditMode===mode)?null:mode;
   S.favTileEditSortSel=null;
+  // S5: einmaliger Hinweis-Toast beim ersten Aktivieren des Sortiermodus
+  if(S.favTileEditMode==='sort'){
+    try{
+      if(!localStorage.getItem('a4_tile_sort_hint')){
+        localStorage.setItem('a4_tile_sort_hint','1');
+        showToast(S.lang==='en'?'⇅ Tap a tile to select, tap another to swap. Use drag handles to drag.':'⇅ Kachel tippen → auswählen, dann 2. Kachel tippen → tauschen.','info',4500);
+      }
+    }catch(e){}
+  }
+  // O7: Hinweis wenn Farb-Modus noch inaktiv
+  if(S.favTileEditMode==='color'&&!S.favTileColors){
+    setTimeout(function(){showToast(S.lang==='en'?'🎨 Colours activated – tap a tile to choose':'🎨 Farben aktiviert – Kachel antippen zum Wählen','info',3500);},50);
+  }
   saveState();renderDrinks(false);
 }
 function resetAllTileColors(){
+  // Nur Custom-Farben löschen, Auto-Modus bleibt aktiv
   S.favTileCustomColors={};
   saveState();renderDrinks(false);
+}
+function resetToDefaultColors(){
+  // Vollständiger Reset: Auto-Farben AUS + Custom-Farben leer → Standard wie Listenansicht
+  S.favTileColors=false;
+  S.favTileCustomColors={};
+  saveState();renderDrinks(false);
+  showToast(S.lang==='en'?'↺ Tile colours reset to default':'↺ Kachelfarben auf Standard zurückgesetzt');
 }
 function favTileEditTap(id){
   var mode=S.favTileEditMode;
@@ -5436,27 +5568,44 @@ function drinkTile(d){
   else if(tileBg) bgValue=tileBg;
   else if(has)    bgValue='rgba(255,255,255,0.07)';
   else            bgValue='rgba(255,255,255,0.04)';
-  var inlineStyle='background:'+bgValue+';border-left-color:'+col+';';
+  // Fix 2: border-top-color statt border-left-color
+  var inlineStyle='background:'+bgValue+';border-top-color:'+col+';';
   var ea=S.favTileEditActive,em=S.favTileEditMode;
   var isSortSel=ea&&em==='sort'&&S.favTileEditSortSel===d.id;
   var isRemoveHint=ea&&em==='remove';
   var isColorMode=ea&&em==='color';
+  var isSortMode=ea&&em==='sort';
   var extraCls=(isSortSel?' tile-sort-sel':'')+(isRemoveHint?' tile-remove-hint':'');
-  var inclDot='<span class="incl-dot '+(d.included?'filled':'outline')+'" style="'+(d.included?'background:'+AI_COLOR+';width:7px;height:7px':'color:'+col+';width:7px;height:7px')+'" title="'+(d.included?(S.lang==='en'?'All Inclusive':'All Inclusive'):(S.lang==='en'?'Not included':'Nicht inklusive'))+'"></span>';
-  var nameEnHtml=d.nameEN&&S.lang==='en'?'<div style="font-size:9px;color:var(--ac);opacity:.8;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">'+esc(d.nameEN)+'</div>':'';
+  // Fix O3: incl-dot etwas größer in der Kachel
+  var inclDot='<span class="incl-dot '+(d.included?'filled':'outline')+'" style="'+(d.included?'background:'+AI_COLOR+';width:9px;height:9px':'color:'+col+';width:9px;height:9px')+'" title="'+(d.included?(S.lang==='en'?'All Inclusive':'All Inclusive'):(S.lang==='en'?'Not included':'Nicht inklusive'))+'"></span>';
   var editActive=S.favTileEditActive;
-  var colorHint=isColorMode&&S.favTileColors?'<div style="position:absolute;top:4px;right:4px;font-size:11px;opacity:.6">🎨</div>':'';
-  return '<div class="drow-wrap" data-dswid="'+esc(d.id)+'" data-has="'+(has&&!editActive?'1':'')+'" data-swside="'+swSide+'" data-fav-tile="1"><div class="drow-swipe-bg"><span style="font-size:22px">↩</span><div style="font-size:10px;letter-spacing:.5px;margin-top:2px">UNDO</div></div><div class="drow-strip" style="background:'+col+'"></div><div class="drow fav-tile'+extraCls+(has?' has':'')+(fl?' fl':'')+'" style="'+inlineStyle+'" data-tile-plus="'+esc(d.id)+'" data-tile-id="'+esc(d.id)+'">'+
-    colorHint+
-    '<div class="fav-tile-top">'+
-      '<div style="flex:1;min-width:0"><div class="fav-tile-name'+(has?' on':'')+'">'+esc(d.name)+'</div>'+nameEnHtml+'<div class="fav-tile-cat"><span class="cdot" style="background:'+col+'"></span>'+esc(d.cat)+'</div></div>'+
-      '<button class="fav-tile-star" data-fav="'+esc(d.id)+'" aria-label="'+(S.lang==='en'?'Remove from favourites':'Aus Favoriten entfernen')+'">★</button>'+
+  // Fix O1: colorHint nach oben links verlagert, damit Badge nicht überlagert wird
+  var colorHint=isColorMode&&S.favTileColors?'<div style="position:absolute;top:5px;left:6px;font-size:11px;opacity:.65;pointer-events:none">🎨</div>':'';
+  // Fix S1/S2: Drag-Handle im Sortiermodus (CSS-Klasse bereits vorhanden)
+  var dragHandle=isSortMode?'<div class="fav-tile-drag-handle-tile" data-tile-drag="'+esc(d.id)+'">⠿</div>':'';
+  // Fix 3: Badge oben rechts – pointer-events:none damit Kachel-Tap durchgeht
+  var badge='<div class="fav-tile-badge'+(has?'':' z')+'">'+c+'</div>';
+  // Fix 4: Minus-Button unten rechts (deaktiviert wenn c=0)
+  var minusBtn='<button class="fav-tile-minus'+(has?'':' z')+'" data-minus="'+esc(d.id)+'" aria-label="'+(S.lang==='en'?'Remove one':'Einen entfernen')+'" onclick="event.stopPropagation();tapMinus(\''+esc(d.id)+'\')">−</button>';
+  return '<div class="drow-wrap" data-dswid="'+esc(d.id)+'" data-has="'+(has&&!editActive?'1':'')+'" data-swside="'+swSide+'" data-fav-tile="1">'+
+    '<div class="drow-swipe-bg"><span style="font-size:22px">↩</span><div style="font-size:10px;letter-spacing:.5px;margin-top:2px">UNDO</div></div>'+
+    '<div class="drow-strip" style="background:'+col+'"></div>'+
+    '<div class="drow fav-tile'+extraCls+(has?' has':'')+(fl?' fl':'')+'" style="'+inlineStyle+'" data-tile-plus="'+esc(d.id)+'" data-tile-id="'+esc(d.id)+'">'+
+      badge+
+      colorHint+
+      dragHandle+
+      '<div class="fav-tile-top">'+
+        '<div style="flex:1;min-width:0;padding-right:28px">'+
+          '<div class="fav-tile-name'+(has?' on':'')+'">'+esc(d.name)+'</div>'+
+          '<div class="fav-tile-cat"><span class="cdot" style="background:'+col+'"></span>'+esc(d.cat)+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="fav-tile-bottom">'+
+        '<div class="dprice" style="font-size:11px">'+eur(d.price)+inclDot+'</div>'+
+        minusBtn+
+      '</div>'+
     '</div>'+
-    '<div class="fav-tile-meta">'+
-      '<div class="dprice" style="flex:1;font-size:11px">'+eur(d.price)+inclDot+'</div>'+
-      '<div class="dnum '+(has?'nz':'z')+'" style="font-size:18px;min-width:20px;text-align:right;line-height:1">'+c+'</div>'+
-    '</div>'+
-  '</div></div>';
+  '</div>';
 }
 
 /* ── renderFavTileEditPanel ── */
@@ -5468,16 +5617,27 @@ function renderFavTileEditPanel(){
   var em=S.favTileEditMode;
   var sortOn=em==='sort',removeOn=em==='remove',colorOn=em==='color';
   var hint='';
-  if(sortOn){hint='<div style="font-size:10px;color:var(--ac);margin-top:6px;padding:5px 8px;background:var(--ac-07);border-radius:8px;line-height:1.5">'+(L?'Tap first tile → tap second tile → swap':'1. Kachel tippen → 2. Kachel tippen → tauschen')+'</div>';}
+  // S3/S4: Sortiermodus-Hinweis + Reset-Reihenfolge-Button
+  if(sortOn){
+    var hasOrder=S.favOrder&&S.favOrder.length>0;
+    hint='<div style="font-size:10px;color:var(--ac);margin-top:6px;padding:5px 8px;background:var(--ac-07);border-radius:8px;line-height:1.5;display:flex;align-items:center;justify-content:space-between;gap:8px">'+
+      '<span>'+(L?'Tap first tile → select, tap second → swap positions':'1. Kachel antippen → auswählen, 2. Kachel antippen → tauschen')+'</span>'+
+      (hasOrder?'<button class="fav-tile-edit-reset" style="white-space:nowrap;flex-shrink:0" onclick="event.stopPropagation();S.favOrder=[];saveState();renderDrinks(false);showToast(\''+(L?'↺ Default order restored':'↺ Standard-Reihenfolge wiederhergestellt')+'\')">'+(L?'↺ Default order':'↺ Standard')+'</button>':'')+
+    '</div>';
+  }
   else if(removeOn){hint='<div style="font-size:10px;color:var(--col-err);margin-top:6px;padding:5px 8px;background:rgba(208,85,85,0.08);border-radius:8px">'+(L?'Tap a tile to remove from favourites':'Kachel tippen → aus Favoriten entfernen')+'</div>';}
-  else if(colorOn&&S.favTileColors){hint='<div style="font-size:10px;color:var(--tx2);margin-top:6px;padding:5px 8px;background:var(--ac-07);border-radius:8px">'+(L?'Tap a tile to choose its colour':'Kachel tippen → Farbe wählen')+'</div>';}
-  var resetBtn=colorOn?'<button class="fav-tile-edit-reset" onclick="event.stopPropagation();resetAllTileColors()">↺ '+(L?'Reset all':'Alle zurücksetzen')+'</button>':'';
+  else if(colorOn){hint='<div style="font-size:10px;color:var(--tx2);margin-top:6px;padding:5px 8px;background:var(--ac-07);border-radius:8px">'+(L?'Tap a tile to choose its colour':'Kachel tippen → Farbe wählen')+'</div>';}
+  // F2: Zwei Reset-Buttons im Farb-Modus: Custom-Reset und Standard-Reset
+  var resetBtns=colorOn?
+    '<button class="fav-tile-edit-reset" onclick="event.stopPropagation();resetAllTileColors()">↺ '+(L?'Reset custom':'Custom löschen')+'</button>'+
+    '<button class="fav-tile-edit-reset" onclick="event.stopPropagation();resetToDefaultColors()">↺ '+(L?'Default (like list)':'Standard (wie Liste)')+'</button>'
+    :'';
   el.style.display='';
   el.innerHTML='<div class="fav-tile-edit-panel">'+
     '<button class="fav-tile-edit-opt'+(sortOn?' on':'')+'" onclick="event.stopPropagation();setFavTileEditMode(\'sort\')">⇅ '+(L?'Sort':'Sortieren')+'</button>'+
     '<button class="fav-tile-edit-opt'+(removeOn?' on':'')+'" onclick="event.stopPropagation();setFavTileEditMode(\'remove\')">★ '+(L?'Remove':'Entfernen')+'</button>'+
-    '<button class="fav-tile-edit-opt'+(colorOn?' on':'')+'" onclick="event.stopPropagation();setFavTileEditMode(\'color\');if(!S.favTileColors){S.favTileColors=true;saveState();renderDrinks(false);}else{renderDrinks(false);}">🎨 '+(L?'Color':'Farbe')+'</button>'+
-    resetBtn+
+    '<button class="fav-tile-edit-opt'+(colorOn?' on':'')+'" onclick="event.stopPropagation();setFavTileEditMode(\'color\');if(!S.favTileColors){S.favTileColors=true;saveState();}renderDrinks(false);">🎨 '+(L?'Color':'Farbe')+'</button>'+
+    resetBtns+
   '</div>'+hint;
 }
 
@@ -5569,11 +5729,12 @@ function renderDrinks(forceSort){
     const arr=S.favCollapsed?'▶':'▼';
     const tileActive=S.favTileMode;
     const editActive=S.favTileEditActive;
-    const tileLbl=tileActive?'☰':'⊞';
     const editLbl=S.lang==='en'?'···':'···';
-    // Button row: ★ Fav title (flex:1) | … (only tile mode, left of ⊞) | ⊞/☰ (rightmost)
+    // Button row: ★ Fav title (flex:1) | … (only tile mode) | View-Toggle Pill
     const editBtn=tileActive?`<button class="fav-tile-edit-btn${editActive?' active':''}" onclick="event.stopPropagation();toggleFavTileEdit()" title="${S.lang==='en'?(editActive?'Exit edit mode':'Edit tiles'):(editActive?'Bearbeiten beenden':'Kacheln bearbeiten')}">${editLbl}</button>`:'';
-    favTitleEl.innerHTML=`<span style="cursor:pointer;display:flex;align-items:center;gap:5px;flex:1" data-fav-toggle="1"><span>${arr}</span><span>${T('fav.title')}</span></span>${editBtn}<button class="fav-tile-btn${tileActive?' active':''}" onclick="event.stopPropagation();toggleFavTileMode()" title="${S.lang==='en'?(tileActive?'List view':'Tile view'):(tileActive?'Listenansicht':'Kachelansicht')}">${tileLbl}</button>`;
+    // Fix 6: Pill-Toggle statt einzelnem Icon-Button
+    const viewToggle=`<div class="fav-view-toggle"><button class="fav-view-btn${!tileActive?' on':''}" onclick="event.stopPropagation();if(S.favTileMode){_favListFade(function(){toggleFavTileMode();});}" title="${S.lang==='en'?'List view':'Listenansicht'}">☰</button><button class="fav-view-btn${tileActive?' on':''}" onclick="event.stopPropagation();if(!S.favTileMode){_favListFade(function(){toggleFavTileMode();});}" title="${S.lang==='en'?'Tile view':'Kachelansicht'}">⊞</button></div>`;
+    favTitleEl.innerHTML=`<span style="cursor:pointer;display:flex;align-items:center;gap:5px;flex:1" data-fav-toggle="1"><span>${arr}</span><span>${T('fav.title')}</span></span>${editBtn}${viewToggle}`;
     renderFavTileEditPanel();
     favListEl.style.display=S.favCollapsed?'none':'';
     if(!S.favCollapsed){
@@ -5581,6 +5742,8 @@ function renderDrinks(forceSort){
         favListEl.className='fav-tile-grid';
         favListEl.style.padding='';
         favListEl.innerHTML=favFiltered.map(d=>drinkTile(d)).join('');
+        // S1/S2: Tile-Drag nach dem Render initialisieren
+        initTileDrag();
       }else if(S.favSortMode){
         favListEl.className='dlist';
         favListEl.style.padding='0';
@@ -5670,6 +5833,58 @@ function handleDrinkClick(e){
 setInterval(()=>{const n=Date.now();Object.keys(S.plusDebounce).forEach(k=>{if(n-S.plusDebounce[k]>60000)delete S.plusDebounce[k];});},300000);
 setInterval(updateClock,1000);
 
+/* ── O5: Long-Press Kontextmenü für Kacheln ── */
+(function(){
+  var _lpTimer=null,_lpId=null,_lpMoved=false;
+  function _openTileCtx(id,x,y){
+    var d=S.drinks.find(function(x){return x.id===id;});if(!d)return;
+    var L=S.lang==='en';
+    var ex=document.getElementById('tileCtxMenu');if(ex)ex.remove();
+    var menu=document.createElement('div');
+    menu.id='tileCtxMenu';
+    menu.style.cssText='position:fixed;z-index:8000;background:var(--bg2);border:1px solid var(--ac-27);border-radius:14px;padding:6px 0;min-width:180px;box-shadow:0 8px 28px rgba(0,0,0,.55);font-family:Georgia,serif;touch-action:none;';
+    // Position: immer im Viewport halten
+    var maxX=window.innerWidth-200,maxY=window.innerHeight-180;
+    menu.style.left=Math.max(8,Math.min(x-20,maxX))+'px';
+    menu.style.top=Math.max(8,Math.min(y-10,maxY))+'px';
+    function row(ico,lbl,fn){
+      var btn=document.createElement('button');
+      btn.style.cssText='display:flex;align-items:center;gap:10px;width:100%;padding:11px 16px;border:none;background:transparent;color:var(--tx0);font-family:Georgia,serif;font-size:14px;cursor:pointer;text-align:left;touch-action:manipulation;';
+      btn.innerHTML='<span style="font-size:16px;width:20px;text-align:center">'+ico+'</span><span>'+lbl+'</span>';
+      btn.addEventListener('touchend',function(e){e.preventDefault();menu.remove();fn();});
+      btn.addEventListener('click',function(){menu.remove();fn();});
+      menu.appendChild(btn);
+    }
+    var isFav=S.favorites.has(id);
+    row('★',L?(isFav?'Remove from favourites':'Add to favourites'):(isFav?'Aus Favoriten entfernen':'Zu Favoriten hinzufügen'),function(){toggleFav(id);});
+    row('🎨',L?'Tile colour':'Kachelfarbe',function(){if(!S.favTileMode){return;}if(!S.favTileColors){S.favTileColors=true;saveState();}openTileColorPicker(id);});
+    row('✏️',L?'Edit drink':'Getränk bearbeiten',function(){openEditDrink&&openEditDrink(id);});
+    // Trennlinie
+    var sep=document.createElement('div');sep.style.cssText='height:1px;background:var(--ac-13);margin:4px 0';menu.appendChild(sep);
+    row('✕',L?'Close':'Schließen',function(){});
+    document.body.appendChild(menu);
+    // Außerhalb tippen schließt
+    function _dismiss(ev){if(!menu.contains(ev.target)){menu.remove();document.removeEventListener('touchstart',_dismiss,true);document.removeEventListener('click',_dismiss,true);}}
+    setTimeout(function(){document.addEventListener('touchstart',_dismiss,true);document.addEventListener('click',_dismiss,true);},100);
+    // Haptic
+    try{if(typeof navigator.vibrate==='function')navigator.vibrate(18);}catch(_){}
+  }
+  // Attach long-press to favSection (delegiert auf Kacheln)
+  var fs=document.getElementById('favSection');
+  if(fs){
+    fs.addEventListener('touchstart',function(e){
+      var tile=e.target.closest('[data-tile-id]');
+      if(!tile||e.target.closest('[data-minus]')||e.target.closest('.fav-tile-drag-handle-tile'))return;
+      _lpId=tile.dataset.tileId;_lpMoved=false;
+      _lpTimer=setTimeout(function(){
+        if(!_lpMoved&&_lpId){_openTileCtx(_lpId,e.touches[0].clientX,e.touches[0].clientY);}
+      },500);
+    },{passive:true});
+    fs.addEventListener('touchmove',function(){_lpMoved=true;clearTimeout(_lpTimer);},{passive:true});
+    fs.addEventListener('touchend',function(){clearTimeout(_lpTimer);},{passive:true});
+  }
+})();
+
 /* FIX V47+: Pro-Getränk-Debounce statt globaler 600ms-Sperre (Multi-User-sicher) */
 var _tapPlusLast={};
 var _tapMinusLast={};
@@ -5692,6 +5907,11 @@ function tapPlus(id){
   if(S.dailyGoal>0){const t=logicalTodayStr();const dt=S.log.filter(e=>entryLogicalDayStr(e)===t).reduce((s,e)=>s+(e.price||0),0); // FIX V32 K-3
 if(dt>=S.dailyGoal){const justCrossed=(dt-d.price)<S.dailyGoal;if(justCrossed){showToast(T('goal.reached'),'error',4000);}else if(S.limitShownToday!==logicalTodayStr()){showToast(T('goal.exceeded'),'warn',3500);S.limitShownToday=logicalTodayStr();}updateLimitBanner();}}
   S.flashId=id;renderDrinks(false);
+  // O1: tap-flash auch auf der Kachel selbst (nicht nur auf .bplus)
+  requestAnimationFrame(function(){
+    var tileEl=document.querySelector('[data-tile-id="'+id+'"]');
+    if(tileEl){tileEl.classList.add('tap-flash');setTimeout(function(){tileEl.classList.remove('tap-flash');},200);}
+  });
   setTimeout(()=>{S.flashId=null;renderDrinks(false);},280);
   clearTimeout(S.sortTimer);S.sortTimer=setTimeout(()=>{S.stableOrder=[];renderDrinks(true);},7000);
   clearTimeout(S.top10Timer);S.top10Timer=setTimeout(()=>{S.stableTop10=[];renderDrinks(false);},5000);
@@ -5994,6 +6214,62 @@ function renderUserStatsCard(fl){
     return `<div class="stat-user-row" style="flex-direction:column;align-items:stretch"><div style="display:flex;align-items:center;gap:8px"><div class="stat-user-avatar" style="background:${u.color}22;color:${u.color}">${esc(u.name.slice(0,1))}</div><div class="stat-user-info"><div class="stat-user-name">${esc(u.name)}</div><div class="stat-user-sub">${fmtNum(stat.count)}× · ${stat.days.size} ${L?'Days':'Tage'} · ∅ ${eur(avgDay)}/${L?'Day':'Tag'}</div></div><div class="stat-user-total">${eur(stat.total)}</div></div>${shareBar}${budgetHtml}</div>`;
   }).join('');
   return `<div class="stat-card" data-sc="byuser"><div class="stat-card-title">👥 ${L?'By Person':'Nach Nutzer'}</div>${rows}</div>`;
+}
+
+/* ── O6: Fade-Helper für Ansichtswechsel Liste ↔ Kacheln ── */
+function _favListFade(cb){
+  var el=document.getElementById('favList');
+  if(!el){cb();return;}
+  el.classList.add('tile-fade');
+  setTimeout(function(){cb();el.classList.remove('tile-fade');},130);
+}
+
+/* ── S1/S2: Tile-Drag (Sortiermodus Kacheln) ── */
+let _tfd={active:false,id:null,el:null,lastOver:null};
+function initTileDrag(){
+  if(!S.favTileEditActive||S.favTileEditMode!=='sort')return;
+  document.querySelectorAll('.fav-tile-drag-handle-tile').forEach(function(handle){
+    if(handle._tfdi)return;handle._tfdi=true;
+    handle.addEventListener('touchstart',function(e){
+      var wrap=handle.closest('.drow-wrap');if(!wrap)return;
+      _tfd.active=true;_tfd.id=wrap.dataset.dswid;_tfd.el=wrap;_tfd.lastOver=null;
+      wrap.classList.add('tile-drag-active');
+      e.preventDefault();e.stopPropagation();
+    },{passive:false});
+    handle.addEventListener('touchmove',function(e){
+      if(!_tfd.active)return;
+      e.preventDefault();e.stopPropagation();
+      var x=e.touches[0].clientX,y=e.touches[0].clientY;
+      var tiles=[...document.querySelectorAll('.fav-tile-grid .drow-wrap')];
+      var target=null;
+      tiles.forEach(function(t){t.classList.remove('tile-drag-over-mark');});
+      for(var i=0;i<tiles.length;i++){
+        var t=tiles[i];if(t===_tfd.el)continue;
+        var r=t.getBoundingClientRect();
+        if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom){target=t;break;}
+      }
+      if(target){target.classList.add('tile-drag-over-mark');_tfd.lastOver=target;}
+      else{_tfd.lastOver=null;}
+    },{passive:false});
+    handle.addEventListener('touchend',function(){
+      if(!_tfd.active)return;_tfd.active=false;
+      if(_tfd.el)_tfd.el.classList.remove('tile-drag-active');
+      document.querySelectorAll('.fav-tile-grid .drow-wrap').forEach(function(t){t.classList.remove('tile-drag-over-mark');});
+      if(_tfd.lastOver&&_tfd.id){
+        var fromId=_tfd.id;
+        var toId=_tfd.lastOver.dataset.dswid;
+        if(fromId&&toId&&fromId!==toId){
+          var allFavIds=[...S.favorites];
+          var base=S.favOrder.length?[...S.favOrder]:[...allFavIds];
+          allFavIds.forEach(function(fid){if(!base.includes(fid))base.push(fid);});
+          var a=base.indexOf(fromId),b=base.indexOf(toId);
+          if(a!==-1&&b!==-1){var tmp=base[a];base[a]=base[b];base[b]=tmp;}
+          S.favOrder=base;saveState();renderDrinks(false);
+        }
+      }
+      _tfd={active:false,id:null,el:null,lastOver:null};
+    },{passive:true});
+  });
 }
 
 /* Touch drag-and-drop for favorites reordering */
