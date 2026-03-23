@@ -3458,153 +3458,140 @@ const PORT_TZ_MAP={
   /* FIX V48 F9: 'Tallinn' und 'Helsinki' hier entfernt – bereits oben definiert */
   'Stockholm':60,
   // FIX FEHLER 9: Duplikate 'Colombo' und 'Maldives' entfernt (bereits oben als 'Colombo':330 und 'Malediven'/'Malé' definiert)
-  /* ── V48.3: Exotische Weltreise-Häfen ergänzt ── */
-  // Mikronesien
-  'Guam':600,'Saipan':600,'Palau':540,'Koror':540,'Pohnpei':660,'Chuuk':660,'Kosrae':660,'Majuro':720,'Kwajalein':720,'Nauru':720,'Yap':540,
-  // Polynesien (weitere)
-  'Rangiroa':-600,'Fakarava':-600,'Hiva Oa':-570,'Fatu Hiva':-570,'Rikitea':-540,'Pitcairn Island':-480,'Rarotonga':-600,'Aitutaki':-600,'Niue':-660,'American Samoa':-660,'Pago Pago':-660,'Wallis':720,'Funafuti':720,'Tarawa':720,
-  // Östlicher Pazifik
-  'Easter Island':-360,'Isla de Pascua':-360,'Galapagos':-360,'Puerto Ayora':-360,'Cocos Island':-360,
-  // Südatlantik
-  'St. Helena':0,'Ascension Island':0,'Tristan da Cunha':0,'Stanley':-180,'Port Stanley':-180,'South Georgia':-120,
-  // Indischer Ozean (weitere)
-  'Seychellen':240,'Victoria':240,'Praslin':240,'Komoren':180,'Moroni':180,
-  'Sorong':540,'Manokwari':540,'Ambon':540,'Banda Neira':480,'Jayapura':540,
-  // Arktis/Spitzbergen/Grönland
-  'Longyearbyen':60,'Spitzbergen':60,'Nuuk':-180,'Ilulissat':-180,'Jan Mayen':0,
-  // Weitere Karibik
-  'Belize City':-360,'Roatán':-360,'Costa Maya':-360,'Amber Cove':-240,
-  'Turks and Caicos':-300,'Tortola':-240,'St. Kitts':-240,'Antigua':-240,'St. Maarten':-240,'Dominica':-240,'Grenada':-240,'St. Vincent':-240,'Trinidad':-240,'Guadeloupe':-240,'St. Barts':-240,
+
+  // ── V48.3: Weltreise-Hafen-Erweiterung ───────────────────────────────
+  // Polynesien / Pazifik
+  'Fakarava':-600,'Rangiroa':-600,'Tikehau':-600,'Manihi':-600,'Ahe':-600,
+  'Marquesas':-570,'Atuona':-570,'Taiohae':-570,
+  'Rarotonga':-600,'Aitutaki':-600,'Avatiu':-600,  // Cook Islands (UTC-10, kein DST)
+  'Niue':-660,
+  'Apia':-660,'Savaii':-660,                        // Samoa (West-Samoa, UTC-11)
+  'Nadi':-720,'Lautoka':-720,'Savusavu':-720,'Labasa':-720, // Fiji
+  'Nukualofa':-780,'Vavau':-780,                   // Tonga
+  'Honiara':660,'Gizo':660,                         // Salomonen
+  'Port Moresby':600,'Lae':600,'Rabaul':600,        // Papua-Neuguinea
+  'Koror':540,'Palau':540,                          // Palau (UTC+9)
+  'Majuro':720,'Kwajalein':720,'Jaluit':720,        // Marshallinseln
+  'Pohnpei':660,'Kolonia':660,'Chuuk':600,'Yap':540,'Kosrae':660, // Mikronesien (FSM)
+  'Saipan':600,'Tinian':600,'Rota':600,             // Nördliche Marianen
+  'Guam':600,'Hagatna':600,                         // Guam (UTC+10)
+  'Tarawa':720,'Kiribati':720,                      // Kiribati (Gilbertinseln UTC+12)
+  'Funafuti':720,'Tuvalu':720,                      // Tuvalu
+  'Avarua':-600,                                    // Rarotonga/Cook-Hauptstadt
+  'Osterinsel':-360,'Easter Island':-360,'Hanga Roa':-360, // Osterinsel (UTC-6)
+  'Pitcairn':-480,                                  // Pitcairn Islands
+  // Südatlantik & abgelegene Inseln
+  'St. Helena':0,'Jamestown':0,                    // St. Helena (UTC+0)
+  'Ascension Island':0,'Georgetown (Ascension)':0, // Ascension
+  'Tristan da Cunha':0,
+  'Stanley':-180,'Port Stanley':-180,              // Falklandinseln
+  'South Georgia':-120,                            // Südgeorgien (UTC-2)
+  'Porto Grande':-60,'Mindelo':-60,'Praia':-60,'São Vicente':-60, // Kap Verde UTC-1
+  'Sao Tome':0,'São Tomé':0,
+  // Indischer Ozean
+  'Seychellen':240,'Victoria (Seychellen)':240,'Mahé':240,'Praslin':240,'La Digue':240,
+  'Diego Garcia':360,                              // Britisches Territorium (UTC+6)
+  'Rodrigues':240,                                 // Mauritius-Außeninsel
+  'Mayotte':180,
+  'Komoren':180,'Moroni':180,
+  'Agalega':240,
+  // Nordatlantik / Kanada arktisch
+  'Nuuk':-120,'Godthab':-120,                     // Grönland West (UTC-2 Sommer / -3 Winter → ca. -180)
+  'Ilulissat':-180,'Kangerlussuaq':-180,
+  'Churchill':-300,                                // Hudson Bay Kanada (UTC-5/6)
+  'St. John\'s':-150,'Saint John\'s':-150,        // Neufundland (UTC-3:30)
+  // Ostafrika / Arabische Halbinsel erweitert
+  'Nacala':120,'Pemba (Mosambik)':120,
+  'Lamu':180,'Malindi':180,'Kilifi':180,
+  'Beira':120,
+  'Inhambane':120,
+  'Mogadishu':180,'Mogadischu':180,
+  'Port Victoria':240,                             // Seychellen-Haupthafen
+  'Oman':240,'Sohar':240,'Sur':240,'Khasab':240,
+  'Karachi':300,                                   // Pakistan (UTC+5)
+  'Gwadar':300,
+  // Südostasien / weitere Inseln
+  'Banda Aceh':420,
+  'Belawan':420,'Medan':420,                       // Nordsumatra
+  'Padang':420,'Teluk Bayur':420,
+  'Palembang':420,'Batam':480,
+  'Ende':480,'Maumere':480,'Kupang':480,           // Flores / Westtimor (UTC+8)
+  'Dili':540,'Timor-Leste':540,                   // Osttimor (UTC+9)
+  'Ambon':540,'Ternate':540,'Sorong':540,          // Maluku / Westpapua (UTC+9)
+  'Jayapura':540,
+  'Makassar':480,'Ujung Pandang':480,             // Sulawesi (UTC+8)
+  'Balikpapan':480,'Samarinda':480,
+  'Puerto Princesa':480,                           // Palawan (Philippinen)
+  'Cebu':480,'Davao':480,'Zamboanga':480,
+  'General Santos':480,
+  'Semarang':420,'Surabaya':420,                  // Java (UTC+7)
+  'Benoa':480,                                    // Bali Kreuzfahrt-Terminal
+  'Komodo':480,                                   // Komodo-Insel
+  'Lombok':480,
+  // Japanische Inseln
+  'Naha':540,'Okinawa':540,
+  'Kagoshima':540,'Hiroshima':540,
+  'Beppu':540,'Shimizu':540,
+  // Weitere Karibik / Mittelamerika
+  'Belize City':-360,'Belize':-360,
+  'Roatán':-360,'Roatan':-360,'Coxen Hole':-360,  // Honduras
+  'Corinto':-360,'Puerto Cortés':-360,
+  'Puntarenas':-360,'Puerto Limón':-360,          // Costa Rica
+  'Colón':-300,'Portobelo':-300,                  // Panama Karibikseite
+  'Santa Marta':-300,'Barranquilla':-300,         // Kolumbien
+  'Turks and Caicos':-300,'Providenciales':-300,
+  'St. Kitts':-240,'Basseterre':-240,
+  'Antigua':-240,"St. John's (Antigua)":-240,
+  'Dominica':-240,'Roseau':-240,
+  'St. Vincent':-240,'Kingstown':-240,
+  'Grenada':-240,'St. George\'s':-240,
+  'Trinidad':-240,'Port of Spain':-240,
+  'Tobago':-240,'Scarborough (Tobago)':-240,
+  'St. Maarten':-240,'Sint Maarten':-240,'Philipsburg':-240,
+  'St. Barts':-240,'Gustavia':-240,
+  'Guadeloupe':-240,'Pointe-à-Pitre':-240,'Pointe-a-Pitre':-240,
+  'Bonaire':-240,'Kralendijk':-240,
+  'Sint Eustatius':-240,'Oranjestad (Sint Eustatius)':-240,
+  'Saba':-240,
+  'Anguilla':-240,'The Valley':-240,
+  'Montserrat':-240,'Plymouth (Montserrat)':-240,
+  'British Virgin Islands':-240,'Road Town':-240,
+  'US Virgin Islands':-240,'Charlotte Amalie':-240,'Christiansted':-240,
   // Weitere Südamerika
-  'Fortaleza':-180,'Recife':-180,'Ilhéus':-180,'Maceió':-180,'Natal':-180,'Belém':-180,'Manaus':-240,'Iquique':-300,'Antofagasta':-300,'Puerto Montt':-180,'Manta':-300,'Guayaquil':-300,
+  'Paramaribo':-180,                              // Suriname (UTC-3)
+  'Georgetown (Guyana)':-240,                    // Guyana (UTC-4)
+  'Cayenne':-180,                                 // Französisch-Guiana (UTC-3)
+  'Belém do Pará':-180,
+  'São Luís':-180,
+  'Vitória (Brasilien)':-180,
+  'Florianópolis':-180,
+  'Porto Alegre':-180,
+  'Puerto Madryn':-180,'Comodoro Rivadavia':-180, // Patagonien
+  'Puerto Natales':-180,
+  'Cabo de Hornos':-180,                          // Kap Hoorn
+  // Arktis / Spitzbergen
+  'Longyearbyen':120,'Svalbard':120,
+  'Ny-Ålesund':120,
+  'Hammerfest':120,'Honningsvåg':120,'Kirkenes':120,
+  'Murmansk':180,
+  // Weitere Ostasien / Pazifikküste
+  'Vladivostok':600,
+  'Petropavlovsk':720,'Petropavlovsk-Kamchatsky':720,
+  'Magadan':720,
+  'Korsakov':660,'Yuzhno-Sakhalinsk':660,         // Sachalin (UTC+11)
+  'Hakodate':540,'Muroran':540,                   // Hokkaido
+  // Nordamerika Pazifik erweitert
+  'Juneau':-540,'Skagway':-540,'Ketchikan':-540,'Sitka':-540,'Haines':-540,
+  'Glacier Bay':-540,'Seward':-540,'Whittier':-540,'Homer':-540,
+  'Kodiak':-540,'Dutch Harbor':-600,
+  'Anchorage':-540,
+  'Victoria (Kanada)':-480,'Nanaimo':-480,'Prince Rupert':-480,
+  'Portland (Oregon)':-480,'Astoria':-480,
+  // Antarktis-Häfen (informativ; keine DST)
+  'Ushuaia':-180,  // bereits oben; Hauptbasis Antarktis-Kreuzfahrten
+  'Puerto Williams':-180,
+  'King George Island':-180,
 };
-/* ── PORT_COORDS: [lat, lon] für die Offline-Weltkarte ── */
-const PORT_COORDS={
-  'Hamburg':[53.55,10.0],'Kiel':[54.32,10.13],'Bremerhaven':[53.54,8.57],'Rostock':[54.09,12.14],'Warnemünde':[54.17,12.07],
-  'Barcelona':[41.38,2.17],'Palma de Mallorca':[39.57,2.64],'Valencia':[39.47,-0.38],'Málaga':[36.72,-4.42],'Cádiz':[36.53,-6.30],'Las Palmas':[28.13,-15.43],'Tenerife':[28.47,-16.25],'La Palma':[28.68,-17.76],'Lanzarote':[28.96,-13.55],'Fuerteventura':[28.51,-13.85],
-  'Lissabon':[38.72,-9.14],'Madeira':[32.65,-16.90],'Funchal':[32.65,-16.90],'Azoren':[37.74,-25.67],'Ponta Delgada':[37.74,-25.67],
-  'Southampton':[50.90,-1.40],'Dover':[51.13,1.31],'London':[51.51,-0.13],'Dublin':[53.33,-6.25],'Edinburgh':[55.95,-3.19],'Invergordon':[57.69,-4.17],'Portland':[50.61,-2.45],
-  'Le Havre':[49.49,0.11],'Cherbourg':[49.64,-1.62],'Brest':[48.39,-4.49],'Bordeaux':[44.84,-0.58],'Marseille':[43.30,5.37],'Toulon':[43.12,5.93],'Nizza':[43.71,7.27],'Monaco':[43.74,7.41],
-  'Amsterdam':[52.37,4.90],'Rotterdam':[51.92,4.48],'Antwerpen':[51.22,4.40],'Zeebrügge':[51.34,3.20],
-  'Kopenhagen':[55.68,12.57],'Stockholm':[59.33,18.07],'Oslo':[59.91,10.75],'Göteborg':[57.71,11.97],'Bergen':[60.39,5.32],'Stavanger':[58.97,5.73],'Tromsø':[69.65,18.96],'Ålesund':[62.47,6.15],'Geiranger':[62.10,7.21],'Longyearbyen':[78.22,15.65],
-  'Helsinki':[60.17,24.94],'Tallinn':[59.44,24.75],'Riga':[56.95,24.11],'Gdańsk':[54.35,18.65],
-  'Reykjavik':[64.13,-21.82],'Akureyri':[65.68,-18.09],'Nuuk':[64.18,-51.75],'Ilulissat':[69.22,-51.10],
-  'Tanger':[35.79,-5.81],'Casablanca':[33.60,-7.60],'Agadir':[30.43,-9.59],'Dakar':[14.69,-17.44],'Accra':[5.56,-0.19],'Lagos':[6.46,3.40],'Lomé':[6.14,1.22],'Tema':[5.64,-0.01],
-  'Kapstadt':[-33.93,18.42],'Durban':[-29.86,31.02],'Port Elizabeth':[-33.96,25.61],'Richards Bay':[-28.78,32.04],'Walvis Bay':[-22.96,14.50],'Lüderitz':[-26.64,15.15],
-  'Port Louis':[-20.16,57.50],'Mauritius':[-20.16,57.50],'Réunion':[-21.10,55.54],'La Réunion':[-21.10,55.54],'Reunion':[-21.10,55.54],'Seychellen':[-4.63,55.45],'Victoria':[-4.63,55.45],'Praslin':[-4.33,55.74],
-  'Mombasa':[-4.05,39.67],'Dar es Salaam':[-6.80,39.28],'Maputo':[-25.97,32.59],'Toamasina':[-18.14,49.40],'Nosy Be':[-13.34,48.27],'Komoren':[-11.70,43.26],'Moroni':[-11.70,43.26],
-  'Dubai':[25.20,55.27],'Abu Dhabi':[24.47,54.37],'Doha':[25.29,51.53],'Muskat':[23.60,58.59],'Muscat':[23.60,58.59],'Salalah':[17.02,54.08],'Aden':[12.77,45.04],'Djibouti':[11.59,43.15],'Dschibuti':[11.59,43.15],'Jeddah':[21.49,39.19],'Dschidda':[21.49,39.19],'Jidda':[21.49,39.19],
-  'Mumbai':[18.93,72.84],'Kochi':[9.93,76.27],'Chennai':[13.08,80.27],'Colombo':[6.93,79.85],'Malediven':[3.20,73.22],'Malé':[4.18,73.51],'Maldives':[3.20,73.22],
-  'Singapur':[1.35,103.82],'Penang':[5.41,100.33],'Port Klang':[3.00,101.40],'Kuala Lumpur':[3.14,101.69],'Bangkok':[13.75,100.52],'Laem Chabang':[13.09,100.88],'Phuket':[7.88,98.39],'Langkawi':[6.35,99.80],
-  'Ho-Chi-Minh-Stadt':[10.82,106.63],'Halong Bay':[20.91,107.18],'Manila':[14.60,120.97],'Kota Kinabalu':[5.98,116.07],
-  'Bali':[-8.34,115.09],'Denpasar':[-8.67,115.22],'Lombok':[-8.65,116.32],'Sorong':[-0.89,131.25],'Ambon':[-3.70,128.18],'Banda Neira':[-4.52,129.90],'Jayapura':[-2.53,140.72],'Komodo':[-8.55,119.48],
-  'Hongkong':[22.32,114.17],'Shanghai':[31.23,121.47],'Tokio':[35.69,139.69],'Yokohama':[35.44,139.64],'Osaka':[34.69,135.50],'Kobe':[34.69,135.20],'Kyoto':[35.01,135.76],'Nagasaki':[32.75,129.88],'Fukuoka':[33.59,130.40],'Busan':[35.10,129.04],'Jeju':[33.50,126.53],'Incheon':[37.46,126.71],'Seoul':[37.56,126.97],'Tianjin':[39.13,117.20],'Peking':[39.91,116.39],
-  'Sydney':[-33.87,151.21],'Melbourne':[-37.82,144.97],'Brisbane':[-27.47,153.03],'Perth':[-31.95,115.86],'Fremantle':[-32.05,115.74],'Adelaide':[-34.93,138.60],'Darwin':[-12.46,130.84],'Cairns':[-16.92,145.77],'Hobart':[-42.88,147.33],'Broome':[-17.96,122.24],'Geraldton':[-28.78,114.61],
-  'Auckland':[-36.86,174.77],'Wellington':[-41.29,174.78],'Christchurch':[-43.53,172.64],
-  'Papeete':[-17.53,-149.57],'Bora Bora':[-16.50,-151.74],'Moorea':[-17.55,-149.83],'Huahine':[-16.72,-151.00],'Raiatea':[-16.87,-151.43],'Rangiroa':[-15.13,-147.65],'Fakarava':[-16.05,-145.63],'Nuku Hiva':[-8.92,-140.10],'Hiva Oa':[-9.75,-139.02],'Rikitea':[-23.13,-134.97],'Pitcairn Island':[-25.07,-130.10],
-  'Suva':[-18.14,178.44],'Noumea':[-22.27,166.46],'Port Vila':[-17.74,168.31],'Vanuatu':[-17.74,168.31],
-  'Rarotonga':[-21.23,-159.78],'Aitutaki':[-18.87,-159.77],'Niue':[-19.05,-169.92],'Tonga':[-21.18,-175.20],'Samoa':[-13.76,-172.10],'Pago Pago':[-14.28,-170.70],'American Samoa':[-14.28,-170.70],'Funafuti':[-8.52,179.20],
-  'Guam':[13.44,144.79],'Saipan':[15.18,145.75],'Palau':[7.52,134.58],'Koror':[7.34,134.48],'Pohnpei':[6.88,158.22],'Majuro':[7.09,171.38],
-  'Honolulu':[21.31,-157.86],'Hilo':[19.73,-155.09],
-  'Easter Island':[-27.11,-109.35],'Isla de Pascua':[-27.11,-109.35],'Galapagos':[-0.90,-89.60],'Puerto Ayora':[-0.74,-90.31],
-  'Vancouver':[49.28,-123.12],'Seattle':[47.61,-122.33],'San Francisco':[37.77,-122.42],'Los Angeles':[34.05,-118.24],'San Diego':[32.72,-117.16],
-  'Acapulco':[16.86,-99.88],'Puerto Vallarta':[20.65,-105.22],'Manzanillo':[19.05,-104.33],'Mazatlán':[23.23,-106.42],
-  'Cartagena':[10.40,-75.52],'Panama City':[8.99,-79.52],'Havanna':[23.14,-82.36],'Nassau':[25.05,-77.35],'Miami':[25.78,-80.21],'Port Canaveral':[28.41,-80.60],'New York':[40.71,-74.01],'Boston':[42.36,-71.06],'Halifax':[44.65,-63.58],
-  'Barbados':[13.10,-59.62],'Martinique':[14.67,-61.02],'St. Lucia':[14.02,-60.98],'Aruba':[12.52,-69.97],'Curaçao':[12.11,-68.93],'Jamaika':[17.99,-76.79],'Puerto Rico':[18.22,-66.59],'Dominica':[15.30,-61.39],'Grenada':[12.07,-61.75],'Antigua':[17.12,-61.85],'Tortola':[18.43,-64.62],'St. Maarten':[18.04,-63.08],'St. Kitts':[17.34,-62.78],'St. Vincent':[13.25,-61.20],'Trinidad':[10.65,-61.52],'Guadeloupe':[16.26,-61.55],'St. Barts':[17.90,-62.83],
-  'Cozumel':[20.51,-86.95],'Cancún':[21.17,-86.83],'Belize City':[17.25,-88.77],'Roatán':[16.31,-86.53],'Costa Maya':[18.72,-87.72],'Amber Cove':[19.83,-70.70],
-  'Rio de Janeiro':[-22.91,-43.17],'Buenos Aires':[-34.60,-58.38],'Montevideo':[-34.90,-56.18],'Santos':[-23.96,-46.33],'Salvador':[-12.98,-38.50],'Recife':[-8.05,-34.88],'Fortaleza':[-3.72,-38.54],'Belém':[-1.46,-48.49],'Maceió':[-9.67,-35.74],'Natal':[-5.79,-35.21],'Ilhéus':[-14.79,-39.04],'Manaus':[-3.10,-60.03],
-  'Valparaíso':[-33.04,-71.62],'Lima':[-12.05,-77.04],'Callao':[-12.05,-77.14],'Iquique':[-20.21,-70.15],'Antofagasta':[-23.65,-70.40],'Manta':[-0.95,-80.73],'Guayaquil':[-2.19,-79.89],'Puerto Montt':[-41.47,-72.94],'Punta Arenas':[-53.15,-70.91],'Ushuaia':[-54.80,-68.30],'Stanley':[-51.69,-57.85],'Port Stanley':[-51.69,-57.85],'South Georgia':[-54.27,-36.53],
-  'St. Helena':[-15.97,-5.71],'Ascension Island':[-7.94,-14.35],'Tristan da Cunha':[-37.07,-12.31],
-  'Piraeus':[37.94,23.65],'Athen':[37.98,23.73],'Santorini':[36.39,25.46],'Mykonos':[37.45,25.33],'Rhodos':[36.43,28.22],'Kreta':[35.34,24.47],'Korfu':[39.62,19.92],'Heraklion':[35.34,25.13],'Chania':[35.52,24.02],
-  'Istanbul':[41.01,28.98],'Bodrum':[37.04,27.43],'Antalya':[36.90,30.71],'İzmir':[38.42,27.14],'Aqaba':[29.52,35.01],'Eilat':[29.56,34.95],'Limassol':[34.68,33.04],'Zypern':[35.16,33.36],
-  'Alexandria':[31.20,29.92],'Port Said':[31.27,32.32],'Suez':[29.97,32.55],
-  'Dubrovnik':[42.65,18.09],'Split':[43.51,16.44],'Kotor':[42.42,18.77],'Venedig':[45.44,12.33],'Triest':[45.65,13.77],'Civitavecchia':[42.09,11.80],'Neapel':[40.85,14.27],'Palermo':[38.12,13.36],'Cagliari':[39.22,9.12],'Livorno':[43.55,10.31],'La Spezia':[44.10,9.82],'Ancona':[43.62,13.51],'Bari':[41.12,16.87],'Messina':[38.19,15.55],'Malta':[35.90,14.51],'Valletta':[35.90,14.51],'Rom':[41.90,12.50],
-};
-/* ── Offline-Reiserouten-Karte (SVG, equirektangulare Projektion) ── */
-function buildRouteMapSVG(){
-  const L=S.lang==='en';
-  // Besuchte Häfen aus Protokoll, chronologisch nach erstem Eintrag
-  const portFirst={};
-  (S.log||[]).forEach(e=>{
-    if(e.location&&e.location.trim()){
-      const loc=e.location.trim();
-      if(!portFirst[loc]||new Date(e.time)<new Date(portFirst[loc]))portFirst[loc]=e.time;
-    }
-  });
-  const portNames=Object.keys(portFirst).sort((a,b)=>new Date(portFirst[a])-new Date(portFirst[b]));
-  // Koordinaten auflösen (exakt + fuzzy)
-  const pts=[];
-  portNames.forEach(p=>{
-    let coord=PORT_COORDS[p];
-    if(!coord){
-      const pl=p.toLowerCase();
-      const k=Object.keys(PORT_COORDS).find(k=>{const kl=k.toLowerCase();return kl===pl||kl.startsWith(pl.slice(0,6))||pl.startsWith(kl.slice(0,6));});
-      if(k)coord=PORT_COORDS[k];
-    }
-    if(coord)pts.push({name:p,lat:coord[0],lon:coord[1]});
-  });
-  if(!pts.length)return null;
-  const W=700,H=320;
-  const px=lon=>Math.round((lon+180)/360*W);
-  const py=lat=>Math.round((90-lat)/180*H);
-  // Vereinfachte Kontinentumrisse [lon,lat]
-  const CONTS=[
-    // Europa
-    [[-10,36],[10,36],[20,38],[30,37],[40,38],[35,50],[30,52],[20,58],[10,62],[0,58],[-5,55],[-10,51],[-5,44],[-10,38],[-10,36]],
-    // Afrika
-    [[-17,15],[-10,5],[0,5],[15,4],[35,5],[42,12],[45,5],[38,-3],[30,-26],[17,-35],[5,5],[-17,15]],
-    // Nordamerika
-    [[-168,70],[-130,55],[-125,50],[-123,38],[-117,32],[-100,20],[-80,10],[-60,8],[-60,20],[-80,25],[-70,45],[-55,50],[-60,65],[-65,72],[-90,72],[-130,70],[-168,70]],
-    // Südamerika
-    [[-80,10],[-60,8],[-50,5],[-35,-5],[-38,-12],[-43,-22],[-50,-29],[-65,-38],[-70,-50],[-68,-55],[-60,-40],[-50,-26],[-35,-5],[-50,3],[-65,10],[-80,10]],
-    // Asien
-    [[30,37],[50,42],[65,45],[80,52],[90,55],[100,52],[115,45],[130,48],[143,42],[140,38],[125,28],[115,22],[100,13],[90,5],[80,10],[65,22],[50,25],[40,35],[30,37]],
-    // Südostasien-Halbinsel
-    [[100,5],[108,5],[108,-2],[104,-2],[100,5]],
-    // Borneo
-    [[109,7],[118,7],[118,2],[110,-4],[109,7]],
-    // Australien
-    [[115,-22],[128,-15],[140,-18],[150,-25],[153,-28],[150,-35],[142,-38],[132,-32],[122,-34],[115,-22]],
-    // Grönland
-    [[-45,82],[-20,78],[-15,75],[-20,70],[-40,65],[-50,70],[-55,78],[-45,82]],
-    // Japan
-    [[130,31],[135,35],[140,38],[143,42],[141,44],[135,42],[130,33],[130,31]],
-    // Neuseeland (grob)
-    [[172,-40],[174,-36],[178,-37],[177,-40],[172,-44],[170,-45],[172,-40]],
-    // UK/Irland (grob)
-    [[-5,50],[0,51],[2,52],[-2,53],[-5,55],[-8,55],[-10,52],[-5,50]],
-  ];
-  let svgContent='';
-  // Hintergrund-Graticule (20°-Linien)
-  for(let lon=-180;lon<=180;lon+=60)svgContent+=`<line x1="${px(lon)}" y1="0" x2="${px(lon)}" y2="${H}" stroke="var(--ac-07)" stroke-width="0.5"/>`;
-  for(let lat=-60;lat<=90;lat+=30)svgContent+=`<line x1="0" y1="${py(lat)}" x2="${W}" y2="${py(lat)}" stroke="var(--ac-07)" stroke-width="0.5"/>`;
-  // Kontinente
-  CONTS.forEach(c=>{
-    const pp=c.map(([ln,lt])=>`${px(ln)},${py(lt)}`).join(' ');
-    svgContent+=`<polygon points="${pp}" fill="var(--tx4)" stroke="var(--ac-13)" stroke-width="0.8"/>`;
-  });
-  // Routenlinie (datumsgrenzen-bewusst: Segment überspringen wenn |ΔLon|>180)
-  if(pts.length>=2){
-    let d='';
-    pts.forEach((p,i)=>{
-      if(i===0){d+=`M${px(p.lon)} ${py(p.lat)}`;}
-      else{
-        const dLon=Math.abs(p.lon-pts[i-1].lon);
-        d+=dLon>180?` M${px(p.lon)} ${py(p.lat)}`:` L${px(p.lon)} ${py(p.lat)}`;
-      }
-    });
-    svgContent+=`<path d="${d}" fill="none" stroke="var(--ac)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>`;
-  }
-  // Hafen-Punkte
-  pts.forEach((p,i)=>{
-    const x=px(p.lon),y=py(p.lat);
-    const first=i===0,last=i===pts.length-1;
-    const r=first||last?5.5:3.5;
-    svgContent+=`<circle cx="${x}" cy="${y}" r="${r}" fill="var(--ac)" stroke="var(--bg)" stroke-width="${first||last?2:1.5}" opacity="${first||last?1:0.85}"/>`;
-    if(first||last)svgContent+=`<text x="${x}" y="${y-8}" text-anchor="middle" font-size="8" fill="var(--ac)" font-family="Georgia,serif" opacity="0.9">${esc(p.name.slice(0,12))}</text>`;
-  });
-  return {svg:`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;border-radius:8px;background:var(--bg3)" aria-label="${L?'Voyage route map':'Reiserouten-Karte'}">${svgContent}</svg>`,mapped:pts.length,total:portNames.length};
-}
 function onCurrentLocInput(val){
   buildLocDatalist();
   // O1: TZ-Vorschlag beim Hafen-Eingeben
@@ -5150,7 +5137,7 @@ function drinkRow(d,rankIdx,showCat){
   const plusRight=S.btnLayout==='plus-right';
   const leftSlot=plusRight?minusBtn+favBtn:plusBtn;
   const rightSlot=plusRight?plusBtn:favBtn+minusBtn;
-  return `<div class="drow-wrap" data-dswid="${esc(d.id)}" data-has="${c>0?'1':''}" data-swside="${plusRight?'left':'right'}" role="listitem" aria-label="${esc(d.name)}"><div class="drow-swipe-bg" aria-hidden="true"><span style="font-size:22px">↩</span><div style="font-size:10px;letter-spacing:.5px;margin-top:2px">UNDO</div></div><div class="drow-strip"></div><div class="drow${has?' has':''}${fl?' fl':''}" data-lpid="${esc(d.id)}" style="border-left-color:${col}">
+  return `<div class="drow-wrap" data-dswid="${esc(d.id)}" data-has="${c>0?'1':''}" data-swside="${plusRight?'left':'right'}" role="listitem" aria-label="${esc(d.name)}"><div class="drow-swipe-bg" aria-hidden="true"><span style="font-size:22px">↩</span><div style="font-size:10px;letter-spacing:.5px;margin-top:2px">UNDO</div></div><div class="drow-strip"></div><div class="drow${has?' has':''}${fl?' fl':''}" style="border-left-color:${col}">
     ${showRnk?`<div class="rnk" style="background:${RNK[rankIdx]}">#${rankIdx+1}</div>`:''}
     ${leftSlot}
     <div class="dinfo"><div class="dname${has?' on':''}">${esc(d.name)}</div>${d.nameEN&&S.lang==="en"?`<div style="font-size:10px;color:var(--ac);margin-top:1px;opacity:.8">${esc(d.nameEN)}</div>`:d.nameEN?`<div style="font-size:10px;color:var(--tx2);margin-top:1px">${esc(d.nameEN)}</div>`:''} ${showCat?`<div class="dcat"><span class="cdot" style="background:${col}"></span>${esc(d.cat)}</div>`:''}<div class="dprice">${eur(d.price)}<span class="incl-dot ${d.included?'filled':'outline'}" style="${d.included?`background:${AI_COLOR};width:7px;height:7px`:`color:${col};width:7px;height:7px`}" title="${d.included?(S.lang==='en'?'All Inclusive':'All Inclusive'):(S.lang==='en'?'Not included':'Nicht inklusive')}"></span></div></div>
@@ -5241,6 +5228,7 @@ function renderDrinks(forceSort){
 }
 
 function handleDrinkClick(e){
+  if(_lpFired){_lpFired=false;return;} // Long-Press wurde ausgelöst → Click ignorieren
   const t=e.target;
   // Favoriten-Titel: nur über data-Attribut, kein onclick → kein Doppel-Auslösen
   if(t.closest('[data-fav-toggle]')&&!t.closest('.fav-sort-btn')){e.preventDefault();toggleFavSection();return;}
@@ -5256,27 +5244,11 @@ function handleDrinkClick(e){
 ['catGroupsView','dlist','top10list','favSection','top10section'].forEach(id=>{
   const el=document.getElementById(id);
   el.addEventListener('click',handleDrinkClick);
-  let _tY=0,_tX=0,_lpTimer=null,_lpFired=false;
-  el.addEventListener('touchstart',function(e){
-    _tY=e.touches[0].clientY;_tX=e.touches[0].clientX;_lpFired=false;
-    // Long-Press: 500ms auf .drow (nicht auf Plus/Minus/Fav-Buttons)
-    const row=e.target.closest('[data-lpid]');
-    if(row&&!e.target.closest('[data-plus],[data-minus],[data-fav]')){
-      clearTimeout(_lpTimer);
-      _lpTimer=setTimeout(()=>{_lpFired=true;_lpTimer=null;openEditDrink(row.dataset.lpid);},500);
-    }
-  },{passive:true});
-  el.addEventListener('touchmove',function(e){
-    // Bewegung > 8px bricht Long-Press ab
-    if(_lpTimer&&(Math.abs(e.touches[0].clientY-_tY)>8||Math.abs(e.touches[0].clientX-_tX)>8)){clearTimeout(_lpTimer);_lpTimer=null;}
-  },{passive:true});
-  el.addEventListener('touchcancel',function(){clearTimeout(_lpTimer);_lpTimer=null;_lpFired=false;},{passive:true});
+  let _tY=0,_tX=0;
+  el.addEventListener('touchstart',function(e){_tY=e.touches[0].clientY;_tX=e.touches[0].clientX;},{passive:true});
   el.addEventListener('touchend',function(e){
-    clearTimeout(_lpTimer);_lpTimer=null;
     const t=e.target;
     const tc=e.changedTouches[0];
-    // Long-Press wurde ausgelöst → normalen Tap unterdrücken
-    if(_lpFired){e.preventDefault();return;}
     if(tc&&(Math.abs(tc.clientY-_tY)>10||Math.abs(tc.clientX-_tX)>10))return;
     // Favoriten-Toggle
     if(t.closest('[data-fav-toggle]')&&!t.closest('.fav-sort-btn')){e.preventDefault();toggleFavSection();return;}
@@ -5290,6 +5262,37 @@ function handleDrinkClick(e){
     }
   },{passive:false});
 });
+/* ── Long-Press auf Getränke-Karten (~500 ms) → Bearbeitungs-Menü ── */
+var _lpTimer=null,_lpFired=false;
+(function(){
+  const panel=document.getElementById('p0');
+  if(!panel)return;
+  var _lpSX=0,_lpSY=0,_lpId=null;
+  panel.addEventListener('touchstart',function(e){
+    const wrap=e.target.closest('.drow-wrap[data-dswid]');
+    // Nicht auf interaktiven Buttons / Kategorie-Header auslösen
+    if(!wrap||e.target.closest('[data-plus],[data-fav],[data-minus],[data-dc],[data-fav-toggle],[data-top10-toggle],[class*=\"bplus\"],[class*=\"fav-btn\"]'))return;
+    _lpId=wrap.dataset.dswid;
+    _lpSX=e.touches[0].clientX;_lpSY=e.touches[0].clientY;
+    _lpFired=false;
+    clearTimeout(_lpTimer);
+    _lpTimer=setTimeout(function(){
+      _lpFired=true;
+      try{if(typeof navigator.vibrate==='function')navigator.vibrate([30,20,30]);}catch(_){}
+      openEditDrink(_lpId);
+    },500);
+  },{passive:true});
+  panel.addEventListener('touchmove',function(e){
+    if(!_lpTimer)return;
+    const t=e.touches[0];
+    if(Math.abs(t.clientX-_lpSX)>10||Math.abs(t.clientY-_lpSY)>10){clearTimeout(_lpTimer);_lpTimer=null;}
+  },{passive:true});
+  panel.addEventListener('touchend',function(e){
+    clearTimeout(_lpTimer);_lpTimer=null;
+    if(_lpFired){e.preventDefault();_lpFired=false;}
+  },{passive:false});
+})();
+
 setInterval(()=>{const n=Date.now();Object.keys(S.plusDebounce).forEach(k=>{if(n-S.plusDebounce[k]>60000)delete S.plusDebounce[k];});},300000);
 setInterval(updateClock,1000);
 
@@ -7114,15 +7117,6 @@ function renderStats(){
         </div>`;
       });
       html+=`<div style="font-size:10px;color:var(--tx2);margin-top:8px;text-align:right">${fmtNum(portChron.length)} ${L?'ports total':'Häfen gesamt'}</div></div>`;
-      // ── Reiserouten-Karte (V48.3) ──
-      const _wmap=buildRouteMapSVG();
-      if(_wmap&&_wmap.mapped>=1){
-        const _unmapped=_wmap.total-_wmap.mapped;
-        html+=`<div class="stat-card" data-sc="routemap"><div class="stat-card-title">🌍 ${L?'Voyage Route Map':'Reiserouten-Karte'}</div>
-        <div style="font-size:10px;color:var(--tx2);margin-bottom:8px">${L?`${_wmap.mapped} port${_wmap.mapped!==1?'s':''} plotted${_unmapped>0?' · '+_unmapped+' without coordinates':''}`:_wmap.mapped+` Hafen${_wmap.mapped!==1?'e':''} eingezeichnet${_unmapped>0?' · '+_unmapped+' ohne Koordinaten':''}`}</div>
-        ${_wmap.svg}
-        </div>`;
-      }
     }
   }
 
