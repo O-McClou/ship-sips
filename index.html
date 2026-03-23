@@ -1056,7 +1056,65 @@ html .fav-section .drow.fl{background:rgba(255,255,255,0.07);border-left-color:v
 }
 .fav-drag-handle:active{color:var(--ac);cursor:grabbing}
 
-/* ── USER PROFILES ─────────────────────────────────────────── */
+/* ── FAVORITEN-KACHELANSICHT ────────────────────────────────── */
+/* Ansichts-Umschalter neben dem Favoriten-Titel */
+.fav-view-btns{display:flex;align-items:center;gap:3px;margin-left:6px;flex-shrink:0}
+.fav-view-btn{background:transparent;border:1px solid var(--ac-20);border-radius:7px;color:var(--tx2);font-size:12px;cursor:pointer;padding:2px 7px;touch-action:manipulation;line-height:1.5;transition:all .15s}
+.fav-view-btn.on{background:var(--ac-13);color:var(--ac);border-color:var(--ac-40)}
+
+/* Farb-Modus-Toggle-Button */
+.fav-color-btn{background:transparent;border:1px solid var(--ac-20);border-radius:7px;color:var(--tx2);font-size:10px;cursor:pointer;padding:2px 7px;touch-action:manipulation;line-height:1.5;transition:all .15s;white-space:nowrap;font-family:Georgia,serif;flex-shrink:0}
+.fav-color-btn.on{background:var(--ac-13);color:var(--ac);border-color:var(--ac-40)}
+
+/* Kachel-Raster */
+.fav-tiles-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 0 4px}
+
+/* Einzelne Kachel */
+.fav-tile{
+  position:relative;
+  border-radius:14px;
+  border:1.5px solid var(--ac-13);
+  background:var(--bg3);
+  padding:10px 10px 8px;
+  cursor:pointer;
+  display:flex;flex-direction:column;gap:0;
+  min-height:96px;
+  overflow:hidden;
+  transition:transform .1s,box-shadow .1s,opacity .15s;
+  -webkit-user-select:none;user-select:none;
+  touch-action:manipulation;
+}
+.fav-tile:active{transform:scale(.96);opacity:.85}
+.fav-tile.fl{box-shadow:0 0 0 2px var(--ac)}
+
+/* Kachel-Kopfzeile: Stern + Zähler */
+.fav-tile-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:4px;margin-bottom:5px}
+.fav-tile-star{font-size:14px;color:var(--ac);line-height:1;flex-shrink:0;background:none;border:none;cursor:pointer;padding:0;touch-action:manipulation}
+.fav-tile-cnt{display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0}
+.fav-tile-num{font-size:17px;font-weight:bold;line-height:1;color:var(--ac)}
+.fav-tile-num.z{font-size:13px;color:var(--tx2);font-weight:normal}
+.fav-tile-sub{font-size:9px;color:var(--tx2);line-height:1;margin-top:1px;text-align:right}
+
+/* Kachel-Name + Kategorie */
+.fav-tile-name{font-size:12px;font-weight:bold;color:var(--tx0);line-height:1.3;flex:1;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.fav-tile-cat{font-size:9px;color:var(--tx2);margin-top:2px;display:flex;align-items:center;gap:3px;overflow:hidden;white-space:nowrap}
+
+/* Kachel-Fußzeile: Preis + Menü */
+.fav-tile-ftr{display:flex;align-items:center;justify-content:space-between;margin-top:5px;gap:4px}
+.fav-tile-price{font-size:10px;color:var(--tx1);display:flex;align-items:center;gap:3px}
+.fav-tile-more{background:none;border:none;color:var(--tx2);font-size:16px;cursor:pointer;padding:0 0 0 4px;touch-action:manipulation;line-height:1;flex-shrink:0}
+
+/* Kachel im Sort-Modus */
+.fav-tile.fav-tile-sort-active{opacity:.4;border-style:dashed}
+.fav-tile.fav-tile-drag-over{box-shadow:0 0 0 3px var(--ac)}
+.fav-tile-drag-handle{position:absolute;top:6px;left:50%;transform:translateX(-50%);font-size:13px;color:var(--tx2);opacity:.6;pointer-events:none;letter-spacing:-1px}
+
+/* Farbwahl-Overlay-Grid */
+.tile-color-picker{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;padding:12px}
+.tile-color-swatch{width:100%;aspect-ratio:1;border-radius:7px;border:2px solid transparent;cursor:pointer;transition:transform .1s,border-color .15s;touch-action:manipulation}
+.tile-color-swatch:active{transform:scale(.88)}
+.tile-color-swatch.selected{border-color:#fff;box-shadow:0 0 0 2px #0008}
+.tile-color-reset{grid-column:1/-1;background:var(--bg2);border:1px dashed var(--ac-40);border-radius:8px;color:var(--tx1);font-family:Georgia,serif;font-size:11px;padding:6px;cursor:pointer;touch-action:manipulation;text-align:center}
 .user-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:bold;flex-shrink:0;vertical-align:middle}
 .user-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .active-user-bar{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg3);border-bottom:1px solid var(--ac-13);font-size:12px}
@@ -1423,6 +1481,7 @@ details.hlp-acc summary:active{opacity:.75}
     <div class="fav-section">
       <div class="fav-title" id="favTitle">★ Favoriten</div>
       <div id="favList" class="dlist" style="padding:0"></div>
+      <div id="favTilesGrid" style="display:none"></div>
     </div>
     <div style="margin:4px 14px 2px;border-bottom:1px solid #e0c04022"></div>
   </div>
@@ -1953,6 +2012,33 @@ window.addEventListener('unhandledrejection', function(e) {
    TRANSLATIONS – Complete DE / EN
 ═══════════════════════════════════════════════════════════════ */
 const APP_VERSION = 'V48.3';
+
+/* ═══ FARBRAD-PALETTE (36 Farben, 3 Ringe × 12 Töne) ══════════
+   Ring 0 (gesättigt), Ring 1 (mittel), Ring 2 (hell/pastell)
+   Reihenfolge: Gelb → Gelbgrün → Grün → Blaugrün → Cyan → Blau
+                → Indigo → Violett → Magenta → Rot → Rot-Orange → Orange
+   ═══════════════════════════════════════════════════════════════ */
+const TILE_COLORS_36=[
+  /* Ring 0 – gesättigt */
+  '#FFE500','#99DD00','#00CC00','#00BB77','#00BBCC','#0066FF',
+  '#3300CC','#9900CC','#CC00AA','#FF0000','#FF4400','#FF8800',
+  /* Ring 1 – mittel */
+  '#FFEE77','#BBDD66','#77DD77','#55DDAA','#55CCDD','#6699FF',
+  '#8866EE','#BB77EE','#EE66CC','#FF7777','#FF8866','#FFBB66',
+  /* Ring 2 – hell/pastell */
+  '#FFFACC','#EEFFCC','#CCFFCC','#CCFFEE','#CCFAFF','#CCDDFF',
+  '#DDCCFF','#EECCFF','#FFCCF0','#FFCCCC','#FFE0CC','#FFEECC'
+];
+/* Textfarbe (weiß/dunkel) für Hintergrundfarbe berechnen */
+function tileTextColor(hex){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return (0.299*r+0.587*g+0.114*b)/255>0.54?'#1a1a1a':'#ffffff';
+}
+/* Hintergrundfarbe als rgba-String (für getönten Modus) */
+function tileRgba(hex,alpha){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return'rgba('+r+','+g+','+b+','+alpha+')';
+}
 const I18N = {
   de:{
     'tab.drinks':'Getränke','tab.log':'Protokoll','tab.stats':'Statistik','tab.manage':'Einstellungen','tab.help':'Hilfe',
@@ -3347,6 +3433,9 @@ let S={
   lastDarkTheme:'kapitaensbuch',lastLightTheme:'sonnendeck',
   dayEndHour:0,dayEndMinute:0,
   favOrder:[],favSortMode:false,
+  favViewMode:'list',   /* 'list' | 'tile' */
+  favColorMode:'theme', /* 'theme' | 'color' | 'tinted' */
+  favTileColors:{},     /* { drinkId: colorIndex 0-35 } */
   headerCollapsed:false,
   tzMode:"auto",tzOffset:0,tzChangeLog:[],
   // User profiles – 4 fixed slots (u1–u4 are permanent positions)
@@ -4064,6 +4153,9 @@ async function _saveStateAsync(){
     {key:'statOpen',   value:JSON.stringify(S.statOpen||{})},
     {key:'syncEnabled',value:S.syncEnabled?'1':''},
     {key:'lastSyncDate',value:S.lastSyncDate||''},
+    {key:'favViewMode', value:S.favViewMode||'list'},
+    {key:'favColorMode',value:S.favColorMode||'theme'},
+    {key:'favTileColors',value:JSON.stringify(S.favTileColors||{})},
   ];
   await db.config.bulkPut(cfgPairs);
   // Logs: upsert via bulkPut (kein clear nötig, vermeidet kurzzeitigen Datenverlust)
@@ -4119,7 +4211,10 @@ function _saveStateLocalStorageFallback(){
     ['a4_statdayshow',JSON.stringify(S.statDayShow||{})],
     ['a4_statopen',JSON.stringify(S.statOpen||{})],
     ['a4_syncenabled',S.syncEnabled?'1':''],
-    ['a4_lastsync',S.lastSyncDate||'']
+    ['a4_lastsync',S.lastSyncDate||''],
+    ['a4_favviewmode',S.favViewMode||'list'],
+    ['a4_favcolormode',S.favColorMode||'theme'],
+    ['a4_favtilecolors',JSON.stringify(S.favTileColors||{})]
     // a4_iconlib absichtlich ausgelassen (Base64-Bilder → IndexedDB ist primär)
   ];
   for(const[k,v]of pairs){
@@ -4202,6 +4297,9 @@ function loadState(){
   try{const _so=JSON.parse(localStorage.getItem('a4_statopen')||'null');S.statOpen=_so&&typeof _so==='object'?_so:{overview:true,topdrinks:true,byday:true};}catch(e){S.statOpen={overview:true,topdrinks:true,byday:true};} // Nr.5
   S.syncEnabled=localStorage.getItem('a4_syncenabled')==='1';
   S.lastSyncDate=localStorage.getItem('a4_lastsync')||null;
+  S.favViewMode=localStorage.getItem('a4_favviewmode')||'list';
+  S.favColorMode=localStorage.getItem('a4_favcolormode')||'theme';
+  try{S.favTileColors=JSON.parse(localStorage.getItem('a4_favtilecolors')||'{}');}catch(e){S.favTileColors={};}
   syncCustomThemesToRuntime();
   // Sync favOrder with actual favorites (remove stale, append new)
   S.favOrder=S.favOrder.filter(id=>S.favorites.has(id));
@@ -5154,7 +5252,7 @@ function renderDrinksDebounced(full){
 }
 function renderDrinks(forceSort){
   // 12.2: Skip re-render if nothing visually changed
-  const hash=JSON.stringify([S.drinks.length,S.catFilter,S.fz,S.lang,JSON.stringify([...S.favorites]),S.btnLayout,JSON.stringify(S.counts),S.favCollapsed,S.top10Collapsed,S.favSortMode,JSON.stringify(S.favOrder),JSON.stringify([...S.drinkExpandedCats]),S.selCat,S.drinks.filter(d=>d.included).length]);
+  const hash=JSON.stringify([S.drinks.length,S.catFilter,S.fz,S.lang,JSON.stringify([...S.favorites]),S.btnLayout,JSON.stringify(S.counts),S.favCollapsed,S.top10Collapsed,S.favSortMode,JSON.stringify(S.favOrder),JSON.stringify([...S.drinkExpandedCats]),S.selCat,S.drinks.filter(d=>d.included).length,S.favViewMode,S.favColorMode,JSON.stringify(S.favTileColors||{})]);
   if(!forceSort&&hash===_lastDrinksHash){return;}
   _lastDrinksHash=hash;
   // Scroll-Position aus dem echten Scroll-Container (#p0) retten
@@ -5184,18 +5282,46 @@ function renderDrinks(forceSort){
   if(favFiltered.length){
     favSec.style.display='';
     const favListEl=document.getElementById('favList');
+    const favTilesEl=document.getElementById('favTilesGrid');
     const favTitleEl=document.getElementById('favTitle');
     const arr=S.favCollapsed?'▶':'▼';
     const sortLbl=S.lang==='en'?'Sort':'Sortieren';
     const sortActive=S.favSortMode;
-    favTitleEl.innerHTML=`<span style="cursor:pointer;display:flex;align-items:center;gap:5px;flex:1" data-fav-toggle="1"><span>${arr}</span><span>${T('fav.title')}</span></span><button class="fav-sort-btn${sortActive?' active':''}" onclick="event.stopPropagation();toggleFavSortMode()">⇅ ${sortLbl}</button>`;
-    favListEl.style.display=S.favCollapsed?'none':'';
-    if(!S.favCollapsed){
-      if(S.favSortMode){
-        favListEl.innerHTML=favFiltered.map(d=>`<div class="fav-sort-item" data-favid="${esc(d.id)}"><div class="fav-drag-handle" data-drag="${esc(d.id)}">⠿</div><div style="flex:1;min-width:0">${drinkRow(d,-1,true)}</div></div>`).join('');
-        initFavDrag();
-      }else{
-        favListEl.innerHTML=favFiltered.map(d=>drinkRow(d,-1,true)).join('');
+    const isTile=S.favViewMode==='tile';
+    const L=S.lang==='en';
+    // Farb-Modus-Label
+    const colorModeLbl=S.favColorMode==='color'?(L?'🎨 Color':'🎨 Farbe'):S.favColorMode==='tinted'?(L?'🎨 Tinted':'🎨 Getönt'):(L?'🎨 Theme':'🎨 Theme');
+    favTitleEl.innerHTML=
+      `<span style="cursor:pointer;display:flex;align-items:center;gap:5px;flex:1" data-fav-toggle="1"><span>${arr}</span><span>${T('fav.title')}</span></span>`+
+      `<div style="display:flex;align-items:center;gap:4px;flex-shrink:0">`+
+      (isTile?`<button class="fav-color-btn${S.favColorMode!=='theme'?' on':''}" onclick="event.stopPropagation();cycleFavColorMode()">${colorModeLbl}</button>`:'') +
+      `<div class="fav-view-btns"><button class="fav-view-btn${!isTile?' on':''}" onclick="event.stopPropagation();setFavViewMode('list')" title="${L?'List view':'Listenansicht'}">☰</button>`+
+      `<button class="fav-view-btn${isTile?' on':''}" onclick="event.stopPropagation();setFavViewMode('tile')" title="${L?'Tile view':'Kachelansicht'}">⊞</button></div>`+
+      `<button class="fav-sort-btn${sortActive?' active':''}" onclick="event.stopPropagation();toggleFavSortMode()">⇅ ${sortLbl}</button>`+
+      `</div>`;
+    // Liste vs. Kacheln
+    const contentVisible=!S.favCollapsed;
+    if(isTile){
+      favListEl.style.display='none';
+      favTilesEl.style.display=contentVisible?'':'none';
+      if(contentVisible){
+        if(S.favSortMode){
+          favTilesEl.innerHTML='<div class="fav-tiles-grid">'+favFiltered.map(d=>favTileHTML(d,true)).join('')+'</div>';
+          initFavTileDrag();
+        }else{
+          favTilesEl.innerHTML='<div class="fav-tiles-grid">'+favFiltered.map(d=>favTileHTML(d,false)).join('')+'</div>';
+        }
+      }
+    }else{
+      favTilesEl.style.display='none';
+      favListEl.style.display=contentVisible?'':'none';
+      if(contentVisible){
+        if(S.favSortMode){
+          favListEl.innerHTML=favFiltered.map(d=>`<div class="fav-sort-item" data-favid="${esc(d.id)}"><div class="fav-drag-handle" data-drag="${esc(d.id)}">⠿</div><div style="flex:1;min-width:0">${drinkRow(d,-1,true)}</div></div>`).join('');
+          initFavDrag();
+        }else{
+          favListEl.innerHTML=favFiltered.map(d=>drinkRow(d,-1,true)).join('');
+        }
       }
     }
   }
@@ -5230,6 +5356,8 @@ function renderDrinks(forceSort){
 function handleDrinkClick(e){
   if(_lpFired){_lpFired=false;return;} // Long-Press wurde ausgelöst → Click ignorieren
   const t=e.target;
+  // Kachel-Elemente werden vom eigenen Kachel-Handler verwaltet → ignorieren
+  if(t.closest('.fav-tile'))return;
   // Favoriten-Titel: nur über data-Attribut, kein onclick → kein Doppel-Auslösen
   if(t.closest('[data-fav-toggle]')&&!t.closest('.fav-sort-btn')){e.preventDefault();toggleFavSection();return;}
   // Top10-Titel
@@ -5250,6 +5378,8 @@ function handleDrinkClick(e){
     const t=e.target;
     const tc=e.changedTouches[0];
     if(tc&&(Math.abs(tc.clientY-_tY)>10||Math.abs(tc.clientX-_tX)>10))return;
+    // Kachel-Elemente → eigener Handler
+    if(t.closest('.fav-tile'))return;
     // Favoriten-Toggle
     if(t.closest('[data-fav-toggle]')&&!t.closest('.fav-sort-btn')){e.preventDefault();toggleFavSection();return;}
     // Top10-Toggle
@@ -5391,6 +5521,255 @@ function renderSummary(){
 
 /* ── Favorites sort mode ─────────────────────────────────────── */
 function toggleFavSortMode(){S.favSortMode=!S.favSortMode;renderDrinks(false);}
+
+/* ── Kachelansicht: Ansichts- und Farbmodus-Umschalter ──────── */
+function setFavViewMode(mode){S.favViewMode=mode;saveState();renderDrinks(false);}
+function cycleFavColorMode(){
+  const modes=['theme','color','tinted'];
+  const idx=modes.indexOf(S.favColorMode||'theme');
+  S.favColorMode=modes[(idx+1)%modes.length];
+  saveState();renderDrinks(false);
+}
+
+/* ── Kachel-HTML ─────────────────────────────────────────────── */
+function favTileHTML(d,sortMode){
+  const c=S.counts[d.id]||0;
+  const has=c>0;
+  const fl=S.flashId===d.id;
+  const col=catColor(d.cat);
+  const colorMode=S.favColorMode||'theme';
+  // Kachelfarbe bestimmen
+  const tileColorIdx=(S.favTileColors||{})[d.id];
+  const hasTileColor=typeof tileColorIdx==='number'&&tileColorIdx>=0&&tileColorIdx<36;
+  const tileHex=hasTileColor?TILE_COLORS_36[tileColorIdx]:null;
+  // Stil je nach Modus
+  let bgStyle='',txStyle='',borderStyle='';
+  if(colorMode==='color'&&tileHex){
+    const tx=tileTextColor(tileHex);
+    bgStyle='background:'+tileHex+';';
+    txStyle='color:'+tx+';';
+    borderStyle='border-color:'+tileHex+'88;';
+  }else if(colorMode==='tinted'&&tileHex){
+    bgStyle='background:'+tileRgba(tileHex,.18)+';';
+    borderStyle='border-color:'+tileRgba(tileHex,.45)+';';
+  }else if(colorMode==='color'&&!hasTileColor){
+    // Auto-Farbe: Farbrad-Index aus Position in favOrder
+    const autoIdx=S.favOrder.indexOf(d.id);
+    const autoHex=TILE_COLORS_36[((autoIdx<0?0:autoIdx)%36+36)%36];
+    const tx=tileTextColor(autoHex);
+    bgStyle='background:'+autoHex+';';
+    txStyle='color:'+tx+';';
+    borderStyle='border-color:'+autoHex+'88;';
+  }else if(colorMode==='tinted'&&!hasTileColor){
+    const autoIdx=S.favOrder.indexOf(d.id);
+    const autoHex=TILE_COLORS_36[((autoIdx<0?0:autoIdx)%36+36)%36];
+    bgStyle='background:'+tileRgba(autoHex,.18)+';';
+    borderStyle='border-color:'+tileRgba(autoHex,.45)+';';
+  }
+  // Inklusive-Punkt
+  const aiDot=d.included
+    ?`<span class="incl-dot filled" style="background:${AI_COLOR};width:6px;height:6px;border-radius:50%;display:inline-block;flex-shrink:0"></span>`
+    :`<span class="incl-dot outline" style="width:6px;height:6px;border-radius:50%;border:1.5px solid ${col};display:inline-block;flex-shrink:0"></span>`;
+  // Sortier-Anfasser
+  const dragHandle=sortMode?`<div class="fav-tile-drag-handle">⠿</div>`:'';
+  const tileStyle=`style="${bgStyle}${borderStyle}"`;
+  const nameStyle=txStyle?`style="${txStyle}"`:'';
+  const subStyle=txStyle?`style="opacity:.7;${txStyle}"`:'';
+  const priceStyle=txStyle?`style="opacity:.85;${txStyle}"`:'';
+  return `<div class="fav-tile${fl?' fl':''}" data-tile-id="${esc(d.id)}" ${tileStyle} role="button" aria-label="${esc(d.name)} ${S.lang==='en'?'add':'hinzufügen'}">
+  ${dragHandle}
+  <div class="fav-tile-hdr">
+    <button class="fav-tile-star" data-fav="${esc(d.id)}" aria-label="${esc(d.name)} ${S.lang==='en'?'remove from favourites':'aus Favoriten entfernen'}" ${txStyle?'style="'+txStyle+'"':''}>★</button>
+    <div class="fav-tile-cnt">
+      <div class="fav-tile-num${has?'':' z'}" ${txStyle?'style="'+txStyle+'"':''}>${c}</div>
+      ${has?`<div class="fav-tile-sub" ${subStyle}>${eur(c*d.price)}</div>`:''}
+    </div>
+  </div>
+  <div class="fav-tile-name" ${nameStyle}>${esc(d.name)}</div>
+  <div class="fav-tile-cat" ${subStyle?'style="opacity:.7;'+txStyle+'"':''}>
+    <span class="cdot" style="background:${col};flex-shrink:0"></span>
+    <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.cat)}</span>
+  </div>
+  <div class="fav-tile-ftr">
+    <div class="fav-tile-price" ${priceStyle}>${eur(d.price)} ${aiDot}</div>
+    <button class="fav-tile-more" data-tile-more="${esc(d.id)}" ${txStyle?'style="opacity:.7;'+txStyle+'"':''} aria-label="Optionen">⋯</button>
+  </div>
+</div>`;
+}
+
+/* ── Kachel-Farbwahl-Overlay ────────────────────────────────── */
+function openTileColorPicker(drinkId){
+  const d=S.drinks.find(x=>x.id===drinkId);if(!d)return;
+  const L=S.lang==='en';
+  const cur=(S.favTileColors||{})[drinkId];
+  const hasCur=typeof cur==='number'&&cur>=0;
+  let html=`<div style="padding:10px 12px 6px;font-size:12px;font-weight:bold;color:var(--ac);border-bottom:1px solid var(--ac-13)">`+
+    `🎨 ${esc(d.name)}</div>`+
+    `<div class="tile-color-picker">`;
+  TILE_COLORS_36.forEach((hex,i)=>{
+    const sel=hasCur&&cur===i?' selected':'';
+    html+=`<div class="tile-color-swatch${sel}" style="background:${hex}" data-tc-idx="${i}" title="${hex}"></div>`;
+  });
+  html+=`<button class="tile-color-reset" data-tc-reset="${esc(drinkId)}">`+
+    (L?'↩ Reset to theme / auto':'↩ Zurück zu Theme / Auto')+`</button>`;
+  html+=`</div>`;
+  // Overlay aufbauen
+  let ov=document.getElementById('tileColorOv');
+  if(!ov){
+    ov=document.createElement('div');
+    ov.id='tileColorOv';
+    ov.className='ov';
+    ov.innerHTML=`<div class="ov-sheet show-bottom" id="tileColorSheet" style="max-width:380px;border-radius:16px 16px 0 0;overflow:hidden;background:var(--bg1)"></div>`;
+    document.body.appendChild(ov);
+    ov.addEventListener('click',function(e){if(e.target===ov)_ovHide('tileColorOv');});
+  }
+  document.getElementById('tileColorSheet').innerHTML=html;
+  _tcDrinkId=drinkId;
+  _ovShow('tileColorOv','show-bottom');
+}
+var _tcDrinkId=null;
+document.addEventListener('click',function(e){
+  const sw=e.target.closest('[data-tc-idx]');
+  if(sw){const idx=parseInt(sw.dataset.tcIdx);setTileColor(_tcDrinkId,idx);_ovHide('tileColorOv');return;}
+  const rst=e.target.closest('[data-tc-reset]');
+  if(rst){setTileColor(rst.dataset.tcReset,-1);_ovHide('tileColorOv');return;}
+});
+function setTileColor(drinkId,idx){
+  if(!S.favTileColors)S.favTileColors={};
+  if(idx<0){delete S.favTileColors[drinkId];}else{S.favTileColors[drinkId]=idx;}
+  saveState();renderDrinks(false);
+}
+
+/* ── Kachel-Event-Handler (Tap + Long-Press + Stern + Menü) ─── */
+(function(){
+  const p0=document.getElementById('p0');if(!p0)return;
+  var _tSX=0,_tSY=0,_tT=null,_tFired=false,_tId=null;
+  p0.addEventListener('touchstart',function(e){
+    const tile=e.target.closest('.fav-tile[data-tile-id]');
+    if(!tile)return;
+    // Stern und Menü-Button direkt weiterleiten
+    if(e.target.closest('[data-fav],[data-tile-more]'))return;
+    _tId=tile.dataset.tileId;
+    _tSX=e.touches[0].clientX;_tSY=e.touches[0].clientY;
+    _tFired=false;
+    clearTimeout(_tT);
+    _tT=setTimeout(function(){
+      _tFired=true;
+      try{if(typeof navigator.vibrate==='function')navigator.vibrate([30,20,30]);}catch(_){}
+      openEditDrink(_tId);
+    },500);
+  },{passive:true});
+  p0.addEventListener('touchmove',function(e){
+    if(!_tT)return;
+    const t=e.touches[0];
+    if(Math.abs(t.clientX-_tSX)>10||Math.abs(t.clientY-_tSY)>10){clearTimeout(_tT);_tT=null;}
+  },{passive:true});
+  p0.addEventListener('touchend',function(e){
+    clearTimeout(_tT);_tT=null;
+    if(_tFired){_tFired=false;return;}
+    const tile=e.target.closest('.fav-tile[data-tile-id]');
+    if(!tile)return;
+    if(e.target.closest('[data-fav]')){toggleFav(e.target.closest('[data-fav]').dataset.fav);return;}
+    if(e.target.closest('[data-tile-more]')){
+      const id=e.target.closest('[data-tile-more]').dataset.tileMore;
+      _showTileMenu(id,e.target);return;
+    }
+    // Ganzkachel = tapPlus
+    const id=tile.dataset.tileId;
+    tapPlus(id);
+  },{passive:true});
+  // Click-Fallback für Desktop/Mouse
+  p0.addEventListener('click',function(e){
+    const tile=e.target.closest('.fav-tile[data-tile-id]');
+    if(!tile)return;
+    if(e.target.closest('[data-fav]')){return;} // touchend hat es
+    if(e.target.closest('[data-tile-more]')){return;}
+    tapPlus(tile.dataset.tileId);
+  });
+})();
+
+function _showTileMenu(drinkId,anchor){
+  const L=S.lang==='en';
+  const d=S.drinks.find(x=>x.id===drinkId);if(!d)return;
+  const items=[
+    {lbl:(L?'✏️ Edit drink':'✏️ Getränk bearbeiten'),fn:()=>openEditDrink(drinkId)},
+    {lbl:(L?'🎨 Tile color':'🎨 Kachelfarbe'),fn:()=>openTileColorPicker(drinkId)},
+    {lbl:(L?'☆ Remove from favourites':'☆ Aus Favoriten entfernen'),fn:()=>toggleFav(drinkId)},
+  ];
+  const menu=document.createElement('div');
+  menu.style.cssText='position:fixed;z-index:9999;background:var(--bg2);border:1px solid var(--ac-27);border-radius:12px;box-shadow:0 4px 20px #0007;min-width:200px;overflow:hidden;font-family:Georgia,serif;';
+  items.forEach(it=>{
+    const b=document.createElement('button');
+    b.textContent=it.lbl;
+    b.style.cssText='display:block;width:100%;text-align:left;padding:11px 16px;background:transparent;border:none;border-bottom:1px solid var(--ac-07);color:var(--tx0);font-size:13px;font-family:Georgia,serif;cursor:pointer;touch-action:manipulation;';
+    b.addEventListener('click',()=>{document.body.removeChild(menu);it.fn();});
+    menu.appendChild(b);
+  });
+  // Letzte Trennlinie entfernen
+  if(menu.lastChild)menu.lastChild.style.borderBottom='none';
+  // Position: Anker falls verfügbar, sonst Mitte
+  document.body.appendChild(menu);
+  const r=anchor?anchor.getBoundingClientRect():null;
+  if(r){
+    let top=r.bottom+6,left=r.left-menu.offsetWidth+r.width;
+    if(left<8)left=8;
+    if(top+menu.offsetHeight>window.innerHeight-8)top=r.top-menu.offsetHeight-6;
+    menu.style.top=top+'px';menu.style.left=left+'px';
+  }else{
+    menu.style.top='50%';menu.style.left='50%';menu.style.transform='translate(-50%,-50%)';
+  }
+  // Außerhalb tippen schließt Menü
+  setTimeout(()=>{
+    const close=ev=>{if(!menu.contains(ev.target)){document.body.removeChild(menu);document.removeEventListener('touchstart',close,true);document.removeEventListener('click',close,true);}};
+    document.addEventListener('touchstart',close,true);
+    document.addEventListener('click',close,true);
+  },50);
+}
+
+/* ── Kachel-Drag-and-Drop (Sortierung im Kachel-Modus) ──────── */
+var _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null};
+function initFavTileDrag(){
+  document.querySelectorAll('.fav-tile[data-tile-id]').forEach(tile=>{
+    if(tile._ftdi)return;tile._ftdi=true;
+    tile.addEventListener('touchstart',function(e){
+      if(!S.favSortMode)return;
+      _ftd.active=true;_ftd.id=tile.dataset.tileId;_ftd.el=tile;
+      _ftd.startX=e.touches[0].clientX;_ftd.startY=e.touches[0].clientY;_ftd.lastOver=null;
+      tile.classList.add('fav-tile-sort-active');
+      e.preventDefault();
+    },{passive:false});
+    tile.addEventListener('touchmove',function(e){
+      if(!_ftd.active)return;
+      e.preventDefault();
+      const x=e.touches[0].clientX,y=e.touches[0].clientY;
+      const tiles=[...document.querySelectorAll('.fav-tile[data-tile-id]')];
+      tiles.forEach(t=>t.classList.remove('fav-tile-drag-over'));
+      let target=null;
+      for(const t of tiles){
+        if(t===_ftd.el)continue;
+        const r=t.getBoundingClientRect();
+        if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom){target=t;break;}
+      }
+      if(target){target.classList.add('fav-tile-drag-over');_ftd.lastOver=target;}
+      else _ftd.lastOver=null;
+    },{passive:false});
+    tile.addEventListener('touchend',function(){
+      if(!_ftd.active)return;_ftd.active=false;
+      if(_ftd.el)_ftd.el.classList.remove('fav-tile-sort-active');
+      const tiles=[...document.querySelectorAll('.fav-tile[data-tile-id]')];
+      tiles.forEach(t=>t.classList.remove('fav-tile-drag-over'));
+      if(_ftd.lastOver){
+        const order=tiles.map(t=>t.dataset.tileId);
+        const fi=order.indexOf(_ftd.id),ti=order.indexOf(_ftd.lastOver.dataset.tileId);
+        if(fi!==-1&&ti!==-1&&fi!==ti){
+          const no=[...order];no.splice(fi,1);no.splice(ti,0,_ftd.id);
+          S.favOrder=no;saveState();renderDrinks(false);
+        }
+      }
+      _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null};
+    },{passive:true});
+  });
+}
 
 // V33 V8: Sortier-Modi: freq (nach Häufigkeit) | alpha (A-Z) | cat (nach Kategorie A-Z)
 function cycleDrinkSort(){
@@ -10895,6 +11274,9 @@ async function loadStateFromDB(){
     try{S.statDaySort=JSON.parse(cfg.statDaySort||'{}');}catch(e){S.statDaySort={};}
     try{S.statDayShow=JSON.parse(cfg.statDayShow||'{}');}catch(e){S.statDayShow={};}
     try{const _so=JSON.parse(cfg.statOpen||'null');S.statOpen=_so&&typeof _so==='object'?_so:{overview:true,topdrinks:true,byday:true};}catch(e){S.statOpen={overview:true,topdrinks:true,byday:true};}
+    S.favViewMode=cfg.favViewMode||'list';
+    S.favColorMode=cfg.favColorMode||'theme';
+    try{S.favTileColors=JSON.parse(cfg.favTileColors||'{}');}catch(e){S.favTileColors={};}
     // Log-Einträge laden und chronologisch sortieren (neueste zuerst)
     const rawLogs=await db.logs.toArray();
     const filteredLogs=rawLogs.filter(isVE).map(sanE);
