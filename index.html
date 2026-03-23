@@ -803,7 +803,7 @@ html .fav-section .drow.fl{background:rgba(255,255,255,0.07);border-left-color:v
 .adm-row-ctrl{display:flex;gap:4px;align-items:center;flex-shrink:0}
 .adm-input{padding:7px 10px;background:var(--bg2);border:1px solid var(--ac-27);border-radius:7px;color:var(--tx0);font-family:Georgia,serif;font-size:13px;outline:none;-webkit-appearance:none}
 .adm-divider{height:1px;background:var(--ac-07);margin:10px 0}
-.vw-group-label{font-size:9px;font-weight:bold;letter-spacing:2.5px;color:var(--tx2);text-transform:uppercase;padding:16px 4px 6px;margin-top:2px;border-top:1px solid var(--ac-07)}
+.vw-group-label{font-size:9px;font-weight:bold;letter-spacing:2px;color:var(--tx1);text-transform:uppercase;padding:20px 2px 7px;margin-top:4px;border-top:1px solid var(--ac-13)}
 .adm-user-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:bold;border:1px solid transparent;cursor:default}
 .adm-danger{background:#1a0808;border-color:#c0392b88;border-left:4px solid #e05555;border-radius:12px;padding:14px;margin-bottom:10px}
 .adm-danger-title{font-size:11px;color:#e05555;font-weight:bold;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px}
@@ -1878,11 +1878,11 @@ details.hlp-acc summary:active{opacity:.75}
   <div class="modal-sheet">
     <div class="modal-title" id="meTitle">Eintrag bearbeiten</div>
     <div class="mfield"><label id="meSelLbl">Getränk aus Liste (optional)</label><select id="meSel" onchange="onMeSelChange()"><option value="">— Freier Eintrag —</option></select></div>
-    <div class="mfield"><label id="meNameLbl">Name</label><input id="meName" type="text" placeholder="Getränkename"></div>
-    <div class="mfield"><label id="mePriceLbl">Preis</label><div class="price-wrap"><input id="mePrice" type="number" step="0.10" min="0" placeholder="0.00"><span class="price-suffix" id="mePriceSuffix">€</span></div></div>
+    <div class="mfield"><label id="meNameLbl">Name</label><input id="meName" type="text" placeholder="Getränkename" onfocus="setTimeout(function(){this.scrollIntoView({behavior:'smooth',block:'center'});}.bind(this),400)"></div>
+    <div class="mfield"><label id="mePriceLbl">Preis</label><div class="price-wrap"><input id="mePrice" type="number" step="0.10" min="0" placeholder="0.00" onfocus="setTimeout(function(){this.scrollIntoView({behavior:'smooth',block:'center'});}.bind(this),400)"><span class="price-suffix" id="mePriceSuffix">€</span></div></div>
     <div class="mfield"><label id="meTimeLbl">Datum &amp; Uhrzeit</label><input id="meTime" type="datetime-local" onfocus="setTimeout(function(){this.scrollIntoView({behavior:'smooth',block:'center'});}.bind(this),400)"></div>
-    <div class="mfield"><label id="meNoteLbl">Notiz (optional)</label><input id="meNote" type="text" placeholder="z. B. Tisch 5, Gast X …" maxlength="200" autocomplete="off" spellcheck="false"></div>
-    <div class="mfield"><label id="meLocLbl">⚓ Hafen / Ort (optional)</label><input id="meLoc" type="text" placeholder="z. B. Lissabon, Hamilton, Sydney …" maxlength="100" autocomplete="off" spellcheck="false" list="locDatalist" oninput="buildLocDatalist()"></div>
+    <div class="mfield"><label id="meNoteLbl">Notiz (optional)</label><input id="meNote" type="text" placeholder="z. B. Tisch 5, Gast X …" maxlength="200" autocomplete="off" spellcheck="false" onfocus="setTimeout(function(){this.scrollIntoView({behavior:'smooth',block:'center'});}.bind(this),400)"></div>
+    <div class="mfield"><label id="meLocLbl">⚓ Hafen / Ort (optional)</label><input id="meLoc" type="text" placeholder="z. B. Lissabon, Hamilton, Sydney …" maxlength="100" autocomplete="off" spellcheck="false" list="locDatalist" oninput="buildLocDatalist()" onfocus="setTimeout(function(){this.scrollIntoView({behavior:'smooth',block:'center'});}.bind(this),400)"></div>
     <datalist id="locDatalist"></datalist>
     <div class="mfield"><label id="meTzLbl">Schiffszeit</label><select id="meTz" style="-webkit-appearance:none;width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--ac-27);border-radius:8px;color:var(--tx0);font-family:Georgia,serif;font-size:13px;outline:none"></select></div>
     <div class="mfield" id="meUserField"><label id="meUserLbl">Nutzer</label><select id="meUser" style="-webkit-appearance:none;width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--ac-27);border-radius:8px;color:var(--tx0);font-family:Georgia,serif;font-size:13px;outline:none"></select></div>
@@ -1898,9 +1898,9 @@ details.hlp-acc summary:active{opacity:.75}
 <div class="ov" id="mdOv">
   <div class="modal-sheet">
     <div class="modal-title" id="mdTitle">Getränk hinzufügen</div>
-    <div class="mfield"><label id="mdNameLbl">Name</label><input id="mdName" type="text" placeholder="Getränkename"></div>
-    <div class="mfield"><label id="mdPriceLbl">Preis</label><div class="price-wrap"><input id="mdPrice" type="number" step="0.10" min="0" placeholder="0.00"><span class="price-suffix" id="mdPriceSuffix">€</span></div></div>
-    <div class="mfield"><label id="mdCatLbl">Kategorie</label><input id="mdCat" type="text" list="catDL" placeholder="Kategorie wählen oder eingeben"><datalist id="catDL"></datalist></div>
+    <div class="mfield"><label id="mdNameLbl">Name</label><input id="mdName" type="text" placeholder="Getränkename" onfocus="setTimeout(function(){this.scrollIntoView({behavior:'smooth',block:'center'});}.bind(this),400)"></div>
+    <div class="mfield"><label id="mdPriceLbl">Preis</label><div class="price-wrap"><input id="mdPrice" type="number" step="0.10" min="0" placeholder="0.00" onfocus="setTimeout(function(){this.scrollIntoView({behavior:'smooth',block:'center'});}.bind(this),400)"><span class="price-suffix" id="mdPriceSuffix">€</span></div></div>
+    <div class="mfield"><label id="mdCatLbl">Kategorie</label><input id="mdCat" type="text" list="catDL" placeholder="Kategorie wählen oder eingeben" onfocus="setTimeout(function(){this.scrollIntoView({behavior:'smooth',block:'center'});}.bind(this),400)"><datalist id="catDL"></datalist></div>
     <div class="modal-btns">
       <button class="mbtn-cancel" id="mdCancelBtn" onclick="closeMd()">Abbrechen</button>
       <button class="mbtn-ok" id="mdSaveBtn" onclick="saveMd()">Speichern</button>
@@ -1913,7 +1913,7 @@ details.hlp-acc summary:active{opacity:.75}
 <div class="ov" id="mrOv">
   <div class="modal-sheet">
     <div class="modal-title" id="mrTitle">Kategorie umbenennen</div>
-    <div class="mfield"><label id="mrNameLbl">Name</label><input id="mrName" type="text" placeholder="Kategoriename"></div>
+    <div class="mfield"><label id="mrNameLbl">Name</label><input id="mrName" type="text" placeholder="Kategoriename" onfocus="setTimeout(function(){this.scrollIntoView({behavior:'smooth',block:'center'});}.bind(this),400)"></div>
     <div class="modal-btns">
       <button class="mbtn-cancel" id="mrCancelBtn" onclick="closeMr()">Abbrechen</button>
       <button class="mbtn-ok" id="mrSaveBtn" onclick="saveMr()">Speichern</button>
@@ -4926,279 +4926,12 @@ function exportLogCSV(){
   showToast('✅ Protokoll '+T('toast.exported'));
 }
 
-/* ═══ PDF REISEBERICHT (V40 T16) ════════════════════════════ */
+/* ═══ PDF REISEBERICHT: exportPDFReport() entfernt (V49) ════
+   Nachfolger: exportVoyagePDF() ab Zeile ~7266
+   ══════════════════════════════════════════════════════════ */
 function exportPDFReport(){
-  const L=S.lang==='en';
-  const cur=S.currency||'€';
-  const allReal=S.log.filter(e=>!e._marker);
-  if(!allReal.length){showToast('⚠️ '+(L?'No entries yet.':'Noch keine Einträge.'),'warn',3000);return;}
-  // V45 #7: Sofortige Rückmeldung dass Bericht erstellt wird
-  showToast(L?'📊 Creating report...':'📊 Bericht wird erstellt...','info',8000);
-
-  // ── Hilfsfunktionen (lokal, ohne Zugriff auf DOM-Globals nötig) ──
-  function fEur(n){const v=parseFloat(n||0);const prefix=['$','£','¥','₹','₺','A$','C$','HK$','NZ$','US$','CA$'];const usePrefix=prefix.some(p=>cur.startsWith(p)||cur===p);const parts=v.toFixed(2).split('.');const sep=L?',':'.';const intPart=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,sep);const formatted=L?(intPart+'.'+parts[1]):(intPart+','+parts[1]);return usePrefix?cur+'\u00a0'+formatted:formatted+'\u00a0'+cur;}
-  function fNum(n){return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,L?',':'.');}
-  function fEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-  function fDate(iso){const d=new Date(iso);return d.toLocaleDateString(L?'en-US':'de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});}
-  function fEDay(e){const tz=typeof e.tz==='number'?e.tz:appOffset();const d=new Date(new Date(e.time).getTime()+tz*60000);const cut=(S.dayEndHour||0)*60+(S.dayEndMinute||0);if(cut>0&&d.getUTCHours()*60+d.getUTCMinutes()<cut){const p=new Date(d.getTime()-86400000);return p.getUTCFullYear()+'-'+String(p.getUTCMonth()+1).padStart(2,'0')+'-'+String(p.getUTCDate()).padStart(2,'0');}return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0');}
-  function fDayLbl(dk){const d=new Date(dk+'T12:00:00Z');return d.toLocaleDateString(L?'en-US':'de-DE',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});}
-
-  // ── Basisdaten ──
-  const tot=allReal.reduce((s,e)=>s+(e.price||0),0);
-  const n=allReal.length;
-  const sorted=[...allReal].sort((a,b)=>new Date(a.time)-new Date(b.time));
-  const firstDate=sorted.length?fDate(sorted[0].time):'–';
-  const lastDate=sorted.length?fDate(sorted[sorted.length-1].time):'–';
-
-  // Tage-Gruppe
-  const dm={};allReal.forEach(e=>{const dk=fEDay(e);if(!dm[dk])dm[dk]={count:0,total:0,dk};dm[dk].count++;dm[dk].total+=(e.price||0);});
-  const dkeys=Object.keys(dm).sort();
-  const dayCount=dkeys.length;
-  const avgPerDay=dayCount?tot/dayCount:0;
-
-  // ── Top-10-Getränke ──
-  const nm2={};allReal.forEach(e=>{if(!nm2[e.name])nm2[e.name]={count:0,total:0,drinkId:e.drinkId};nm2[e.name].count++;nm2[e.name].total+=(e.price||0);});
-  const top10=Object.entries(nm2).sort((a,b)=>b[1].count-a[1].count).slice(0,10);
-
-  // ── Pro Nutzer ──
-  const um={};allReal.forEach(e=>{const uid=e.userId||'__none__';if(!um[uid])um[uid]={count:0,total:0,name:'?',uid:uid};um[uid].count++;um[uid].total+=(e.price||0);const u=S.users.find(x=>x.id===uid);if(u)um[uid].name=u.name;else um[uid].name=L?'(unassigned)':'(ohne Zuordnung)';});
-  const userRows=Object.values(um).sort((a,b)=>b.total-a.total);
-
-  // ── Ausgaben nach Hafen ──
-  const lm={};allReal.forEach(e=>{if(e.location&&e.location.trim()){const loc=e.location.trim();if(!lm[loc])lm[loc]={count:0,total:0};lm[loc].count++;lm[loc].total+=(e.price||0);}});
-  const portRows=Object.entries(lm).sort((a,b)=>b[1].total-a[1].total);
-
-  // ── Kategorien ──
-  const cm={};allReal.forEach(e=>{const dr=S.drinks.find(x=>x.id===e.drinkId);const cat=dr?dr.cat:(L?'Other':'Sonstiges');if(!cm[cat])cm[cat]={count:0,total:0};cm[cat].count++;cm[cat].total+=(e.price||0);});
-  const catRows=Object.entries(cm).sort((a,b)=>b[1].total-a[1].total);
-
-  // ── Zeitzonenreise ──
-  const cl=(S.tzChangeLog||[]).slice().sort((a,b)=>new Date(a.time)-new Date(b.time));
-
-  // ── Tagesübersicht (für Tabelle, max 200 Tage) ──
-  const showDays=dkeys.slice(0,365);
-  // V45 #10: Hinweis wenn mehr als 300 Tage vorhanden (Bericht zeigt max. 365)
-  if(dkeys.length>300){showToast(L?'📅 Note: Report shows max. 365 days.':'📅 Hinweis: Der Bericht zeigt max. 365 Tage.','info',6000);}
-
-  // ── Inklusive-Daten ──
-  const inclRealCount=allReal.filter(e=>{const d=S.drinks.find(x=>x.id===e.drinkId);return d&&d.included;}).length;
-  const inclRealTotal=allReal.filter(e=>{const d=S.drinks.find(x=>x.id===e.drinkId);return d&&d.included;}).reduce((s,e)=>s+(e.price||0),0);
-
-  // ── HTML-Report zusammenbauen ──
-  const reportDate=new Date().toLocaleDateString(L?'en-US':'de-DE',{day:'2-digit',month:'long',year:'numeric'});
-  const title1=fEsc(S.appTitle1||'Ship-Sips');
-  const title2=fEsc(S.appTitle2||'Meine Reise');
-
-  let h='';
-  h+=`<!DOCTYPE html><html lang="${L?'en':'de'}"><head><meta charset="UTF-8">`;
-  h+=`<meta name="viewport" content="width=device-width,initial-scale=1">`;
-  h+=`<title>${L?'Voyage Report':'Reisebericht'} – ${title1}</title>`;
-  h+=`<style>`;
-  h+=`*{box-sizing:border-box;margin:0;padding:0}`;
-  h+=`body{font-family:Georgia,'Times New Roman',serif;color:#1a1a1a;background:#fff;font-size:13px;line-height:1.55}`;
-  h+=`@media print{body{font-size:11px}@page{margin:15mm 12mm}h1{page-break-before:avoid}.section{page-break-inside:avoid}.day-table tr{page-break-inside:avoid}}`;
-  h+=`header{background:linear-gradient(135deg,#0a1628 0%,#1a2e48 100%);color:#e8d9a8;padding:28px 32px;margin-bottom:24px}`;
-  h+=`header h1{font-size:22px;letter-spacing:.5px;font-weight:normal}`;
-  h+=`header .sub{font-size:12px;color:#a89060;margin-top:6px}`;
-  h+=`h2{font-size:15px;color:#0a1628;border-bottom:2px solid #c9a84c;padding-bottom:6px;margin:24px 0 12px;letter-spacing:.3px}`;
-  h+=`h3{font-size:13px;color:#1a2e48;margin:16px 0 8px}`;
-  h+=`.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:8px}`;
-  h+=`.kpi{background:#f8f4ec;border:1px solid #e0d4b0;border-radius:8px;padding:12px 14px;text-align:center}`;
-  h+=`.kpi-val{font-size:20px;color:#8a5820;font-weight:bold}`;
-  h+=`.kpi-lbl{font-size:10px;color:#7a6040;margin-top:3px;text-transform:uppercase;letter-spacing:.5px}`;
-  h+=`table{width:100%;border-collapse:collapse;margin-bottom:8px;font-size:12px}`;
-  h+=`th{background:#0a1628;color:#e8d9a8;padding:7px 10px;text-align:left;font-weight:normal;font-size:11px;letter-spacing:.3px}`;
-  h+=`td{padding:6px 10px;border-bottom:1px solid #ede4cc;vertical-align:top}`;
-  h+=`tr:last-child td{border-bottom:none}`;
-  h+=`tr:nth-child(even) td{background:#faf6ef}`;
-  h+=`.bar-wrap{height:8px;background:#ede4cc;border-radius:4px;overflow:hidden;min-width:60px}`;
-  h+=`.bar-fill{height:100%;background:#c9a84c;border-radius:4px}`;
-  h+=`.section{margin-bottom:28px}`;
-  h+=`.anchor{color:#8a5820}`;
-  h+=`.tz-line{display:flex;align-items:flex-start;gap:10px;padding:4px 0;font-size:12px}`;
-  h+=`.tz-dot{width:10px;height:10px;border-radius:50%;background:#c9a84c;flex-shrink:0;margin-top:3px}`;
-  h+=`.footer{border-top:1px solid #e0d4b0;margin-top:32px;padding-top:10px;font-size:10px;color:#a09080;text-align:center}`;
-  h+=`</style></head><body>`;
-
-  // Header
-  h+=`<header><h1>⚓ ${title1} ${title2}</h1>`;
-  h+=`<div class="sub">${L?'Voyage Report':'Reisebericht'} · ${L?'Generated':'Erstellt'}: ${reportDate}`;
-  if(firstDate!==lastDate)h+=` · ${L?'Period':'Zeitraum'}: ${firstDate} – ${lastDate}`;
-  h+=`</div></header>`;
-
-  // ── Übersicht ──
-  h+=`<div class="section"><h2>📊 ${L?'Summary':'Übersicht'}</h2>`;
-  h+=`<div class="kpi-grid">`;
-  h+=`<div class="kpi"><div class="kpi-val">${fNum(n)}</div><div class="kpi-lbl">${L?'Entries':'Einträge'}</div></div>`;
-  h+=`<div class="kpi"><div class="kpi-val">${fEur(tot)}</div><div class="kpi-lbl">${L?'Total':'Gesamt'}</div></div>`;
-  h+=`<div class="kpi"><div class="kpi-val">${fNum(dayCount)}</div><div class="kpi-lbl">${L?'Days':'Reisetage'}</div></div>`;
-  h+=`<div class="kpi"><div class="kpi-val">${fEur(avgPerDay)}</div><div class="kpi-lbl">${L?'∅ per Day':'∅ pro Tag'}</div></div>`;
-  if(portRows.length)h+=`<div class="kpi"><div class="kpi-val">${fNum(portRows.length)}</div><div class="kpi-lbl">${L?'Ports':'Häfen'}</div></div>`;
-  if(cl.length)h+=`<div class="kpi"><div class="kpi-val">${fNum(cl.length)}</div><div class="kpi-lbl">${L?'TZ Changes':'TZ-Wechsel'}</div></div>`;
-  if(inclRealCount>0){h+=`<div class="kpi"><div class="kpi-val">⬤ ${fNum(inclRealCount)}</div><div class="kpi-lbl">${L?'Included':'Inklusive'}</div></div>`;h+=`<div class="kpi"><div class="kpi-val">${fEur(inclRealTotal)}</div><div class="kpi-lbl">${L?'Incl. Total':'Inklusive Gesamt'}</div></div>`;}
-  h+=`</div></div>`;
-
-  // ── Pro Nutzer ──
-  if(userRows.length>1||(userRows.length===1&&userRows[0].name!=='?')){
-    h+=`<div class="section"><h2>👥 ${L?'Per Person':'Pro Person'}</h2><table>`;
-    h+=`<tr><th>${L?'Person':'Nutzer'}</th><th>${L?'Entries':'Einträge'}</th><th>${L?'Total':'Gesamt'}</th><th>${L?'% of Total':'Anteil'}</th><th style="min-width:80px">${L?'Budget':'Budget'}</th></tr>`;
-    userRows.forEach(u=>{
-      const pct=tot>0?(u.total/tot*100).toFixed(1):'0.0';
-      const budget=S.userBudgets?S.userBudgets[u.uid]||0:0;
-      const rem=budget>0?budget-u.total:0;
-      const budgetStr=budget>0?`${fEur(u.total)} / ${fEur(budget)} (${rem>=0?L?'left':'noch':L?'over':'über'}: ${fEur(Math.abs(rem))})`:L?'no limit':'kein Limit';
-      h+=`<tr><td><strong>${fEsc(u.name)}</strong></td><td>${fNum(u.count)}</td><td>${fEur(u.total)}</td><td>${pct}%</td><td style="font-size:11px">${budgetStr}</td></tr>`;
-    });
-    h+=`</table></div>`;
-  }
-
-  // ── Top 10 Getränke ──
-  h+=`<div class="section"><h2>🍹 ${L?'Top 10 Drinks':'Top 10 Getränke'}</h2><table>`;
-  h+=`<tr><th>#</th><th>${L?'Drink':'Getränk'}</th><th>${L?'Incl.':'Inkl.'}</th><th>${L?'Count':'Anzahl'}</th><th>${L?'Total':'Gesamt'}</th><th>${L?'Share':'Anteil'}</th><th style="min-width:80px">${L?'Trend':'Häufigkeit'}</th></tr>`;
-  top10.forEach(([name,s],i)=>{
-    const pct=n>0?s.count/n*100:0;
-    const _dR=S.drinks.find(x=>x.id===s.drinkId);
-    const _inclMark=_dR&&_dR.included?'⬤':'○';
-    h+=`<tr><td style="color:#8a5820;font-weight:bold">${i+1}</td><td>${fEsc(name)}</td><td style="text-align:center;font-size:14px">${_inclMark}</td><td>${fNum(s.count)}×</td><td>${fEur(s.total)}</td><td>${pct.toFixed(1)}%</td><td><div class="bar-wrap"><div class="bar-fill" style="width:${Math.min(pct*2,100)}%"></div></div></td></tr>`;
-  });
-  h+=`</table></div>`;
-
-  // ── Kategorien ──
-  if(catRows.length){
-    h+=`<div class="section"><h2>📂 ${L?'By Category':'Nach Kategorie'}</h2><table>`;
-    h+=`<tr><th>${L?'Category':'Kategorie'}</th><th>${L?'Count':'Anzahl'}</th><th>${L?'Total':'Gesamt'}</th><th>${L?'Share':'Anteil'}</th><th style="min-width:80px"></th></tr>`;
-    catRows.forEach(([cat,s])=>{
-      const pct=tot>0?(s.total/tot*100):0;
-      h+=`<tr><td>${fEsc(cat)}</td><td>${fNum(s.count)}×</td><td>${fEur(s.total)}</td><td>${pct.toFixed(1)}%</td><td><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%"></div></div></td></tr>`;
-    });
-    h+=`</table></div>`;
-  }
-
-  // ── Häfen / Orte ──
-  if(portRows.length){
-    h+=`<div class="section"><h2>⚓ ${L?'Spending by Port / Location':'Ausgaben nach Hafen / Ort'}</h2><table>`;
-    h+=`<tr><th>${L?'Port / Location':'Hafen / Ort'}</th><th>${L?'Count':'Anzahl'}</th><th>${L?'Total':'Gesamt'}</th><th>${L?'Share':'Anteil'}</th><th style="min-width:80px"></th></tr>`;
-    // Build set of manually-overridden port names
-    const _routeOverridePorts=new Set();
-    allReal.forEach(e=>{
-      if(!S.voyageRoute||!S.voyageRoute.length)return;
-      const dk=fEDay(e);
-      const rPort=((S.voyageRoute.find(r=>r.date===dk)||{port:''}).port||'').trim();
-      if(rPort&&e.location&&e.location.trim().toLowerCase()!==rPort.toLowerCase()){
-        _routeOverridePorts.add(e.location.trim());
-      }
-    });
-    portRows.forEach(([loc,s])=>{
-      const pct=tot>0?(s.total/tot*100):0;
-      const overNote=_routeOverridePorts.has(loc)?` <span style="font-size:10px;color:#e0a055">✏️ ${L?'Route changed':'Route geändert'}</span>`:'';
-      h+=`<tr><td><span class="anchor">⚓</span> ${fEsc(loc)}${overNote}</td><td>${fNum(s.count)}×</td><td>${fEur(s.total)}</td><td>${pct.toFixed(1)}%</td><td><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%"></div></div></td></tr>`;
-    });
-    h+=`</table></div>`;
-  }
-
-  // ── Tagesübersicht ──
-  h+=`<div class="section"><h2>📅 ${L?'Daily Overview':'Tagesübersicht'}${dkeys.length>365?(' ('+(L?'first 365 days shown – total: ':'Erste 365 Tage – gesamt: ')+dkeys.length+(L?' days)':' Tage)')):''}</h2><table class="day-table">`;
-  h+=`<tr><th>${L?'Date':'Datum'}</th><th>${L?'Port':'Hafen'}</th><th>${L?'Entries':'Einträge'}</th><th>${L?'Total':'Gesamt'}</th><th>${L?'vs Avg':'vs ∅'}</th><th style="min-width:80px">${L?'Daily Goal':'Tagesziel'}</th></tr>`;
-  const maxDay=Math.max(...dkeys.map(dk=>dm[dk].total),1);
-  showDays.forEach(dk=>{
-    const d=dm[dk];
-    const pct=d.total/maxDay*100;
-    const vsAvg=d.total-avgPerDay;
-    const vsStr=(vsAvg>=0?'+':'')+fEur(vsAvg);
-    const vsCol=vsAvg>0?'#c05050':vsAvg<0?'#508050':'#808080';
-    let goalCell='–';
-    if(S.dailyGoal>0){const gPct=Math.min(d.total/S.dailyGoal*100,100);const gCol=gPct>=100?'#e05555':gPct>=80?'#e0a055':'#5faa70';goalCell=`<div class="bar-wrap"><div class="bar-fill" style="width:${gPct}%;background:${gCol}"></div></div><div style="font-size:9px;color:${gCol}">${gPct.toFixed(0)}% (${fEur(S.dailyGoal)})</div>`;}
-    // Port column: collect unique ports for this day, flag overrides
-    const _dayEntries=allReal.filter(e=>fEDay(e)===dk);
-    const _dayPorts=[...(new Set(_dayEntries.map(e=>(e.location||'').trim()).filter(Boolean)))];
-    const _routeDayPort=S.voyageRoute&&S.voyageRoute.length?((S.voyageRoute.find(r=>r.date===dk)||{port:''}).port||'').trim():'';
-    let _portCell='–';
-    if(_dayPorts.length>0){
-      _portCell=_dayPorts.map(p=>{
-        const _ov=_routeDayPort&&p.toLowerCase()!==_routeDayPort.toLowerCase();
-        return fEsc(p)+(_ov?' <span style="color:#e0a055;font-size:9px">✏️</span>':'');
-      }).join(', ');
-    } else if(_routeDayPort){
-      _portCell=`<span style="color:#a09080;font-style:italic">${fEsc(_routeDayPort)}</span>`;
-    }
-    h+=`<tr><td>${fEsc(fDayLbl(dk))}</td><td style="font-size:11px">${_portCell}</td><td>${fNum(d.count)}</td><td>${fEur(d.total)}</td><td style="color:${vsCol};font-size:11px">${vsStr}</td><td>${goalCell}</td></tr>`;
-  });
-  if(dkeys.length>365)h+=`<tr><td colspan="5" style="text-align:center;color:#a09080;font-style:italic">${dkeys.length-365} ${L?'more days not shown':'weitere Tage nicht angezeigt'}</td></tr>`;
-  h+=`</table></div>`;
-
-  // ── Zeitzonenreise ──
-  if(cl.length){
-    h+=`<div class="section"><h2>🕐 ${L?'Ship\'s Time Journey':'Schiffszeit-Reise'}</h2>`;
-    if(cl[0]){
-      h+=`<div class="tz-line"><div class="tz-dot" style="background:#c9a84c"></div><div>${L?'Start':'Start'}: <strong>${appOffsetLabel(cl[0].fromOffset)}</strong></div></div>`;
-    }
-    cl.forEach(ch=>{
-      const _dtLocal=new Date(new Date(ch.time).getTime()+ch.fromOffset*60000);
-      const ds=new Date(_dtLocal.getUTCFullYear(),_dtLocal.getUTCMonth(),_dtLocal.getUTCDate()).toLocaleDateString(L?'en-US':'de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+String(_dtLocal.getUTCHours()).padStart(2,'0')+':'+String(_dtLocal.getUTCMinutes()).padStart(2,'0');
-      h+=`<div class="tz-line"><div class="tz-dot" style="background:#4aaccc"></div><div>→ <strong>${appOffsetLabel(ch.toOffset)}</strong> &nbsp;<span style="color:#a09080;font-size:11px">${ds}</span></div></div>`;
-    });
-    h+=`<div style="font-size:10px;color:#a09080;margin-top:6px">${fmtNum(cl.length)} ${L?'ship\'s time changes total':'Schiffszeit-Wechsel gesamt'}</div></div>`;
-  }
-
-  // Footer
-  h+=`<div class="footer">${L?'Generated by':'Erstellt von'} ${title1} ${title2} · ${reportDate}</div>`;
-  // FIX V42 #3: Kein auto-print via setTimeout (blockiert WebKit in PWA/Edge).
-  // Stattdessen: Bericht als Daten-URL in ein Fullscreen-Overlay laden,
-  // Nutzer tippt auf "Drucken" → window.print() läuft synchron im Tap-Kontext.
-  h+=`</body></html>`;
-
-  try{
-    const blob=new Blob([h],{type:'text/html;charset=utf-8'});
-    const url=URL.createObjectURL(blob);
-
-    // Overlay erstellen
-    const ov=document.createElement('div');
-    ov.id='pdfPrintOv';
-    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px;box-sizing:border-box;';
-
-    const iframe=document.createElement('iframe');
-    iframe.src=url;
-    iframe.style.cssText='width:100%;max-width:480px;flex:1;border:none;border-radius:10px;background:#fff;';
-
-    const btnRow=document.createElement('div');
-    btnRow.style.cssText='display:flex;gap:12px;';
-
-    const printBtn=document.createElement('button');
-    printBtn.textContent=L?'🖨 Print / Save as PDF':'🖨 Drucken / Als PDF sichern';
-    printBtn.style.cssText='padding:13px 22px;background:#c9a84c;color:#06101E;border:none;border-radius:10px;font-family:Georgia,serif;font-size:15px;font-weight:bold;cursor:pointer;touch-action:manipulation;';
-    // Synchron im Tap: iframe.contentWindow.print() funktioniert in WebKit
-    printBtn.onclick=function(){
-      var _printed=false;
-      try{
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-        _printed=true;
-      }catch(e){_printed=false;}
-      // FIX V47: Kein window.open('_blank') – würde Nutzer aus der PWA werfen.
-      // Stattdessen shareOrDownload() → iOS-Teilen-Dialog bleibt in der App.
-      setTimeout(function(){
-        if(!_printed){
-          const fname=(appNameClean()+'_Report.html');
-          shareOrDownload(h,fname,'text/html;charset=utf-8');
-        }
-      },1200);
-    };
-
-    const closeBtn=document.createElement('button');
-    closeBtn.textContent=L?'✕ Close':'✕ Schließen';
-    closeBtn.style.cssText='padding:13px 18px;background:transparent;color:#8dafc8;border:1px solid #8dafc844;border-radius:10px;font-family:Georgia,serif;font-size:14px;cursor:pointer;touch-action:manipulation;';
-    closeBtn.onclick=function(){document.body.removeChild(ov);setTimeout(()=>URL.revokeObjectURL(url),1000);};
-
-    btnRow.appendChild(printBtn);
-    btnRow.appendChild(closeBtn);
-    ov.appendChild(iframe);
-    ov.appendChild(btnRow);
-    document.body.appendChild(ov);
-
-    showToast('📄 '+(L?'Tap "Print" → Save as PDF':'„Drucken" tippen → Als PDF sichern'),'info',5000);
-  }catch(err){
-    showToast('⚠️ '+(L?'Could not open report: ':'Bericht konnte nicht geöffnet werden: ')+err.message,'error',5000);
-  }
+  // ENTFERNT – Aufruf wird an exportVoyagePDF() weitergeleitet
+  exportVoyagePDF();
 }
 
 let _csv=null;
@@ -5271,7 +5004,7 @@ function drinkRow(d,rankIdx,showCat){
   const plusRight=S.btnLayout==='plus-right';
   const leftSlot=plusRight?minusBtn+favBtn:plusBtn;
   const rightSlot=plusRight?plusBtn:favBtn+minusBtn;
-  return `<div class="drow-wrap" data-dswid="${esc(d.id)}" data-has="${c>0?'1':''}" data-swside="${plusRight?'left':'right'}"><div class="drow-swipe-bg"><span style="font-size:22px">↩</span><div style="font-size:10px;letter-spacing:.5px;margin-top:2px">UNDO</div></div><div class="drow-strip"></div><div class="drow${has?' has':''}${fl?' fl':''}" style="border-left-color:${col}">
+  return `<div class="drow-wrap" data-dswid="${esc(d.id)}" data-has="${c>0?'1':''}" data-swside="${plusRight?'left':'right'}" role="listitem" aria-label="${esc(d.name)}"><div class="drow-swipe-bg" aria-hidden="true"><span style="font-size:22px">↩</span><div style="font-size:10px;letter-spacing:.5px;margin-top:2px">UNDO</div></div><div class="drow-strip"></div><div class="drow${has?' has':''}${fl?' fl':''}" style="border-left-color:${col}">
     ${showRnk?`<div class="rnk" style="background:${RNK[rankIdx]}">#${rankIdx+1}</div>`:''}
     ${leftSlot}
     <div class="dinfo"><div class="dname${has?' on':''}">${esc(d.name)}</div>${d.nameEN&&S.lang==="en"?`<div style="font-size:10px;color:var(--ac);margin-top:1px;opacity:.8">${esc(d.nameEN)}</div>`:d.nameEN?`<div style="font-size:10px;color:var(--tx2);margin-top:1px">${esc(d.nameEN)}</div>`:''} ${showCat?`<div class="dcat"><span class="cdot" style="background:${col}"></span>${esc(d.cat)}</div>`:''}<div class="dprice">${eur(d.price)}<span class="incl-dot ${d.included?'filled':'outline'}" style="${d.included?`background:${AI_COLOR};width:7px;height:7px`:`color:${col};width:7px;height:7px`}" title="${d.included?(S.lang==='en'?'All Inclusive':'All Inclusive'):(S.lang==='en'?'Not included':'Nicht inklusive')}"></span></div></div>
@@ -6480,7 +6213,7 @@ function buildLogRowHtml(e,extraClass,catBadge){
   if(S.logMultiSelect){
     return `<div class="msel-wrap" data-mselid="${esc(e.id)}"><div class="logrow${extraClass?' '+extraClass:''}${sel?' msel-on':''}" data-rid="${esc(e.id)}"><div class="logrow-top"><div class="msel-cb${sel?' on':''}" style="margin-right:6px">${sel?'✓':''}</div><div class="logname">${esc(e.name)}${catHtml?' '+catHtml:''}</div><div style="display:flex;align-items:center;gap:6px;flex-shrink:0">${userBadgeHtml(e.userId)}<div class="logpbig" style="display:flex;align-items:center;gap:3px">${eur(e.price||0)}${_inclDot}</div></div></div><div class="logtime">🕐 ${fmtEntryTime(e)} <span style="font-size:10px;color:var(--tx2);margin-left:5px">(${appOffsetLabel(eTz)})</span></div>${e.location?`<div class="lognote" style="color:var(--ac)">⚓ ${esc(e.location)}</div>`:''}${_isRouteOverridden(e)?`<div class="lognote" style="color:#e0a055;font-size:10px">✏️ ${S.lang==='en'?'Route changed':'Route wurde geändert'}</div>`:''}${e.note?`<div class="lognote">${esc(e.note)}</div>`:''}</div></div>`;
   }
-  return `<div class="swipe-wrap" data-swid="${esc(e.id)}"><div class="swipe-edit-bg"><span style="font-size:20px">✏️</span><span>${S.lang==='en'?'EDIT':'BEARBEITEN'}</span></div><div class="swipe-del-bg"><span style="font-size:20px">🗑</span><span>${S.lang==='en'?'DELETE':'LÖSCHEN'}</span></div><div class="swipe-strip swipe-strip-left"></div><div class="swipe-strip swipe-strip-right"></div><div class="logrow${extraClass?' '+extraClass:''}" data-rid="${esc(e.id)}"><div class="logrow-top"><div class="logname">${esc(e.name)}${catHtml?' '+catHtml:''}</div><div style="display:flex;align-items:center;gap:4px;flex-shrink:0">${userBadgeHtml(e.userId)}<div class="logpbig" style="display:flex;align-items:center;gap:3px">${eur(e.price||0)}${_inclDot}</div><button class="log-ctx-btn" onclick="showLogCtxMenu(event,'${esc(e.id)}')" title="${S.lang==='en'?'More options':'Mehr Optionen'}" aria-label="${S.lang==='en'?'More options':'Mehr Optionen'}">⋯</button><!-- [PUNKT-F] --></div></div><div class="logtime">🕐 ${fmtEntryTime(e)} <span style="font-size:10px;color:var(--tx2);margin-left:5px">(${appOffsetLabel(eTz)})</span></div>${e.location?`<div class="lognote" style="color:var(--ac)">⚓ ${esc(e.location)}</div>`:''}${_isRouteOverridden(e)?`<div class="lognote" style="color:#e0a055;font-size:10px">✏️ ${S.lang==='en'?'Route changed':'Route wurde geändert'}</div>`:''}<div class="lognote lognote-tap" onclick="openInlineNoteEdit(event,'${esc(e.id)}')" title="${S.lang==='en'?'Tap to edit note':'Notiz bearbeiten'}" style="cursor:pointer;min-height:16px;-webkit-user-select:none;user-select:none">${e.note?esc(e.note):`<span style="color:var(--tx2);font-size:10px;opacity:.55">${S.lang==='en'?'+ note':'+ Notiz'}</span>`}</div></div></div>`;
+  return `<div class="swipe-wrap" data-swid="${esc(e.id)}" aria-label="${S.lang==='en'?'Log entry':'Protokolleintrag'}: ${esc(e.name)}"><div class="swipe-edit-bg" aria-hidden="true"><span style="font-size:20px">✏️</span><span>${S.lang==='en'?'EDIT':'BEARBEITEN'}</span></div><div class="swipe-del-bg" aria-hidden="true"><span style="font-size:20px">🗑</span><span>${S.lang==='en'?'DELETE':'LÖSCHEN'}</span></div><div class="swipe-strip swipe-strip-left"></div><div class="swipe-strip swipe-strip-right"></div><div class="logrow${extraClass?' '+extraClass:''}" data-rid="${esc(e.id)}"><div class="logrow-top"><div class="logname">${esc(e.name)}${catHtml?' '+catHtml:''}</div><div style="display:flex;align-items:center;gap:4px;flex-shrink:0">${userBadgeHtml(e.userId)}<div class="logpbig" style="display:flex;align-items:center;gap:3px">${eur(e.price||0)}${_inclDot}</div><button class="log-ctx-btn" onclick="showLogCtxMenu(event,'${esc(e.id)}')" title="${S.lang==='en'?'More options':'Mehr Optionen'}" aria-label="${S.lang==='en'?'More options':'Mehr Optionen'}">⋯</button><!-- [PUNKT-F] --></div></div><div class="logtime">🕐 ${fmtEntryTime(e)} <span style="font-size:10px;color:var(--tx2);margin-left:5px">(${appOffsetLabel(eTz)})</span></div>${e.location?`<div class="lognote" style="color:var(--ac)">⚓ ${esc(e.location)}</div>`:''}${_isRouteOverridden(e)?`<div class="lognote" style="color:#e0a055;font-size:10px">✏️ ${S.lang==='en'?'Route changed':'Route wurde geändert'}</div>`:''}<div class="lognote lognote-tap" onclick="openInlineNoteEdit(event,'${esc(e.id)}')" title="${S.lang==='en'?'Tap to edit note':'Notiz bearbeiten'}" style="cursor:pointer;min-height:16px;-webkit-user-select:none;user-select:none">${e.note?esc(e.note):`<span style="color:var(--tx2);font-size:10px;opacity:.55">${S.lang==='en'?'+ note':'+ Notiz'}</span>`}</div></div></div>`;
 }
 function renderLogCatFilter(){
   const lcs=document.getElementById('logCatScroll');if(!lcs)return;
@@ -7530,7 +7263,7 @@ function toggleVwSec(k){
 }
 
 function renderVerwaltung(){
-  if(!S.vwOpen)S.vwOpen={bkp:true,settings:false,tracking:true,users:false,tz:false,design:false,drinks:false,route:false,dbstatus:false,sync:true,appupdate:false};
+  if(!S.vwOpen)S.vwOpen={bkp:true,settings:false,tracking:false,users:false,tz:false,design:false,drinks:false,route:false,dbstatus:false,sync:false,appupdate:false};
   S.catIndex=allCats();
   const vw=document.getElementById('vwpane');
   const L=S.lang==='en';
@@ -7731,7 +7464,7 @@ function renderVerwaltung(){
           <span style="font-size:10px;font-weight:bold;color:var(--tx0)">CSV</span>
           <span style="font-size:9px;color:var(--tx2)">Excel · Numbers</span>
         </button>
-        <button class="adm-btn-sm" onclick="exportPDFReport()" style="flex-direction:column;gap:3px;padding:10px 6px;align-items:center">
+        <button class="adm-btn-sm" onclick="exportVoyagePDF()" style="flex-direction:column;gap:3px;padding:10px 6px;align-items:center">
           <span style="font-size:18px">📄</span>
           <span style="font-size:10px;font-weight:bold;color:var(--tx0)">PDF</span>
           <span style="font-size:9px;color:var(--tx2)">${L?'Voyage Report':'Reisebericht'}</span>
@@ -7746,56 +7479,217 @@ function renderVerwaltung(){
 
   </div>
 
+
+  <div class="vw-group-label">👤 Personen &amp; Budget</div>
+
   <!-- ══════════════════════════════════════════
-       0b-STATUS: DATENBANKÜBERSICHT (V46)
-       Positiv und informativ – kein Warncharakter
+       5. NUTZER-PROFILE
   ══════════════════════════════════════════ -->
-  <div class="adm-card" style="border-color:var(--ac-13)">
-    <div class="adm-card-hdr" onclick="toggleVwSec('dbstatus')">
-      <span class="adm-card-hdr-ico">📊</span>
+  <div class="adm-card" id="vw-users">
+    <div class="adm-card-hdr" onclick="toggleVwSec('users')">
+      <span class="adm-card-hdr-ico">👥</span>
       <div class="adm-card-hdr-body">
-        <div class="adm-card-hdr-title">${L?'Database overview':'Datenbankübersicht'}</div>
-        <div class="adm-card-hdr-sub" id="admDataSub">${S.log.length} ${L?'active entries':'aktive Einträge'}</div>
+        <div class="adm-card-hdr-title">${L?'User Profiles':'Nutzer-Profile'}</div>
+        <div class="adm-card-hdr-sub">${userPills}</div>
       </div>
-      <span class="adm-card-hdr-arr${S.vwOpen&&S.vwOpen.dbstatus?' open':''}">►</span>
+      <span class="adm-card-hdr-arr${S.vwOpen.users?' open':''}">&#9658;</span>
     </div>
-    <div class="adm-card-body${S.vwOpen&&S.vwOpen.dbstatus?' open':''}">
+    <div class="adm-card-body${S.vwOpen.users?' open':''}">
       <div style="padding-top:10px">
-        <!-- 2 Stat-Kacheln -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-          <div style="background:var(--bg2);border:1px solid var(--ac-13);border-radius:10px;padding:10px 8px;text-align:center">
-            <div style="font-size:20px;font-weight:bold;color:var(--ac);line-height:1.1">${fmtNum(S.log.length)}</div>
-            <div style="font-size:9px;color:var(--tx2);letter-spacing:.5px;margin-top:3px;text-transform:uppercase">${L?'Active entries':'Aktive Eintr.'}</div>
+
+        <!-- Nutzer-Übersicht -->
+        <div style="font-size:10px;color:var(--tx2);line-height:1.6;margin-bottom:10px">
+          ${L?'Up to 4 fixed persons + additional users. The active user is assigned all new entries.':'Bis zu 4 feste Personen + weitere Nutzer. Der aktive Nutzer erhält alle neuen Einträge.'}
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+          ${(S.users||[]).map(u=>`<div style="display:flex;align-items:center;gap:6px;padding:7px 11px;background:${(u.color||'#666')}18;border:1px solid ${(u.color||'#666')}33;border-radius:10px">
+            <span style="width:9px;height:9px;border-radius:50%;background:${u.color||'#aaa'};display:inline-block;flex-shrink:0"></span>
+            <span style="font-size:12px;color:var(--tx0)">${esc(u.name||'?')}</span>
+            ${u.id===S.activeUserId?`<span style="font-size:9px;background:var(--ac);color:var(--bg);padding:1px 6px;border-radius:4px;font-weight:bold">${L?'active':'aktiv'}</span>`:''}
+          </div>`).join('')}
+        </div>
+        <button class="adm-btn-sm" onclick="openUserManagement()" style="width:100%;justify-content:center;padding:12px;gap:7px">
+          <span>👥</span>
+          <span style="font-size:12px;font-weight:bold">${L?'Manage users (names, colours, budgets)':'Nutzer verwalten (Namen, Farben, Budgets)'}</span>
+          <span style="margin-left:auto;color:var(--ac)">›</span>
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       2. TAGESLIMIT & WÄHRUNG
+       (Budgetkontrolle)
+  ══════════════════════════════════════════ -->
+  <div class="adm-card">
+    <div class="adm-card-hdr" onclick="toggleVwSec('tracking')">
+      <span class="adm-card-hdr-ico">🎯</span>
+      <div class="adm-card-hdr-body">
+        <div class="adm-card-hdr-title">${L?'Daily Limit &amp; Currency':'Tageslimit &amp; Währung'}</div>
+        <div class="adm-card-hdr-sub">
+          ${S.dailyGoal>0?(L?'Limit: ':'Limit: ')+S.dailyGoal+' '+S.currency:(L?'No limit set':'Kein Limit gesetzt')}
+          &nbsp;·&nbsp;${S.currency}${(S.serviceCharge||0)>0?'&nbsp;·&nbsp;🧾 '+S.serviceCharge+'%':''}
+        </div>
+      </div>
+      <span class="adm-card-hdr-arr${S.vwOpen.tracking?' open':''}">&#9658;</span>
+    </div>
+    <div class="adm-card-body${S.vwOpen.tracking?' open':''}">
+      <div style="padding-top:4px">
+
+        <!-- Tageslimit -->
+        <div class="adm-row" style="flex-direction:column;align-items:flex-start;gap:7px">
+          <span class="adm-row-label" style="font-size:12px;font-weight:bold;color:var(--tx0)">${T('settings.goal')}</span>
+          <div style="font-size:10px;color:var(--tx2);margin-top:-4px">${L?'Daily spending limit per person. 0 = off.':'Maximales Tagesbudget pro Person. 0 = deaktiviert.'}</div>
+          <div class="goal-row" style="width:100%">
+            <input id="goalInp" type="number" min="0" step="10" placeholder="${T('settings.goal.hint')}" value="${S.dailyGoal||''}" class="adm-input" style="flex:1;max-width:120px">
+            <span style="font-size:13px;color:var(--ac);margin:0 4px">${S.currency}</span>
+            <button class="goal-ok" onclick="saveGoal()">OK</button>
           </div>
-          <div style="background:var(--bg2);border:1px solid var(--ac-13);border-radius:10px;padding:10px 8px;text-align:center">
-            <div style="font-size:20px;font-weight:bold;color:var(--col-ok);line-height:1.1">${(S.log.length*0.5/1024).toFixed(1)}</div>
-            <div style="font-size:9px;color:var(--tx2);letter-spacing:.5px;margin-top:3px;text-transform:uppercase">MB</div>
+        </div>
+
+        <!-- Währung -->
+        <div class="adm-row" style="flex-direction:column;align-items:flex-start;gap:7px;padding-bottom:4px">
+          <span class="adm-row-label" style="font-size:12px;font-weight:bold;color:var(--tx0)">${T('settings.currency')}</span>
+          <div style="font-size:10px;color:var(--tx2);margin-top:-4px">${T('settings.currency.hint')}</div>
+          <div style="display:flex;gap:6px;width:100%;align-items:center">
+            <select id="currSel" onchange="onCurrSelChange()" class="adm-input" style="flex:1">
+              ${CURRENCIES.map(c=>`<option value="${esc(c.sym)}"${S.currency===c.sym?' selected':''}>${esc(c.label)}</option>`).join('')}
+              <option value="__custom__"${!CURRENCIES.find(c=>c.sym===S.currency)?' selected':''}>${T('settings.currency.custom')}</option>
+            </select>
+            <button class="goal-ok" onclick="saveCurrency()">OK</button>
           </div>
+          <input id="currCustom" type="text" maxlength="6" placeholder="z.B. HKD" value="${!CURRENCIES.find(c=>c.sym===S.currency)?esc(S.currency):''}" class="adm-input" style="display:${!CURRENCIES.find(c=>c.sym===S.currency)?'block':'none'};width:100%">
         </div>
-        <!-- V46: IndexedDB hat kein festes Limit – positiver Status statt Balken -->
-        <div style="margin-bottom:10px;padding:8px 10px;background:var(--col-ok-bg);border:1px solid var(--col-ok);border-radius:8px;font-size:10px;color:var(--col-ok);line-height:1.6">
-          🗄️ <strong>IndexedDB</strong> – ${L?'No storage limit. iOS rarely deletes this data (only under extreme storage pressure).':'Kein Speicherlimit. iOS löscht diese Daten nur in extremen Ausnahmefällen.'}
+
+        <!-- Service Charge / Trinkgeld -->
+        <div class="adm-row" style="flex-direction:column;align-items:flex-start;gap:7px;padding-top:12px;border-top:1px solid var(--ac-07)">
+          <div style="display:flex;align-items:center;gap:8px;width:100%">
+            <span style="font-size:15px">🧾</span>
+            <span class="adm-row-label" style="font-size:12px;font-weight:bold;color:var(--tx0)">${L?'Service Charge (automatic tip)':'Service Charge (Trinkgeld-Automatik)'}</span>
+            ${(S.serviceCharge||0)>0?`<span style="margin-left:auto;font-size:11px;font-weight:bold;background:var(--ac-20);color:var(--ac);border:1px solid var(--ac-40);border-radius:6px;padding:2px 8px">${S.serviceCharge}%</span>`:''}
+          </div>
+          <div style="font-size:10px;color:var(--tx2);line-height:1.55">
+            ${L?'Automatically adds X% on top of each drink price when tapping <strong>+</strong>. Standard rates: 18% (NCL, Royal Caribbean) or 20% (Celebrity). <strong>0 = disabled.</strong>':'Schlägt beim Antippen von <strong>+</strong> automatisch X% auf den Listenpreis auf. Übliche Sätze: 18% (NCL, Royal Caribbean) oder 20% (Celebrity). <strong>0 = deaktiviert.</strong>'}
+          </div>
+          <div class="goal-row" style="width:100%">
+            <input id="svcInp" type="number" min="0" max="50" step="0.5" placeholder="0" value="${S.serviceCharge||''}" class="adm-input" style="flex:1;max-width:100px">
+            <span style="font-size:13px;color:var(--ac);margin:0 4px">%</span>
+            <button class="goal-ok" onclick="saveServiceCharge()">OK</button>
+          </div>
+          ${(S.serviceCharge||0)>0?`<div style="font-size:10px;padding:6px 9px;background:var(--ac-07);border-radius:7px;border-left:3px solid var(--ac-27);color:var(--tx1);line-height:1.5">✓ ${L?'Active: every + tap adds <strong>'+S.serviceCharge+'%</strong> to the list price.':'Aktiv: jeder +-Tipp schlägt <strong>'+S.serviceCharge+'%</strong> auf den Listenpreis auf.'}</div>`:''}
         </div>
-        <!-- Kontext-Info -->
-        <div style="font-size:10px;color:var(--tx2);line-height:1.6;border-top:1px solid var(--ac-07);padding-top:8px">
-          <div>📝 ${L?'Drinks in list':'Getränke in der Liste'}: <strong style="color:var(--tx1)">${S.drinks.length}</strong></div>
-          ${S.log.length>0?`<div>🕐 ${L?'First entry':'Erster Eintrag'}: <strong style="color:var(--tx1)">${new Date(Math.min(...S.log.map(e=>new Date(e.time).getTime()))).toLocaleDateString('de-DE')}</strong></div>`:''}
-          ${S.log.length>0?`<div>🕐 ${L?'Latest entry':'Letzter Eintrag'}: <strong style="color:var(--tx1)">${new Date(Math.max(...S.log.map(e=>new Date(e.time).getTime()))).toLocaleDateString('de-DE')}</strong></div>`:''}
-        </div>
+
       </div>
     </div>
   </div>
 
 
-  <!-- ══════════════════════════════════════════
-       GRUPPE: REISE
-  ══════════════════════════════════════════ -->
-  <div class="vw-group-label">⚓ ${L?'Voyage':'Reise'}</div>
+  <div class="vw-group-label">🍹 Getränkeliste</div>
 
   <!-- ══════════════════════════════════════════
-       0b. REISEROUTE
-       (Kreuzfahrt-Routenplanung)
+       6. GETRÄNKE & KATEGORIEN
   ══════════════════════════════════════════ -->
+  <div class="adm-card" id="vw-drinks">
+    <div class="adm-card-hdr" onclick="toggleVwSec('drinks')">
+      <span class="adm-card-hdr-ico">🍹</span>
+      <div class="adm-card-hdr-body">
+        <div class="adm-card-hdr-title">${L?'Drinks &amp; Categories':'Getränke &amp; Kategorien'}</div>
+        <div class="adm-card-hdr-sub">${S.drinks.length} ${L?'drinks':'Getränke'} · ${S.catIndex.length} ${L?'categories':'Kategorien'}</div>
+      </div>
+      <span class="adm-card-hdr-arr${S.vwOpen.drinks?' open':''}">&#9658;</span>
+    </div>
+    <div class="adm-card-body${S.vwOpen.drinks?' open':''}">
+      <div style="padding-top:10px">
+
+        <!-- CSV-Bereich -->
+        <div style="font-size:10px;font-weight:bold;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">${L?'Import / Export via CSV':'Import / Export via CSV'}</div>
+        <div class="vw-hint" style="margin-bottom:10px">${T('manage.drinks.hint')}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px">
+          <button class="adm-btn-sm" onclick="exportDrinksCSV()" style="padding:11px 8px;flex-direction:column;gap:3px;align-items:center">
+            <span style="font-size:18px">📤</span>
+            <span style="font-size:10px;font-weight:bold;color:var(--tx0)">${L?'Export list':'Liste exportieren'}</span>
+            <span style="font-size:9px;color:var(--tx2)">CSV</span>
+          </button>
+          <label class="adm-btn-sm" style="padding:11px 8px;flex-direction:column;gap:3px;align-items:center;cursor:pointer">
+            <span style="font-size:18px">📥</span>
+            <span style="font-size:10px;font-weight:bold;color:var(--tx0)">${L?'Import list':'Liste importieren'}</span>
+            <span style="font-size:9px;color:var(--tx2)">CSV</span>
+            <input type="file" accept=".csv,text/csv" id="csvFileInput" onchange="onDrinkCSVFile(this)" style="display:none">
+          </label>
+        </div>
+
+        <!-- Kategorien & Getränke verwalten -->
+        <div class="adm-divider"></div>
+        <div style="font-size:10px;font-weight:bold;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px">${T('manage.cats.title')}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;padding:7px 10px;background:${AI_COLOR}18;border:1px solid ${AI_COLOR}44;border-radius:8px;font-size:10px;color:var(--tx1)"><span class="incl-dot filled" style="background:${AI_COLOR};width:10px;height:10px;flex-shrink:0"></span><span>${L?'<strong style="color:'+AI_COLOR+'">Green dot</strong> behind the price = All Inclusive (AI). Tap the dot to toggle the status.':'<strong style="color:'+AI_COLOR+'">Grüner Punkt</strong> hinter dem Preis = All Inclusive (AI). Punkt antippen zum Umschalten.'}</span></div>
+        <div id="drinkMgmt">${catHtml}</div>
+        <button class="new-cat-btn" onclick="openNewCat()">&#65291; ${T('manage.new.cat').replace('\uff0b ','')}</button>
+
+      </div>
+    </div>
+  </div>
+
+
+  <div class="vw-group-label">⚓ Reise &amp; Zeit</div>
+
+  <!-- ══════════════════════════════════════════
+       1. ZEITZONE & TAGESSTRUKTUR
+       (Wichtig für Kreuzfahrt / Reisen)
+  ══════════════════════════════════════════ -->
+  <div class="adm-card" id="vw-tz" style="border-color:${tzMismatch?'#e0a05555':'var(--ac-13)'}">
+    <div class="adm-card-hdr" onclick="toggleVwSec('tz')">
+      <span class="adm-card-hdr-ico">🕐</span>
+      <div class="adm-card-hdr-body">
+        <div class="adm-card-hdr-title">${L?'Ship\'s time &amp; Day Structure':'Schiffszeit &amp; Tagesstruktur'}</div>
+        <div class="adm-card-hdr-sub" style="${tzMismatch?'color:#e0a055':''}">
+          <span id="vwClockDisp">${appFmtTime(new Date().toISOString())}</span>
+          &nbsp;·&nbsp;${appOffsetLabel()}&nbsp;·&nbsp;${S.tzMode==='fixed'?(L?'Fixed':'Fest'):(L?'Auto':'Auto')}${tzMismatch?'&nbsp;⚠️':''}
+        </div>
+      </div>
+      <span class="adm-card-hdr-arr${S.vwOpen.tz?' open':''}">&#9658;</span>
+    </div>
+    <div class="adm-card-body${S.vwOpen.tz?' open':''}">
+      <div style="padding-top:10px">
+
+        <!-- TZ-Warnung -->
+        ${tzMismatch?`<div style="padding:8px 11px;background:#2a1800;border:1px solid #e0a05544;border-radius:8px;font-size:11px;color:#e0a055;margin-bottom:12px;line-height:1.55">&#9888;&#65039; ${T('settings.tz.mismatch')} &ndash; ${L?'Device':'Gerät'}: ${esc(appOffsetLabel(devOff))}</div>`:''}
+
+        <!-- TZ-Modus -->
+        <div style="font-size:10px;font-weight:bold;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">${L?'Ship\'s time mode':'Schiffszeit-Modus'}</div>
+        <div class="adm-row" style="flex-direction:column;align-items:flex-start;gap:8px;padding-bottom:12px">
+          <div class="adm-row-ctrl" style="width:100%;gap:6px">
+            <button class="sbtn${S.tzMode==='auto'?' on':''}" onclick="setTimezone('auto',0);renderVerwaltung()" style="flex:1;justify-content:center">&#128241; ${L?'Automatic':'Automatisch'}</button>
+            <button class="sbtn${S.tzMode==='fixed'?' on':''}" onclick="document.getElementById('tzFixedRow').style.display='flex';document.getElementById('tzAutoHint').style.display='none'" style="flex:1;justify-content:center">&#9202; ${L?'Manual':'Manuell'}</button>
+            <button class="sbtn" onclick="openTzWiz()" style="flex:1;justify-content:center;background:var(--ac-13);border-color:var(--ac-40)">🧭 ${L?'Wizard':'Assistent'}</button>
+          </div>
+          <div id="tzAutoHint" style="display:${S.tzMode==='auto'?'block':'none'};font-size:10px;color:var(--tx2);line-height:1.5">${T('settings.tz.hint.auto')}<br><span style="color:var(--tx2)">${L?'Unreliable at sea – iPhone does not know the ship\'s time.':'Auf hoher See unzuverlässig – iPhone kennt die Schiffszeit nicht.'}</span></div>
+          <div id="tzFixedRow" style="display:${S.tzMode==='fixed'?'flex':'none'};flex-direction:column;gap:7px;width:100%">
+            <div style="font-size:10px;color:var(--tx2);line-height:1.5">${T('settings.tz.hint')}</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <select id="tzOffSel" class="adm-input" style="flex:1;font-size:12px">${tzOffSel}</select>
+              <button class="goal-ok" onclick="saveTzFixed()">OK</button>
+            </div>
+            <div style="font-size:10px;color:var(--tx2)">${L?'Tip: Set to ship time at start of voyage.':'Tipp: Zu Reisebeginn einmalig auf Schiffszeit stellen.'}</div>
+          </div>
+        </div>
+
+        <!-- Tagesende -->
+        <div style="font-size:10px;font-weight:bold;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;padding-top:4px;border-top:1px solid var(--ac-07)">${T('settings.dayend')}</div>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+          <input id="dayEndInp" type="time" value="${dayEndLabel()}" class="adm-input" style="flex:1">
+          <button class="goal-ok" onclick="saveDayEnd()">OK</button>
+        </div>
+        <div style="font-size:10px;color:${(S.dayEndHour||0)===0&&(S.dayEndMinute||0)===0?'var(--tx2)':'var(--ac)'};line-height:1.5">
+          ${(S.dayEndHour||0)===0&&(S.dayEndMinute||0)===0
+            ?T('settings.dayend.hint')
+            :'\u2713 '+(L?'Active':'Aktiv')+': '+dayEndLabel()+' \u2013 '+(L?'Entries before count for the previous day.':'Einträge davor zählen zum Vortag.')}
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   ${(()=>{
     const routeCount=(S.voyageRoute||[]).length;
     const today=logicalTodayStr();
@@ -7877,134 +7771,8 @@ function renderVerwaltung(){
   </div>`;
   })()}
 
-  <!-- ══════════════════════════════════════════
-       1. ZEITZONE & TAGESSTRUKTUR
-       (Wichtig für Kreuzfahrt / Reisen)
-  ══════════════════════════════════════════ -->
-  <div class="adm-card" id="vw-tz" style="border-color:${tzMismatch?'#e0a05555':'var(--ac-13)'}">
-    <div class="adm-card-hdr" onclick="toggleVwSec('tz')">
-      <span class="adm-card-hdr-ico">🕐</span>
-      <div class="adm-card-hdr-body">
-        <div class="adm-card-hdr-title">${L?'Ship\'s time &amp; Day Structure':'Schiffszeit &amp; Tagesstruktur'}</div>
-        <div class="adm-card-hdr-sub" style="${tzMismatch?'color:#e0a055':''}">
-          <span id="vwClockDisp">${appFmtTime(new Date().toISOString())}</span>
-          &nbsp;·&nbsp;${appOffsetLabel()}&nbsp;·&nbsp;${S.tzMode==='fixed'?(L?'Fixed':'Fest'):(L?'Auto':'Auto')}${tzMismatch?'&nbsp;⚠️':''}
-        </div>
-      </div>
-      <span class="adm-card-hdr-arr${S.vwOpen.tz?' open':''}">&#9658;</span>
-    </div>
-    <div class="adm-card-body${S.vwOpen.tz?' open':''}">
-      <div style="padding-top:10px">
 
-        <!-- TZ-Warnung -->
-        ${tzMismatch?`<div style="padding:8px 11px;background:#2a1800;border:1px solid #e0a05544;border-radius:8px;font-size:11px;color:#e0a055;margin-bottom:12px;line-height:1.55">&#9888;&#65039; ${T('settings.tz.mismatch')} &ndash; ${L?'Device':'Gerät'}: ${esc(appOffsetLabel(devOff))}</div>`:''}
-
-        <!-- TZ-Modus -->
-        <div style="font-size:10px;font-weight:bold;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">${L?'Ship\'s time mode':'Schiffszeit-Modus'}</div>
-        <div class="adm-row" style="flex-direction:column;align-items:flex-start;gap:8px;padding-bottom:12px">
-          <div class="adm-row-ctrl" style="width:100%;gap:6px">
-            <button class="sbtn${S.tzMode==='auto'?' on':''}" onclick="setTimezone('auto',0);renderVerwaltung()" style="flex:1;justify-content:center">&#128241; ${L?'Automatic':'Automatisch'}</button>
-            <button class="sbtn${S.tzMode==='fixed'?' on':''}" onclick="document.getElementById('tzFixedRow').style.display='flex';document.getElementById('tzAutoHint').style.display='none'" style="flex:1;justify-content:center">&#9202; ${L?'Manual':'Manuell'}</button>
-            <button class="sbtn" onclick="openTzWiz()" style="flex:1;justify-content:center;background:var(--ac-13);border-color:var(--ac-40)">🧭 ${L?'Wizard':'Assistent'}</button>
-          </div>
-          <div id="tzAutoHint" style="display:${S.tzMode==='auto'?'block':'none'};font-size:10px;color:var(--tx2);line-height:1.5">${T('settings.tz.hint.auto')}<br><span style="color:var(--tx2)">${L?'Unreliable at sea – iPhone does not know the ship\'s time.':'Auf hoher See unzuverlässig – iPhone kennt die Schiffszeit nicht.'}</span></div>
-          <div id="tzFixedRow" style="display:${S.tzMode==='fixed'?'flex':'none'};flex-direction:column;gap:7px;width:100%">
-            <div style="font-size:10px;color:var(--tx2);line-height:1.5">${T('settings.tz.hint')}</div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <select id="tzOffSel" class="adm-input" style="flex:1;font-size:12px">${tzOffSel}</select>
-              <button class="goal-ok" onclick="saveTzFixed()">OK</button>
-            </div>
-            <div style="font-size:10px;color:var(--tx2)">${L?'Tip: Set to ship time at start of voyage.':'Tipp: Zu Reisebeginn einmalig auf Schiffszeit stellen.'}</div>
-          </div>
-        </div>
-
-        <!-- Tagesende -->
-        <div style="font-size:10px;font-weight:bold;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;padding-top:4px;border-top:1px solid var(--ac-07)">${T('settings.dayend')}</div>
-        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-          <input id="dayEndInp" type="time" value="${dayEndLabel()}" class="adm-input" style="flex:1">
-          <button class="goal-ok" onclick="saveDayEnd()">OK</button>
-        </div>
-        <div style="font-size:10px;color:${(S.dayEndHour||0)===0&&(S.dayEndMinute||0)===0?'var(--tx2)':'var(--ac)'};line-height:1.5">
-          ${(S.dayEndHour||0)===0&&(S.dayEndMinute||0)===0
-            ?T('settings.dayend.hint')
-            :'\u2713 '+(L?'Active':'Aktiv')+': '+dayEndLabel()+' \u2013 '+(L?'Entries before count for the previous day.':'Einträge davor zählen zum Vortag.')}
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ══════════════════════════════════════════
-       GRUPPE: EINSTELLUNGEN
-  ══════════════════════════════════════════ -->
-  <div class="vw-group-label">⚙️ ${L?'Settings':'Einstellungen'}</div>
-
-  <!-- ══════════════════════════════════════════
-       2. TAGESLIMIT & WÄHRUNG
-       (Budgetkontrolle)
-  ══════════════════════════════════════════ -->
-  <div class="adm-card">
-    <div class="adm-card-hdr" onclick="toggleVwSec('tracking')">
-      <span class="adm-card-hdr-ico">🎯</span>
-      <div class="adm-card-hdr-body">
-        <div class="adm-card-hdr-title">${L?'Daily Limit &amp; Currency':'Tageslimit &amp; Währung'}</div>
-        <div class="adm-card-hdr-sub">
-          ${S.dailyGoal>0?(L?'Limit: ':'Limit: ')+S.dailyGoal+' '+S.currency:(L?'No limit set':'Kein Limit gesetzt')}
-          &nbsp;·&nbsp;${S.currency}${(S.serviceCharge||0)>0?'&nbsp;·&nbsp;🧾 '+S.serviceCharge+'%':''}
-        </div>
-      </div>
-      <span class="adm-card-hdr-arr${S.vwOpen.tracking?' open':''}">&#9658;</span>
-    </div>
-    <div class="adm-card-body${S.vwOpen.tracking?' open':''}">
-      <div style="padding-top:4px">
-
-        <!-- Tageslimit -->
-        <div class="adm-row" style="flex-direction:column;align-items:flex-start;gap:7px">
-          <span class="adm-row-label" style="font-size:12px;font-weight:bold;color:var(--tx0)">${T('settings.goal')}</span>
-          <div style="font-size:10px;color:var(--tx2);margin-top:-4px">${L?'Daily spending limit per person. 0 = off.':'Maximales Tagesbudget pro Person. 0 = deaktiviert.'}</div>
-          <div class="goal-row" style="width:100%">
-            <input id="goalInp" type="number" min="0" step="10" placeholder="${T('settings.goal.hint')}" value="${S.dailyGoal||''}" class="adm-input" style="flex:1;max-width:120px">
-            <span style="font-size:13px;color:var(--ac);margin:0 4px">${S.currency}</span>
-            <button class="goal-ok" onclick="saveGoal()">OK</button>
-          </div>
-        </div>
-
-        <!-- Währung -->
-        <div class="adm-row" style="flex-direction:column;align-items:flex-start;gap:7px;padding-bottom:4px">
-          <span class="adm-row-label" style="font-size:12px;font-weight:bold;color:var(--tx0)">${T('settings.currency')}</span>
-          <div style="font-size:10px;color:var(--tx2);margin-top:-4px">${T('settings.currency.hint')}</div>
-          <div style="display:flex;gap:6px;width:100%;align-items:center">
-            <select id="currSel" onchange="onCurrSelChange()" class="adm-input" style="flex:1">
-              ${CURRENCIES.map(c=>`<option value="${esc(c.sym)}"${S.currency===c.sym?' selected':''}>${esc(c.label)}</option>`).join('')}
-              <option value="__custom__"${!CURRENCIES.find(c=>c.sym===S.currency)?' selected':''}>${T('settings.currency.custom')}</option>
-            </select>
-            <button class="goal-ok" onclick="saveCurrency()">OK</button>
-          </div>
-          <input id="currCustom" type="text" maxlength="6" placeholder="z.B. HKD" value="${!CURRENCIES.find(c=>c.sym===S.currency)?esc(S.currency):''}" class="adm-input" style="display:${!CURRENCIES.find(c=>c.sym===S.currency)?'block':'none'};width:100%">
-        </div>
-
-        <!-- Service Charge / Trinkgeld -->
-        <div class="adm-row" style="flex-direction:column;align-items:flex-start;gap:7px;padding-top:12px;border-top:1px solid var(--ac-07)">
-          <div style="display:flex;align-items:center;gap:8px;width:100%">
-            <span style="font-size:15px">🧾</span>
-            <span class="adm-row-label" style="font-size:12px;font-weight:bold;color:var(--tx0)">${L?'Service Charge (automatic tip)':'Service Charge (Trinkgeld-Automatik)'}</span>
-            ${(S.serviceCharge||0)>0?`<span style="margin-left:auto;font-size:11px;font-weight:bold;background:var(--ac-20);color:var(--ac);border:1px solid var(--ac-40);border-radius:6px;padding:2px 8px">${S.serviceCharge}%</span>`:''}
-          </div>
-          <div style="font-size:10px;color:var(--tx2);line-height:1.55">
-            ${L?'Automatically adds X% on top of each drink price when tapping <strong>+</strong>. Standard rates: 18% (NCL, Royal Caribbean) or 20% (Celebrity). <strong>0 = disabled.</strong>':'Schlägt beim Antippen von <strong>+</strong> automatisch X% auf den Listenpreis auf. Übliche Sätze: 18% (NCL, Royal Caribbean) oder 20% (Celebrity). <strong>0 = deaktiviert.</strong>'}
-          </div>
-          <div class="goal-row" style="width:100%">
-            <input id="svcInp" type="number" min="0" max="50" step="0.5" placeholder="0" value="${S.serviceCharge||''}" class="adm-input" style="flex:1;max-width:100px">
-            <span style="font-size:13px;color:var(--ac);margin:0 4px">%</span>
-            <button class="goal-ok" onclick="saveServiceCharge()">OK</button>
-          </div>
-          ${(S.serviceCharge||0)>0?`<div style="font-size:10px;padding:6px 9px;background:var(--ac-07);border-radius:7px;border-left:3px solid var(--ac-27);color:var(--tx1);line-height:1.5">✓ ${L?'Active: every + tap adds <strong>'+S.serviceCharge+'%</strong> to the list price.':'Aktiv: jeder +-Tipp schlägt <strong>'+S.serviceCharge+'%</strong> auf den Listenpreis auf.'}</div>`:''}
-        </div>
-
-      </div>
-    </div>
-  </div>
+  <div class="vw-group-label">🎨 App-Einstellungen</div>
 
   <!-- ══════════════════════════════════════════
        3. DARSTELLUNG
@@ -8195,94 +7963,48 @@ function renderVerwaltung(){
     </div>
   </div>
 
+
+  <div class="vw-group-label">📊 System</div>
+
   <!-- ══════════════════════════════════════════
-       5. NUTZER-PROFILE
+       SPEICHER & DATEN (V46)
+       Positiv und informativ – kein Warncharakter
   ══════════════════════════════════════════ -->
-  <div class="adm-card" id="vw-users">
-    <div class="adm-card-hdr" onclick="toggleVwSec('users')">
-      <span class="adm-card-hdr-ico">👥</span>
+  <div class="adm-card" style="border-color:var(--ac-13)">
+    <div class="adm-card-hdr" onclick="toggleVwSec('dbstatus')">
+      <span class="adm-card-hdr-ico">📊</span>
       <div class="adm-card-hdr-body">
-        <div class="adm-card-hdr-title">${L?'User Profiles':'Nutzer-Profile'}</div>
-        <div class="adm-card-hdr-sub">${userPills}</div>
+        <div class="adm-card-hdr-title">${L?'Storage &amp; Data':'Speicher &amp; Daten'}</div>
+        <div class="adm-card-hdr-sub" id="admDataSub">${S.log.length} ${L?'active entries':'aktive Einträge'}</div>
       </div>
-      <span class="adm-card-hdr-arr${S.vwOpen.users?' open':''}">&#9658;</span>
+      <span class="adm-card-hdr-arr${S.vwOpen&&S.vwOpen.dbstatus?' open':''}">►</span>
     </div>
-    <div class="adm-card-body${S.vwOpen.users?' open':''}">
+    <div class="adm-card-body${S.vwOpen&&S.vwOpen.dbstatus?' open':''}">
       <div style="padding-top:10px">
-
-        <!-- Nutzer-Übersicht -->
-        <div style="font-size:10px;color:var(--tx2);line-height:1.6;margin-bottom:10px">
-          ${L?'Up to 4 fixed persons + additional users. The active user is assigned all new entries.':'Bis zu 4 feste Personen + weitere Nutzer. Der aktive Nutzer erhält alle neuen Einträge.'}
+        <!-- 2 Stat-Kacheln -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+          <div style="background:var(--bg2);border:1px solid var(--ac-13);border-radius:10px;padding:10px 8px;text-align:center">
+            <div style="font-size:20px;font-weight:bold;color:var(--ac);line-height:1.1">${fmtNum(S.log.length)}</div>
+            <div style="font-size:9px;color:var(--tx2);letter-spacing:.5px;margin-top:3px;text-transform:uppercase">${L?'Active entries':'Aktive Eintr.'}</div>
+          </div>
+          <div style="background:var(--bg2);border:1px solid var(--ac-13);border-radius:10px;padding:10px 8px;text-align:center">
+            <div style="font-size:20px;font-weight:bold;color:var(--col-ok);line-height:1.1">${(S.log.length*0.5/1024).toFixed(1)}</div>
+            <div style="font-size:9px;color:var(--tx2);letter-spacing:.5px;margin-top:3px;text-transform:uppercase">MB</div>
+          </div>
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
-          ${(S.users||[]).map(u=>`<div style="display:flex;align-items:center;gap:6px;padding:7px 11px;background:${(u.color||'#666')}18;border:1px solid ${(u.color||'#666')}33;border-radius:10px">
-            <span style="width:9px;height:9px;border-radius:50%;background:${u.color||'#aaa'};display:inline-block;flex-shrink:0"></span>
-            <span style="font-size:12px;color:var(--tx0)">${esc(u.name||'?')}</span>
-            ${u.id===S.activeUserId?`<span style="font-size:9px;background:var(--ac);color:var(--bg);padding:1px 6px;border-radius:4px;font-weight:bold">${L?'active':'aktiv'}</span>`:''}
-          </div>`).join('')}
+        <!-- V46: IndexedDB hat kein festes Limit – positiver Status statt Balken -->
+        <div style="margin-bottom:10px;padding:8px 10px;background:var(--col-ok-bg);border:1px solid var(--col-ok);border-radius:8px;font-size:10px;color:var(--col-ok);line-height:1.6">
+          🗄️ <strong>IndexedDB</strong> – ${L?'No storage limit. iOS rarely deletes this data (only under extreme storage pressure).':'Kein Speicherlimit. iOS löscht diese Daten nur in extremen Ausnahmefällen.'}
         </div>
-        <button class="adm-btn-sm" onclick="openUserManagement()" style="width:100%;justify-content:center;padding:12px;gap:7px">
-          <span>👥</span>
-          <span style="font-size:12px;font-weight:bold">${L?'Manage users (names, colours, budgets)':'Nutzer verwalten (Namen, Farben, Budgets)'}</span>
-          <span style="margin-left:auto;color:var(--ac)">›</span>
-        </button>
-
+        <!-- Kontext-Info -->
+        <div style="font-size:10px;color:var(--tx2);line-height:1.6;border-top:1px solid var(--ac-07);padding-top:8px">
+          <div>📝 ${L?'Drinks in list':'Getränke in der Liste'}: <strong style="color:var(--tx1)">${S.drinks.length}</strong></div>
+          ${S.log.length>0?`<div>🕐 ${L?'First entry':'Erster Eintrag'}: <strong style="color:var(--tx1)">${new Date(Math.min(...S.log.map(e=>new Date(e.time).getTime()))).toLocaleDateString('de-DE')}</strong></div>`:''}
+          ${S.log.length>0?`<div>🕐 ${L?'Latest entry':'Letzter Eintrag'}: <strong style="color:var(--tx1)">${new Date(Math.max(...S.log.map(e=>new Date(e.time).getTime()))).toLocaleDateString('de-DE')}</strong></div>`:''}
+        </div>
       </div>
     </div>
   </div>
-
-  <!-- ══════════════════════════════════════════
-       GRUPPE: GETRÄNKE
-  ══════════════════════════════════════════ -->
-  <div class="vw-group-label">🍹 ${L?'Drinks':'Getränke'}</div>
-
-  <!-- ══════════════════════════════════════════
-       6. GETRÄNKE & KATEGORIEN
-  ══════════════════════════════════════════ -->
-  <div class="adm-card" id="vw-drinks">
-    <div class="adm-card-hdr" onclick="toggleVwSec('drinks')">
-      <span class="adm-card-hdr-ico">🍹</span>
-      <div class="adm-card-hdr-body">
-        <div class="adm-card-hdr-title">${L?'Drinks &amp; Categories':'Getränke &amp; Kategorien'}</div>
-        <div class="adm-card-hdr-sub">${S.drinks.length} ${L?'drinks':'Getränke'} · ${S.catIndex.length} ${L?'categories':'Kategorien'}</div>
-      </div>
-      <span class="adm-card-hdr-arr${S.vwOpen.drinks?' open':''}">&#9658;</span>
-    </div>
-    <div class="adm-card-body${S.vwOpen.drinks?' open':''}">
-      <div style="padding-top:10px">
-
-        <!-- CSV-Bereich -->
-        <div style="font-size:10px;font-weight:bold;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">${L?'Import / Export via CSV':'Import / Export via CSV'}</div>
-        <div class="vw-hint" style="margin-bottom:10px">${T('manage.drinks.hint')}</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px">
-          <button class="adm-btn-sm" onclick="exportDrinksCSV()" style="padding:11px 8px;flex-direction:column;gap:3px;align-items:center">
-            <span style="font-size:18px">📤</span>
-            <span style="font-size:10px;font-weight:bold;color:var(--tx0)">${L?'Export list':'Liste exportieren'}</span>
-            <span style="font-size:9px;color:var(--tx2)">CSV</span>
-          </button>
-          <label class="adm-btn-sm" style="padding:11px 8px;flex-direction:column;gap:3px;align-items:center;cursor:pointer">
-            <span style="font-size:18px">📥</span>
-            <span style="font-size:10px;font-weight:bold;color:var(--tx0)">${L?'Import list':'Liste importieren'}</span>
-            <span style="font-size:9px;color:var(--tx2)">CSV</span>
-            <input type="file" accept=".csv,text/csv" id="csvFileInput" onchange="onDrinkCSVFile(this)" style="display:none">
-          </label>
-        </div>
-
-        <!-- Kategorien & Getränke verwalten -->
-        <div class="adm-divider"></div>
-        <div style="font-size:10px;font-weight:bold;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px">${T('manage.cats.title')}</div>
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;padding:7px 10px;background:${AI_COLOR}18;border:1px solid ${AI_COLOR}44;border-radius:8px;font-size:10px;color:var(--tx1)"><span class="incl-dot filled" style="background:${AI_COLOR};width:10px;height:10px;flex-shrink:0"></span><span>${L?'<strong style="color:'+AI_COLOR+'">Green dot</strong> behind the price = All Inclusive (AI). Tap the dot to toggle the status.':'<strong style="color:'+AI_COLOR+'">Grüner Punkt</strong> hinter dem Preis = All Inclusive (AI). Punkt antippen zum Umschalten.'}</span></div>
-        <div id="drinkMgmt">${catHtml}</div>
-        <button class="new-cat-btn" onclick="openNewCat()">&#65291; ${T('manage.new.cat').replace('\uff0b ','')}</button>
-
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════════════
-       GRUPPE: APP & SYSTEM
-  ══════════════════════════════════════════ -->
-  <div class="vw-group-label">📲 ${L?'App & System':'App &amp; System'}</div>
 
   <!-- ══════════════════════════════════════════
        APP-EXPORT: HTML-Kopie der App
@@ -8348,7 +8070,7 @@ function renderVerwaltung(){
   <!-- V45: Erweitert-Bereich (zugeklappt) -->
   <div style="margin-top:10px">
     <button onclick="(function(){var b=document.getElementById('vwAdvBody');var a=document.getElementById('vwAdvArr');if(!b)return;var open=b.style.display!=='none';b.style.display=open?'none':'';a.textContent=open?'▶':'▼';})()" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:var(--bg2);border:1px solid var(--ac-20);border-radius:12px;padding:12px 14px;cursor:pointer;touch-action:manipulation;font-family:Georgia,serif">
-      <span style="font-size:13px;font-weight:bold;color:var(--tx0)">⚙️ ${L?'Advanced – rarely needed':'Erweitert – selten benötigt'}</span>
+      <span style="font-size:13px;font-weight:bold;color:var(--tx0)">⚠️ ${L?'Reset options – use with caution':'Zurücksetzen – nur im Notfall'}</span>
       <span id="vwAdvArr" style="color:var(--tx2);font-size:12px">▶</span>
     </button>
     <div id="vwAdvBody" style="display:none;padding-top:8px">
@@ -8696,7 +8418,7 @@ function renderHelp(){
 
     <div class="hlp-card">
       <div class="hlp-card-title">↔️ ${h('Swipe-Gesten: Bearbeiten &amp; Löschen','Swipe gestures: Edit &amp; Delete')}</div>
-      <div class="hlp-swipe-diagram">
+      <div class="hlp-swipe-diagram" aria-hidden="true">
         <div class="hlp-swipe-l"><span style="font-size:18px">✏️</span><span style="font-size:9px;font-weight:bold">${h('BEARBEITEN','EDIT')}</span><span style="font-size:14px;opacity:.8">→</span></div>
         <div class="hlp-swipe-c">
           <div class="hlp-swipe-bar-l"></div><div class="hlp-swipe-bar-r"></div>
