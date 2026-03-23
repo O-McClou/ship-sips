@@ -5599,23 +5599,13 @@ function favTileHTML(d,sortMode){
   const nameStyle=txStyle?`style="${txStyle}"`:'';
   const subStyle=txStyle?`style="opacity:.7;${txStyle}"`:'';
   const priceStyle=txStyle?`style="opacity:.85;${txStyle}"`:'';
-  return `<div class="fav-tile${fl?' fl':''}" data-tile-id="${esc(d.id)}" ${tileStyle} role="button" aria-label="${esc(d.name)} ${S.lang==='en'?'add':'hinzufügen'}">
-  ${dragHandle}
-  <div class="fav-tile-hdr">
-      <div class="fav-tile-num${has?'':' z'}" ${txStyle?'style="'+txStyle+'"':''}>${c}</div>
-      ${has?`<div class="fav-tile-sub" ${subStyle}>${eur(c*d.price)}</div>`:''}
-    </div>
-  </div>
-  <div class="fav-tile-name" ${nameStyle}>${esc(d.name)}</div>
-  <div class="fav-tile-cat" ${subStyle?'style="opacity:.7;'+txStyle+'"':''}>
-    <span style="background:${col};flex-shrink:0;width:9px;height:9px;border-radius:50%;display:inline-block"></span>
-    <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.cat)}</span>
-  </div>
-  <div class="fav-tile-ftr">
-    <div class="fav-tile-price" ${priceStyle}>${eur(d.price)} ${aiDot}</div>
-    <button class="fav-tile-more" data-tile-more="${esc(d.id)}" ${txStyle?'style="opacity:.7;'+txStyle+'"':''} aria-label="Optionen">⋯</button>
-  </div>
-</div>`;
+  const _tileOpen='<div class="fav-tile'+(fl?' fl':'')+'" data-tile-id="'+esc(d.id)+'" style="'+(bgStyle+borderStyle)+'" role="button" aria-label="'+esc(d.name)+' '+(S.lang==='en'?'add':'hinzufügen')+'">';
+  const _drag=dragHandle;
+  const _hdr='<div class="fav-tile-hdr"><div class="fav-tile-cnt">'+('<div class="fav-tile-num'+(has?'':' z')+'"'+(txStyle?' style="'+txStyle+'"':'')+'>'+(c)+'</div>')+(has?'<div class="fav-tile-sub"'+(txStyle?' style="opacity:.7;'+txStyle+'"':'')+'>'+eur(c*d.price)+'</div>':'')+'</div></div>';
+  const _name='<div class="fav-tile-name"'+(txStyle?' style="'+txStyle+'"':'')+'>'+esc(d.name)+'</div>';
+  const _cat='<div class="fav-tile-cat"'+(txStyle?' style="opacity:.7;'+txStyle+'"':'')+'><span style="background:'+col+';flex-shrink:0;width:9px;height:9px;border-radius:50%;display:inline-block"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(d.cat)+'</span></div>';
+  const _ftr='<div class="fav-tile-ftr"><div class="fav-tile-price"'+(txStyle?' style="opacity:.85;'+txStyle+'"':'')+'>'+eur(d.price)+' '+aiDot+'</div><button class="fav-tile-more" data-tile-more="'+esc(d.id)+'"'+(txStyle?' style="opacity:.7;'+txStyle+'"':'')+' aria-label="Optionen">⋯</button></div>';
+  return _tileOpen+_drag+_hdr+_name+_cat+_ftr+'</div>';
 }
 
 /* ── Kachel-Farbwahl-Overlay ────────────────────────────────── */
