@@ -546,8 +546,8 @@ html .fav-section .drow{background:transparent;border-color:rgba(255,255,255,0.0
 html .fav-section .drow.has{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.10);border-left-color:var(--ac);box-shadow:none}
 html .fav-section .drow.fl{background:rgba(255,255,255,0.07);border-left-color:var(--ac)}
 .top10-section{padding:0 14px 4px;background:var(--bg2);border-radius:10px;margin:0 4px}
-.top10-title{font-size:9px;color:var(--ac);font-weight:bold;letter-spacing:3px;text-transform:uppercase;padding:10px 2px 8px;display:flex;align-items:center;gap:8px}
-.top10-title::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--ac-20),transparent)}
+.top10-title{font-size:9px;color:var(--ac);font-weight:bold;letter-spacing:3px;text-transform:uppercase;padding:10px 2px 8px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.top10-title::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--ac-20),transparent);order:5}
 .drink-cat-group{margin:0 14px 4px}
 .drink-cat-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg3);border-radius:9px;border:1px solid var(--ac-10);border-left:3px solid var(--ac-27);cursor:pointer;-webkit-user-select:none;user-select:none;margin-bottom:2px;touch-action:manipulation;transition:background .2s}
 .drink-cat-hdr:active{background:var(--ac-07)}
@@ -1543,6 +1543,7 @@ details.hlp-acc summary:active{opacity:.75}
     <div class="top10-section">
       <div class="top10-title" id="top10title">⭐ Häufig bestellt</div>
       <div id="top10list" class="dlist" style="padding:0"></div>
+      <div id="top10TilesGrid" style="display:none"></div>
     </div>
     <div style="margin:4px 14px 2px;border-bottom:1px solid var(--ac-13)"></div>
   </div>
@@ -3515,6 +3516,8 @@ let S={
   favViewMode:'list',   /* 'list' | 'tile' */
   favColorMode:'theme', /* 'theme' | 'color' | 'tinted' */
   favTileColors:{},     /* { drinkId: colorIndex 0-35 } */
+  top10ViewMode:'list', /* 'list' | 'tile' */
+  top10ColorMode:'theme',/* 'theme' | 'color' | 'tinted' */
   headerCollapsed:false,
   tzMode:"auto",tzOffset:0,tzChangeLog:[],
   // User profiles – 4 fixed slots (u1–u4 are permanent positions)
@@ -5331,7 +5334,7 @@ function renderDrinksDebounced(full){
 }
 function renderDrinks(forceSort){
   // 12.2: Skip re-render if nothing visually changed
-  const hash=JSON.stringify([S.drinks.length,S.catFilter,S.fz,S.lang,JSON.stringify([...S.favorites]),S.btnLayout,JSON.stringify(S.counts),S.favCollapsed,S.top10Collapsed,S.favSortMode,JSON.stringify(S.favOrder),JSON.stringify([...S.drinkExpandedCats]),S.selCat,S.drinks.filter(d=>d.included).length,S.favViewMode,S.favColorMode,JSON.stringify(S.favTileColors||{})]);
+  const hash=JSON.stringify([S.drinks.length,S.catFilter,S.fz,S.lang,JSON.stringify([...S.favorites]),S.btnLayout,JSON.stringify(S.counts),S.favCollapsed,S.top10Collapsed,S.favSortMode,JSON.stringify(S.favOrder),JSON.stringify([...S.drinkExpandedCats]),S.selCat,S.drinks.filter(d=>d.included).length,S.favViewMode,S.favColorMode,JSON.stringify(S.favTileColors||{}),S.top10ViewMode,S.top10ColorMode]);
   if(!forceSort&&hash===_lastDrinksHash){return;}
   _lastDrinksHash=hash;
   // Scroll-Position aus dem echten Scroll-Container (#p0) retten
@@ -5424,10 +5427,33 @@ function renderDrinks(forceSort){
     if(wc.length){
       top10.style.display='';
       const arr10=S.top10Collapsed?'▶':'▼';
-      document.getElementById('top10title').innerHTML=`<span data-top10-toggle="1" style="cursor:pointer;display:flex;align-items:center;gap:5px;flex:1"><span>${arr10}</span><span>${T('top10.title')}</span></span>`;
+      const isTile10=S.top10ViewMode==='tile';
+      const L=S.lang==='en';
+      const t10ViewToggleIcon=isTile10?'☰':'⊞';
+      const t10ViewToggleTitle=isTile10?(L?'Switch to list view':'Zur Listenansicht'):(L?'Switch to tile view':'Zur Kachelansicht');
+      const t10ViewToggleTarget=isTile10?'list':'tile';
+      const t10ColorModeLbl=S.top10ColorMode==='color'?(L?'Color':'Farbe'):S.top10ColorMode==='tinted'?(L?'Tinted':'Getönt'):(L?'Theme':'Theme');
+      const t10ColorModeIcon=S.top10ColorMode==='color'?'🎨':S.top10ColorMode==='tinted'?'🖌':'🎨';
+      document.getElementById('top10title').innerHTML=
+        `<span data-top10-toggle="1" style="cursor:pointer;display:flex;align-items:center;gap:5px;flex:1;min-width:0"><span>${arr10}</span><span>${T('top10.title')}</span></span>`+
+        `<div style="display:flex;align-items:center;gap:3px;flex-shrink:0;margin-left:auto">`+
+        (isTile10?`<button class="fav-color-btn${S.top10ColorMode!=='theme'?' on':''}" onclick="event.stopPropagation();cycleTop10ColorMode()" title="${t10ColorModeLbl}">${t10ColorModeIcon}</button>`:'') +
+        `<button class="fav-view-btn${isTile10?' on':''}" onclick="event.stopPropagation();setTop10ViewMode('${t10ViewToggleTarget}')" title="${t10ViewToggleTitle}">${t10ViewToggleIcon}</button>`+
+        `</div>`;
       const top10List=document.getElementById('top10list');
-      top10List.style.display=S.top10Collapsed?'none':'';
-      if(!S.top10Collapsed)top10List.innerHTML=wc.map((d,i)=>drinkRow(d,i,true)).join('');
+      const top10TilesEl=document.getElementById('top10TilesGrid');
+      const contentVisible=!S.top10Collapsed;
+      if(isTile10){
+        top10List.style.display='none';
+        top10TilesEl.style.display=contentVisible?'':'none';
+        if(contentVisible){
+          top10TilesEl.innerHTML='<div class="fav-tiles-grid">'+wc.map((d,i)=>top10TileHTML(d,i)).join('')+'</div>';
+        }
+      }else{
+        top10TilesEl.style.display='none';
+        top10List.style.display=contentVisible?'':'none';
+        if(contentVisible)top10List.innerHTML=wc.map((d,i)=>drinkRow(d,i,true)).join('');
+      }
     }
     else{top10.style.display='none';S.stableTop10=[];}
     const cats=allCats();let html='';
@@ -5442,8 +5468,6 @@ function renderDrinks(forceSort){
 /* ── Kachel-Namen: Schriftgröße auto-skalieren damit Name in max. Zeilen passt ─
    S/M: 2 Zeilen · L/XL: 3 Zeilen. Kachelgröße bleibt fix. ─────────────────── */
 function _adjustTileNameFontSizes(){
-  var grid=document.querySelector('.fav-tiles-grid');
-  if(!grid)return;
   var fz=document.body.classList.contains('fz-small')?'small'
         :document.body.classList.contains('fz-large')?'large'
         :document.body.classList.contains('fz-xlarge')?'xlarge':'medium';
@@ -5451,21 +5475,21 @@ function _adjustTileNameFontSizes(){
   var basePx={'small':12,'medium':15,'large':18,'xlarge':21}[fz];
   var minPx=Math.max(8,Math.round(basePx*0.58));
   var lh=1.3;
-  grid.querySelectorAll('.fav-tile').forEach(function(tile){
-    var nameEl=tile.querySelector('.fav-tile-name');
-    if(!nameEl)return;
-    /* Reset auf Basisgröße */
-    nameEl.style.fontSize=basePx+'px';
-    nameEl.style.webkitLineClamp=String(maxLines);
-    /* Max erlaubte Höhe für den Namen (maxLines × Zeilenhöhe) */
-    var maxH=Math.ceil(maxLines*lh*basePx)+4;
-    var fs=basePx;
-    /* Bis zu 20 Iterationen verkleinern */
-    for(var i=0;i<20&&nameEl.scrollHeight>maxH&&fs>minPx;i++){
-      fs=Math.max(minPx,fs-1);
-      nameEl.style.fontSize=fs+'px';
-      maxH=Math.ceil(maxLines*lh*fs)+4;
-    }
+  var grids=document.querySelectorAll('.fav-tiles-grid');
+  grids.forEach(function(grid){
+    grid.querySelectorAll('.fav-tile').forEach(function(tile){
+      var nameEl=tile.querySelector('.fav-tile-name');
+      if(!nameEl)return;
+      nameEl.style.fontSize=basePx+'px';
+      nameEl.style.webkitLineClamp=String(maxLines);
+      var maxH=Math.ceil(maxLines*lh*basePx)+4;
+      var fs=basePx;
+      for(var i=0;i<20&&nameEl.scrollHeight>maxH&&fs>minPx;i++){
+        fs=Math.max(minPx,fs-1);
+        nameEl.style.fontSize=fs+'px';
+        maxH=Math.ceil(maxLines*lh*fs)+4;
+      }
+    });
   });
 }
 
@@ -5485,7 +5509,7 @@ function handleDrinkClick(e){
   if(minus)tapMinus(minus.dataset.minus);
 }
 // iOS braucht sowohl click als auch touchend für zuverlässige Interaktion
-['catGroupsView','dlist','top10list','favSection','top10section'].forEach(id=>{
+['catGroupsView','dlist','top10list','top10TilesGrid','favSection','top10section'].forEach(id=>{
   const el=document.getElementById(id);
   el.addEventListener('click',handleDrinkClick);
   let _tY=0,_tX=0;
@@ -5647,6 +5671,15 @@ function cycleFavColorMode(){
   saveState();renderDrinks(false);
 }
 
+/* ── Top10 Kachelansicht: Ansichts- und Farbmodus-Umschalter ── */
+function setTop10ViewMode(mode){S.top10ViewMode=mode;saveState();renderDrinks(false);}
+function cycleTop10ColorMode(){
+  const modes=['theme','color','tinted'];
+  const idx=modes.indexOf(S.top10ColorMode||'theme');
+  S.top10ColorMode=modes[(idx+1)%modes.length];
+  saveState();renderDrinks(false);
+}
+
 /* ── Kachel-HTML ─────────────────────────────────────────────── */
 function favTileHTML(d,sortMode){
   const c=S.counts[d.id]||0;
@@ -5710,7 +5743,42 @@ function favTileHTML(d,sortMode){
   return _tileOpen+_strip+_drag+_hdr+_body+_ftr+'</div>';
 }
 
-/* ── Kachel-Farbwahl-Overlay ────────────────────────────────── */
+/* ── Top10-Kachel-HTML (wie favTileHTML, aber: Rang-Badge, kein Sort, kein Undo-Strip) ── */
+function top10TileHTML(d,rank){
+  const c=S.counts[d.id]||0;
+  const has=c>0;
+  const fl=S.flashId===d.id;
+  const col=catColor(d.cat);
+  const colorMode=S.top10ColorMode||'theme';
+  // Auto-Farbe nach Rang (Index)
+  let bgStyle='',txStyle='',borderStyle='';
+  if(colorMode==='color'){
+    const autoHex=TILE_COLORS_36[(rank%36+36)%36];
+    const tx=tileTextColor(autoHex);
+    bgStyle='background:'+autoHex+';';
+    txStyle='color:'+tx+';';
+    borderStyle='border-color:'+autoHex+'88;';
+  }else if(colorMode==='tinted'){
+    const autoHex=TILE_COLORS_36[(rank%36+36)%36];
+    bgStyle='background:'+tileRgba(autoHex,.18)+';';
+    borderStyle='border-color:'+tileRgba(autoHex,.45)+';';
+  }
+  const aiDot=d.included
+    ?`<span class="incl-dot filled" style="background:${AI_COLOR};width:11px;height:11px;border-radius:50%;display:inline-block;flex-shrink:0"></span>`
+    :`<span class="incl-dot outline" style="width:11px;height:11px;border-radius:50%;border:1.5px solid ${col};display:inline-block;flex-shrink:0"></span>`;
+  const _tileOpen='<div class="fav-tile'+(fl?' fl':'')+'" data-top10-tile-id="'+esc(d.id)+'" data-has="'+(c>0?'1':'')+'" style="'+(bgStyle+borderStyle)+'" role="button" aria-label="'+esc(d.name)+' '+(S.lang==='en'?'add':'hinzufügen')+'">';
+  // Kopfzeile: Rang-Badge links, Zähler rechts
+  const rankColors=['#FFD700','#C0C0C0','#CD7F32'];
+  const rankStyle=rank<3?'background:'+rankColors[rank]+';color:#1a1a1a;':('background:var(--bg4);color:var(--tx2);');
+  const _rankBadge='<span style="'+rankStyle+'border-radius:10px;padding:1px 6px;font-size:9px;font-weight:bold;flex-shrink:0;line-height:1.5">'+(rank+1)+'</span>';
+  const _cnt='<div class="fav-tile-cnt">'+('<div class="fav-tile-num'+(has?'':' z')+'"'+(txStyle?' style="'+txStyle+'"':'')+'>'+(c)+'</div>')+(has?'<div class="fav-tile-sub"'+(txStyle?' style="opacity:.7;'+txStyle+'"':'')+'>'+eur(c*d.price)+'</div>':'')+'</div>';
+  const _hdr='<div class="fav-tile-hdr">'+_rankBadge+_cnt+'</div>';
+  const _name='<div class="fav-tile-name"'+(txStyle?' style="'+txStyle+'"':'')+'>'+esc(d.name)+'</div>';
+  const _cat='<div class="fav-tile-cat"'+(txStyle?' style="opacity:.7;'+txStyle+'"':'')+'><span style="background:'+col+';flex-shrink:0;width:9px;height:9px;border-radius:50%;display:inline-block"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(d.cat)+'</span></div>';
+  const _ftr='<div class="fav-tile-ftr"><div class="fav-tile-price"'+(txStyle?' style="opacity:.85;'+txStyle+'"':'')+'>'+eur(d.price)+' '+aiDot+'</div></div>';
+  const _body='<div class="fav-tile-body">'+_name+_cat+'</div>';
+  return _tileOpen+_hdr+_body+_ftr+'</div>';
+}
 function openTileColorPicker(drinkId){
   const d=S.drinks.find(x=>x.id===drinkId);if(!d)return;
   const L=S.lang==='en';
@@ -5770,16 +5838,19 @@ function setTileColor(drinkId,idx){
 
   p0.addEventListener('touchstart',function(e){
     const tile=e.target.closest('.fav-tile[data-tile-id]');
-    if(!tile)return;
+    const t10tile=e.target.closest('.fav-tile[data-top10-tile-id]');
+    if(!tile&&!t10tile)return;
     if(e.target.closest('[data-tile-more]'))return;
-    _tId=tile.dataset.tileId;
+    _tId=(tile||t10tile).dataset.tileId||(tile||t10tile).dataset.top10TileId;
     _tSX=e.touches[0].clientX;_tSY=e.touches[0].clientY;
     _tFired=false;_tScrolled=false;
     _swActive=false;_swTile=null;_swHoriz=false;_swDir=0;
     if(S.favSortMode)return;/* Sortiermodus: kein Menü, kein Wischen, nur Scrollen */
-    if(tile.dataset.has==='1'){
+    // Undo-Wischen nur für Favoriten-Kacheln (nicht Top10)
+    if(tile&&tile.dataset.has==='1'){
       _swActive=true;_swTile=tile;_swSX=_tSX;_swSY=_tSY;
     }
+    if(t10tile)return;/* Top10: kein Long-Press-Menü */
     clearTimeout(_tT);
     _tT=setTimeout(function(){
       if(_tScrolled)return;
@@ -5836,23 +5907,25 @@ function setTileColor(drinkId,idx){
     if(_tFired){_tFired=false;return;}
     if(_tScrolled)return;
     const tile=e.target.closest('.fav-tile[data-tile-id]');
-    if(!tile)return;
+    const t10tile=e.target.closest('.fav-tile[data-top10-tile-id]');
+    if(!tile&&!t10tile)return;
     if(e.target.closest('[data-tile-more]')){
       const id=e.target.closest('[data-tile-more]').dataset.tileMore;
       _showTileMenu(id,e.target);return;
     }
     const tc=e.changedTouches[0];
     if(tc&&(Math.abs(tc.clientX-_tSX)>_MOVE_THRESHOLD||Math.abs(tc.clientY-_tSY)>_MOVE_THRESHOLD))return;
-    if(S.favSortMode)return;/* Sortiermodus: kein Hinzufügen */
-    tapPlus(tile.dataset.tileId);
+    if(tile){if(S.favSortMode)return;tapPlus(tile.dataset.tileId);}
+    if(t10tile){tapPlus(t10tile.dataset.top10TileId);}
   },{passive:true});
 
   p0.addEventListener('click',function(e){
     const tile=e.target.closest('.fav-tile[data-tile-id]');
-    if(!tile)return;
+    const t10tile=e.target.closest('.fav-tile[data-top10-tile-id]');
+    if(!tile&&!t10tile)return;
     if(e.target.closest('[data-tile-more]'))return;
-    if(S.favSortMode)return;/* Sortiermodus: kein Hinzufügen */
-    tapPlus(tile.dataset.tileId);
+    if(tile){if(S.favSortMode)return;tapPlus(tile.dataset.tileId);}
+    if(t10tile){tapPlus(t10tile.dataset.top10TileId);}
   });
 })();
 
