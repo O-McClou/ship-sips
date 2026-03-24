@@ -574,6 +574,10 @@ html .fav-section .drow.fl{background:rgba(255,255,255,0.07);border-left-color:v
 .drow{display:flex;align-items:center;gap:9px;padding:10px 12px;background:var(--bg3);border-radius:10px;border:1px solid var(--ac-07);border-left:5px solid var(--ac-13);position:relative;transition:background .2s,border-color .2s}
 .drow.has{background:var(--bg2);border-color:var(--ac-27);border-left-color:var(--ac);box-shadow:var(--shadow-card)}
 .drow.fl{background:var(--ac-09);border-left-color:var(--ac)}
+/* Kompakte Zeile für Favoriten + Top10 */
+#favList .drow, #top10list .drow{padding:6px 10px}
+#favList .bplus, #top10list .bplus{width:40px;height:40px;min-width:40px;font-size:22px}
+#favList .fav-btn, #top10list .fav-btn{width:28px;height:28px;min-width:28px;font-size:16px}
 .rnk{position:absolute;top:-5px;left:7px;border-radius:10px;padding:1px 6px;font-size:9px;color:var(--bg);font-weight:bold;pointer-events:none}
 .fav-btn{width:34px;height:34px;min-width:34px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx4);padding:5px;box-sizing:content-box;line-height:1;z-index:2;-webkit-user-select:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;transition:color .2s,text-shadow .2s}
 .fav-btn.on{color:var(--ac);text-shadow:0 0 10px var(--ac-40)}
@@ -1066,11 +1070,11 @@ html .fav-section .drow.fl{background:rgba(255,255,255,0.07);border-left-color:v
 .fav-color-btn{background:transparent;border:1px solid var(--ac-20);border-radius:7px;color:var(--tx2);font-size:12px;cursor:pointer;padding:5px 10px;touch-action:manipulation;line-height:1.5;transition:all .15s;white-space:nowrap;font-family:Georgia,serif;flex-shrink:0}
 .fav-color-btn.on{background:var(--ac-13);color:var(--ac);border-color:var(--ac-40)}
 
-/* Kachel-Raster – gleiche Größe für alle Kacheln */
-.fav-tiles-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 0 4px;grid-auto-rows:130px;touch-action:pan-y}
-body.fz-small .fav-tiles-grid{grid-auto-rows:112px}
-body.fz-large .fav-tiles-grid{grid-auto-rows:150px}
-body.fz-xlarge .fav-tiles-grid{grid-auto-rows:170px}
+/* Kachel-Raster – Mindesthöhe, aber Kachel darf bei langem Namen wachsen */
+.fav-tiles-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 0 4px;grid-auto-rows:minmax(120px,auto);touch-action:pan-y;align-items:start}
+body.fz-small .fav-tiles-grid{grid-auto-rows:minmax(100px,auto)}
+body.fz-large .fav-tiles-grid{grid-auto-rows:minmax(140px,auto)}
+body.fz-xlarge .fav-tiles-grid{grid-auto-rows:minmax(160px,auto)}
 /* Sortiermodus: Kacheln darf scrollen, daher touch-action auf auto */
 
 /* Einzelne Kachel */
@@ -1082,7 +1086,7 @@ body.fz-xlarge .fav-tiles-grid{grid-auto-rows:170px}
   padding:11px 11px 9px;
   cursor:pointer;
   display:flex;flex-direction:column;gap:0;
-  height:100%;
+  min-height:120px;
   box-sizing:border-box;
   overflow:hidden;
   transition:transform .1s,box-shadow .1s,opacity .15s;
@@ -1092,16 +1096,16 @@ body.fz-xlarge .fav-tiles-grid{grid-auto-rows:170px}
 .fav-tile:active{transform:scale(.96);opacity:.85}
 .fav-tile.fl{box-shadow:0 0 0 2px var(--ac)}
 
-/* Kachel-Kopfzeile: Zähler (kein Stern mehr) */
-.fav-tile-hdr{display:flex;align-items:flex-start;justify-content:flex-end;gap:4px;margin-bottom:6px}
-.fav-tile-star{display:none} /* Stern ausgeblendet – Entfernen über ⋯ Menü */
+/* Kachel-Kopfzeile: Stern links, Zähler rechts */
+.fav-tile-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:4px;margin-bottom:6px}
+.fav-tile-star{font-size:15px;color:var(--ac);line-height:1;flex-shrink:0;opacity:0.8}
 .fav-tile-cnt{display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0}
 .fav-tile-num{font-size:15px;font-weight:bold;line-height:1;color:var(--ac)}
 .fav-tile-num.z{font-size:13px;color:var(--tx2);font-weight:normal}
 .fav-tile-sub{font-size:11px;color:var(--tx2);line-height:1;margin-top:2px;text-align:right}
 
-/* Kachel-Name + Kategorie */
-.fav-tile-name{font-size:15px;font-weight:bold;color:var(--tx0);line-height:1.3;flex:1;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+/* Kachel-Name: vollständig anzeigen, kein Clamp, füllt verbleibenden Platz */
+.fav-tile-name{font-size:15px;font-weight:bold;color:var(--tx0);line-height:1.3;flex:1;word-break:break-word;overflow:visible;white-space:normal;min-height:0}
 .fav-tile-cat{font-size:11px;color:var(--tx2);margin-top:3px;display:flex;align-items:center;gap:3px;overflow:hidden;white-space:nowrap}
 
 /* Kachel-Fußzeile: Preis + Menü */
@@ -1131,7 +1135,7 @@ body.fz-xlarge .fav-tiles-grid{grid-auto-rows:170px}
 .tile-color-reset{grid-column:1/-1;background:var(--bg2);border:1px dashed var(--ac-40);border-radius:8px;color:var(--tx1);font-family:Georgia,serif;font-size:12px;padding:8px;cursor:pointer;touch-action:manipulation;text-align:center}
 
 /* ── Kachel-Schriftgrößen nach Schriftgrössen-Einstellung ──── */
-body.fz-small .fav-tile{min-height:102px;padding:9px 9px 7px}
+body.fz-small .fav-tile{padding:8px 8px 6px}
 body.fz-small .fav-tile-num{font-size:12px}
 body.fz-small .fav-tile-num.z{font-size:11px}
 body.fz-small .fav-tile-sub{font-size:9px}
@@ -1139,7 +1143,7 @@ body.fz-small .fav-tile-name{font-size:12px}
 body.fz-small .fav-tile-cat{font-size:9px}
 body.fz-small .fav-tile-price{font-size:10px}
 
-body.fz-large .fav-tile{min-height:130px;padding:13px 13px 10px}
+body.fz-large .fav-tile{padding:13px 13px 10px}
 body.fz-large .fav-tile-num{font-size:18px}
 body.fz-large .fav-tile-num.z{font-size:14px}
 body.fz-large .fav-tile-sub{font-size:13px}
@@ -1147,7 +1151,7 @@ body.fz-large .fav-tile-name{font-size:18px}
 body.fz-large .fav-tile-cat{font-size:13px}
 body.fz-large .fav-tile-price{font-size:14px}
 
-body.fz-xlarge .fav-tile{min-height:148px;padding:15px 14px 11px}
+body.fz-xlarge .fav-tile{padding:15px 14px 11px}
 body.fz-xlarge .fav-tile-num{font-size:21px}
 body.fz-xlarge .fav-tile-num.z{font-size:17px}
 body.fz-xlarge .fav-tile-sub{font-size:15px}
@@ -2000,17 +2004,24 @@ details.hlp-acc summary:active{opacity:.75}
     <div class="mfield"><label id="mdPriceLbl">Preis</label><div class="price-wrap"><input id="mdPrice" type="number" step="0.10" min="0" placeholder="0.00" onfocus="setTimeout(function(){this.scrollIntoView({behavior:'smooth',block:'center'});}.bind(this),400)"><span class="price-suffix" id="mdPriceSuffix">€</span></div></div>
     <div class="mfield">
       <label id="mdCatLbl">Kategorie</label>
-      <div style="display:flex;gap:6px;align-items:center">
-        <input id="mdCat" type="text" list="catDL" placeholder="Kategorie wählen oder eingeben" style="flex:1" onfocus="setTimeout(function(){this.scrollIntoView({behavior:'smooth',block:'center'});}.bind(this),400)">
-        <datalist id="catDL"></datalist>
-        <select id="mdCatSel" onchange="if(this.value){document.getElementById('mdCat').value=this.value;this.value='';}" style="-webkit-appearance:none;appearance:none;padding:0 8px;height:36px;background:var(--bg2);border:1px solid var(--ac-27);border-radius:8px;color:var(--tx1);font-family:Georgia,serif;font-size:12px;cursor:pointer;min-width:44px;flex-shrink:0" title="Bestehende Kategorie auswählen">▾</select>
-      </div>
+      <select id="mdCatSel" style="-webkit-appearance:none;appearance:none;width:100%;padding:8px 12px;background:var(--bg2);border:1px solid var(--ac-27);border-radius:8px;color:var(--tx0);font-family:Georgia,serif;font-size:14px;cursor:pointer;outline:none" onfocus="setTimeout(function(){this.scrollIntoView({behavior:'smooth',block:'center'});}.bind(this),400)">
+        <!-- wird per JS befüllt -->
+      </select>
     </div>
     <div class="mfield" id="mdInclRow">
       <label id="mdInclLbl" style="display:flex;align-items:center;gap:8px;cursor:pointer">
         <span style="flex:1">All Inclusive</span>
         <span id="mdInclDot" style="width:16px;height:16px;border-radius:50%;border:2px solid var(--ac-40);background:transparent;display:inline-block;flex-shrink:0;transition:all .15s;cursor:pointer" onclick="toggleMdIncl()"></span>
         <span id="mdInclTxt" style="font-size:11px;color:var(--tx2);min-width:60px;text-align:right">Nicht inkl.</span>
+      </label>
+    </div>
+    <div class="mfield" id="mdRetroRow" style="display:none;padding:8px 0 0;border-top:1px solid var(--ac-10);margin-top:4px">
+      <label style="display:flex;flex-direction:column;gap:6px">
+        <span id="mdRetroLbl" style="font-size:12px;color:var(--tx2)">Änderungen rückwirkend anwenden?</span>
+        <select id="mdRetroSel" style="-webkit-appearance:none;appearance:none;width:100%;padding:8px 12px;background:var(--bg2);border:1px solid var(--ac-20);border-radius:8px;color:var(--tx1);font-family:Georgia,serif;font-size:13px;cursor:pointer;outline:none">
+          <option value="future">Nur zukünftige Einträge</option>
+          <option value="retro">Auch vergangene Protokolleinträge</option>
+        </select>
       </label>
     </div>
     <div class="modal-btns">
@@ -5346,16 +5357,20 @@ function renderDrinks(forceSort){
     const sortActive=S.favSortMode;
     const isTile=S.favViewMode==='tile';
     const L=S.lang==='en';
-    // Farb-Modus-Label
-    const colorModeLbl=S.favColorMode==='color'?(L?'🎨 Color':'🎨 Farbe'):S.favColorMode==='tinted'?(L?'🎨 Tinted':'🎨 Getönt'):(L?'🎨 Theme':'🎨 Theme');
-    // Buttons: Sortieren → Farbe → ☰⊞ (alle rechts, möglichst weit rechts)
+    // Farb-Modus-Symbol + Label
+    const colorModeLbl=S.favColorMode==='color'?(L?'Color':'Farbe'):S.favColorMode==='tinted'?(L?'Tinted':'Getönt'):(L?'Theme':'Theme');
+    const colorModeIcon=S.favColorMode==='color'?'🎨':S.favColorMode==='tinted'?'🖌':'🎨';
+    // Ansicht: ein einzelner Toggle-Button ganz rechts
+    const viewToggleIcon=isTile?'☰':'⊞';
+    const viewToggleTitle=isTile?(L?'Switch to list view':'Zur Listenansicht'): (L?'Switch to tile view':'Zur Kachelansicht');
+    const viewToggleTarget=isTile?'list':'tile';
+    // Buttons: ⇅ → 🎨 → ☰/⊞ (alle rechts)
     favTitleEl.innerHTML=
       `<span style="cursor:pointer;display:flex;align-items:center;gap:5px;flex:1;min-width:0" data-fav-toggle="1"><span>${arr}</span><span>${T('fav.title')}</span></span>`+
       `<div style="display:flex;align-items:center;gap:4px;flex-shrink:0;margin-left:auto">`+
-      `<button class="fav-sort-btn${sortActive?' active':''}" onclick="event.stopPropagation();toggleFavSortMode()">⇅ ${sortLbl}</button>`+
-      (isTile?`<button class="fav-color-btn${S.favColorMode!=='theme'?' on':''}" onclick="event.stopPropagation();cycleFavColorMode()">${colorModeLbl}</button>`:'') +
-      `<div class="fav-view-btns"><button class="fav-view-btn${!isTile?' on':''}" onclick="event.stopPropagation();setFavViewMode('list')" title="${L?'List view':'Listenansicht'}">☰</button>`+
-      `<button class="fav-view-btn${isTile?' on':''}" onclick="event.stopPropagation();setFavViewMode('tile')" title="${L?'Tile view':'Kachelansicht'}">⊞</button></div>`+
+      `<button class="fav-sort-btn${sortActive?' active':''}" onclick="event.stopPropagation();toggleFavSortMode()" title="${L?'Sort':'Sortieren'}">⇅</button>`+
+      (isTile?`<button class="fav-color-btn${S.favColorMode!=='theme'?' on':''}" onclick="event.stopPropagation();cycleFavColorMode()" title="${colorModeLbl}">${colorModeIcon}</button>`:'') +
+      `<button class="fav-view-btn" onclick="event.stopPropagation();setFavViewMode('${viewToggleTarget}')" title="${viewToggleTitle}">${viewToggleIcon}</button>`+
       `</div>`;
     // Liste vs. Kacheln
     const contentVisible=!S.favCollapsed;
@@ -5640,7 +5655,10 @@ function favTileHTML(d,sortMode){
   const priceStyle=txStyle?`style="opacity:.85;${txStyle}"`:'';
   const _tileOpen='<div class="fav-tile'+(fl?' fl':'')+'" data-tile-id="'+esc(d.id)+'" data-has="'+(c>0?'1':'')+'" style="'+(bgStyle+borderStyle)+'" role="button" aria-label="'+esc(d.name)+' '+(S.lang==='en'?'add':'hinzufügen')+'">';
   const _drag=dragHandle;
-  const _hdr='<div class="fav-tile-hdr"><div class="fav-tile-cnt">'+('<div class="fav-tile-num'+(has?'':' z')+'"'+(txStyle?' style="'+txStyle+'"':'')+'>'+(c)+'</div>')+(has?'<div class="fav-tile-sub"'+(txStyle?' style="opacity:.7;'+txStyle+'"':'')+'>'+eur(c*d.price)+'</div>':'')+'</div></div>';
+  // Kopfzeile: Stern links, Zähler rechts
+  const _star='<span class="fav-tile-star"'+(txStyle?' style="'+txStyle+'"':'')+'>★</span>';
+  const _cnt='<div class="fav-tile-cnt">'+('<div class="fav-tile-num'+(has?'':' z')+'"'+(txStyle?' style="'+txStyle+'"':'')+'>'+(c)+'</div>')+(has?'<div class="fav-tile-sub"'+(txStyle?' style="opacity:.7;'+txStyle+'"':'')+'>'+eur(c*d.price)+'</div>':'')+'</div>';
+  const _hdr='<div class="fav-tile-hdr">'+_star+_cnt+'</div>';
   const _name='<div class="fav-tile-name"'+(txStyle?' style="'+txStyle+'"':'')+'>'+esc(d.name)+'</div>';
   const _cat='<div class="fav-tile-cat"'+(txStyle?' style="opacity:.7;'+txStyle+'"':'')+'><span style="background:'+col+';flex-shrink:0;width:9px;height:9px;border-radius:50%;display:inline-block"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(d.cat)+'</span></div>';
   const _ftr='<div class="fav-tile-ftr"><div class="fav-tile-price"'+(txStyle?' style="opacity:.85;'+txStyle+'"':'')+'>'+eur(d.price)+' '+aiDot+'</div><button class="fav-tile-more" data-tile-more="'+esc(d.id)+'"'+(txStyle?' style="opacity:.7;'+txStyle+'"':'')+' aria-label="Optionen">⋯</button></div>';
@@ -8849,10 +8867,90 @@ function drinkMgmtClick(e){
 
 function _mdUpdateInclUI(incl){const dot=document.getElementById('mdInclDot');const txt=document.getElementById('mdInclTxt');const L=S.lang==='en';if(dot){dot.style.background=incl?AI_COLOR:'transparent';dot.style.borderColor=incl?AI_COLOR:'var(--ac-40)';}if(txt)txt.textContent=incl?(L?'Included':'All Inclusive'):(L?'Not included':'Nicht inkl.');}
 function toggleMdIncl(){window._mdIncl=!window._mdIncl;_mdUpdateInclUI(window._mdIncl);}
-function _mdFillCatSel(){const sel=document.getElementById('mdCatSel');if(!sel)return;const cats=allCats();sel.innerHTML='<option value="">▾</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');}
-function openAddDrink(pc){S.mdMode='add';S.mdId=null;document.getElementById('mdTitle').textContent=T('modal.drink.add');document.getElementById('mdNameLbl').textContent=T('modal.drink.name');document.getElementById('mdPriceLbl').textContent=T('modal.drink.price');document.getElementById('mdCatLbl').textContent=T('modal.drink.cat');document.getElementById('mdCancelBtn').textContent=T('modal.cancel');document.getElementById('mdSaveBtn').textContent=T('modal.save');const ps=document.getElementById('mdPriceSuffix');if(ps)ps.textContent=S.currency||'€';document.getElementById('mdName').value='';document.getElementById('mdPrice').value='';document.getElementById('mdCat').value=pc||'';document.getElementById('catDL').innerHTML=allCats().map(c=>`<option value="${esc(c)}">`).join('');window._mdIncl=false;_mdUpdateInclUI(false);_mdFillCatSel();_ovShow('mdOv','show-bottom');}
-function openEditDrink(id){const d=S.drinks.find(x=>x.id===id);if(!d)return;S.mdMode='edit';S.mdId=id;document.getElementById('mdTitle').textContent=T('modal.drink.edit');document.getElementById('mdNameLbl').textContent=T('modal.drink.name');document.getElementById('mdPriceLbl').textContent=T('modal.drink.price');document.getElementById('mdCatLbl').textContent=T('modal.drink.cat');document.getElementById('mdCancelBtn').textContent=T('modal.cancel');document.getElementById('mdSaveBtn').textContent=T('modal.save');const ps=document.getElementById('mdPriceSuffix');if(ps)ps.textContent=S.currency||'€';document.getElementById('mdName').value=d.name;document.getElementById('mdPrice').value=d.price;document.getElementById('mdCat').value=d.cat;document.getElementById('catDL').innerHTML=allCats().map(c=>`<option value="${esc(c)}">`).join('');window._mdIncl=!!d.included;_mdUpdateInclUI(window._mdIncl);_mdFillCatSel();_ovShow('mdOv','show-bottom');}
-function saveMd(){const name=document.getElementById('mdName').value.trim(),price=parseFloat(document.getElementById('mdPrice').value)||0,cat=document.getElementById('mdCat').value.trim();if(!name){showToast('⚠️ '+(S.lang==='en'?'Please enter a name.':'Bitte Namen eingeben.'),'warn',3000);return;}if(!cat){showToast('⚠️ '+(S.lang==='en'?'Please enter a category.':'Bitte Kategorie eingeben.'),'warn',3000);return;}if(S.mdMode==='add')S.drinks.push({id:uid(),cat,name,price,included:!!window._mdIncl});else{const d=S.drinks.find(x=>x.id===S.mdId);if(d){d.name=name;d.price=price;d.cat=cat;d.included=!!window._mdIncl;}}invCC();saveState();closeMd();renderVerwaltung();if(S.activeTab===0){S.stableOrder=[];_lastDrinksHash='';renderDrinks(true);}showToast(T('toast.saved'));}
+function _mdFillCatSel(currentCat){
+  const sel=document.getElementById('mdCatSel');if(!sel)return;
+  const cats=allCats();
+  const L=S.lang==='en';
+  // Wenn currentCat nicht in Liste: als erste Option hinzufügen
+  const allOpts=[...cats];
+  if(currentCat&&!allOpts.includes(currentCat))allOpts.unshift(currentCat);
+  sel.innerHTML=allOpts.map(c=>`<option value="${esc(c)}"${c===currentCat?' selected':''}>${esc(c)}</option>`).join('');
+}
+function openAddDrink(pc){
+  S.mdMode='add';S.mdId=null;
+  const L=S.lang==='en';
+  document.getElementById('mdTitle').textContent=T('modal.drink.add');
+  document.getElementById('mdNameLbl').textContent=T('modal.drink.name');
+  document.getElementById('mdPriceLbl').textContent=T('modal.drink.price');
+  document.getElementById('mdCatLbl').textContent=T('modal.drink.cat');
+  document.getElementById('mdCancelBtn').textContent=T('modal.cancel');
+  document.getElementById('mdSaveBtn').textContent=T('modal.save');
+  const ps=document.getElementById('mdPriceSuffix');if(ps)ps.textContent=S.currency||'€';
+  document.getElementById('mdName').value='';
+  document.getElementById('mdPrice').value='';
+  _mdFillCatSel(pc||allCats()[0]||'');
+  window._mdIncl=false;_mdUpdateInclUI(false);
+  // Rückwirkend-Zeile ausblenden beim Hinzufügen
+  const retroRow=document.getElementById('mdRetroRow');if(retroRow)retroRow.style.display='none';
+  _ovShow('mdOv','show-bottom');
+}
+function openEditDrink(id){
+  const d=S.drinks.find(x=>x.id===id);if(!d)return;
+  S.mdMode='edit';S.mdId=id;
+  const L=S.lang==='en';
+  document.getElementById('mdTitle').textContent=T('modal.drink.edit');
+  document.getElementById('mdNameLbl').textContent=T('modal.drink.name');
+  document.getElementById('mdPriceLbl').textContent=T('modal.drink.price');
+  document.getElementById('mdCatLbl').textContent=T('modal.drink.cat');
+  document.getElementById('mdCancelBtn').textContent=T('modal.cancel');
+  document.getElementById('mdSaveBtn').textContent=T('modal.save');
+  const ps=document.getElementById('mdPriceSuffix');if(ps)ps.textContent=S.currency||'€';
+  document.getElementById('mdName').value=d.name;
+  document.getElementById('mdPrice').value=d.price;
+  _mdFillCatSel(d.cat);
+  window._mdIncl=!!d.included;_mdUpdateInclUI(window._mdIncl);
+  // Rückwirkend-Zeile einblenden beim Bearbeiten
+  const retroRow=document.getElementById('mdRetroRow');
+  if(retroRow){retroRow.style.display='';const rl=document.getElementById('mdRetroLbl');if(rl)rl.textContent=L?'Apply changes retroactively?':'Änderungen rückwirkend anwenden?';}
+  // Default auf "Nur zukünftige Einträge"
+  const retroSel=document.getElementById('mdRetroSel');
+  if(retroSel)retroSel.value='future';
+  _ovShow('mdOv','show-bottom');
+}
+function saveMd(){
+  const name=document.getElementById('mdName').value.trim();
+  const price=parseFloat(document.getElementById('mdPrice').value)||0;
+  const catSel=document.getElementById('mdCatSel');
+  const cat=(catSel&&catSel.value)?catSel.value.trim():'';
+  const L=S.lang==='en';
+  if(!name){showToast('⚠️ '+(L?'Please enter a name.':'Bitte Namen eingeben.'),'warn',3000);return;}
+  if(!cat){showToast('⚠️ '+(L?'Please select a category.':'Bitte Kategorie auswählen.'),'warn',3000);return;}
+  const retroSel=document.getElementById('mdRetroSel');
+  const applyRetro=retroSel&&retroSel.value==='retro';
+  if(S.mdMode==='add'){
+    S.drinks.push({id:uid(),cat,name,price,included:!!window._mdIncl});
+  }else{
+    const d=S.drinks.find(x=>x.id===S.mdId);
+    if(d){
+      const oldName=d.name,oldPrice=d.price,oldCat=d.cat,oldIncl=!!d.included;
+      d.name=name;d.price=price;d.cat=cat;d.included=!!window._mdIncl;
+      // Rückwirkend: Protokolleinträge aktualisieren
+      if(applyRetro){
+        S.log.forEach(e=>{
+          if(e.drinkId===S.mdId){
+            if(e.name===oldName)e.name=name;
+            if(e.price===oldPrice)e.price=price;
+          }
+        });
+        showToast('✅ '+(L?`Log entries updated retroactively.`:`Protokolleinträge rückwirkend aktualisiert.`),'info',4000);
+      }
+    }
+  }
+  invCC();saveState();closeMd();renderVerwaltung();
+  if(S.activeTab===0){S.stableOrder=[];_lastDrinksHash='';renderDrinks(true);}
+  if(S.activeTab===1)renderLog();
+  showToast(T('toast.saved'));
+}
 function closeMd(){_ovHide('mdOv');}
 function askDelDrink(id){const d=S.drinks.find(x=>x.id===id);if(!d)return;showCfm(T('confirm.del.drink.title'),`„${d.name}" ${S.lang==='en'?'will be removed.':'wird entfernt.'}`,T('modal.delete'),()=>{S.drinks=S.drinks.filter(x=>x.id!==id);invCC();saveState();renderVerwaltung();if(S.activeTab===0){S.stableOrder=[];renderDrinks(true);}showToast('✅ '+T('toast.deleted'));});}
 function openRenameCat(ci){const cat=S.catIndex[ci];if(cat===undefined)return;S.mrMode='rename';S.mrOld=cat;document.getElementById('mrTitle').textContent=T('modal.cat.rename');document.getElementById('mrNameLbl').textContent=T('modal.cat.name');document.getElementById('mrCancelBtn').textContent=T('modal.cancel');document.getElementById('mrSaveBtn').textContent=T('modal.save');document.getElementById('mrName').value=cat;S.expandedCats.add(cat);_ovShow('mrOv','show-bottom');}
@@ -9066,7 +9164,7 @@ function renderHelp(){
       <div class="hlp-card-title">💡 ${h('Getränke zählen – Tipps &amp; Hinweise','Counting Drinks – Tips &amp; Notes')}</div>
       <div class="hlp-row"><span class="hlp-badge gold">+</span><span>${h('<strong>+ Button:</strong> Schutz gegen Doppel-Tippen (500 ms Sperre). Ein zweites Tippen innerhalb von 500 ms wird ignoriert – verhindert versehentliche Doppelerfassungen.','<strong>+ button:</strong> protected against double-tapping (500 ms lock). A second tap within 500 ms is ignored – prevents accidental double entries.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">↩ ${h('Wischen (Undo)','Swipe (Undo)')}</span><span>${h('Getränke-Button in die Undo-Richtung wischen (roter Streifen am Rand zeigt die aktive Seite) → letzten Eintrag dieses Getränks rückgängig machen. <em>Nur eine Richtung ist aktiv</em> – je nach Schaltflächen-Seite: bei + links → nach links wischen; bei + rechts → nach rechts wischen.<br><strong>Kachelansicht:</strong> Der goldene Streifen am Rand der Kachel zeigt die Undo-Seite. Kachel in die Undo-Richtung wischen → letzten Eintrag dieses Getränks rückgängig machen. Funktioniert nur wenn das Getränk bereits erfasst wurde.','Swipe the drink button in the undo direction (the red strip on the edge shows the active side) → undo the last entry for this drink. <em>Only one direction is active</em> – depending on the button side: with + on left → swipe left; with + on right → swipe right.<br><strong>Tile view:</strong> The gold strip on the tile edge shows the undo side. Swipe the tile in the undo direction → undo the last entry. Only works if the drink has been recorded at least once.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge gold">✏️ ${h('Long-Press → Optionsmenü öffnen','Long-press → open options menu')}</span><span>${h('<strong>Getränke-Karte ca. 0,7 Sekunden gedrückt halten</strong> (ohne zu wischen) → Optionsmenü öffnet sich mit kurzer Vibration als Bestätigung.<br><strong>Listenansicht:</strong> Bearbeitungsformular für dieses Getränk öffnet sich direkt (Name, Preis, Kategorie).<br><strong>Kachelansicht:</strong> Das ⋯-Menü öffnet sich mit allen Optionen: ✏️ Bearbeiten, 🎨 Kachelfarbe, ☆ Aus Favoriten entfernen.<br><em>Hinweis: In der Listenansicht reagiert der + Button weiterhin normal – Long-Press muss auf dem Getränkenamen oder der Karte selbst stattfinden.</em>','<strong>Hold a drink card for about 0.7 seconds</strong> (without swiping) → the options menu opens with a short vibration feedback.<br><strong>List view:</strong> Edit form opens directly (name, price, category).<br><strong>Tile view:</strong> The ⋯ menu opens with all options: ✏️ Edit, 🎨 Tile colour, ☆ Remove from favourites.<br><em>Note: In list view, the + button still responds normally – long-press must be on the drink name or card body.</em>')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge gold">✏️ ${h('Long-Press → Optionsmenü öffnen','Long-press → open options menu')}</span><span>${h('<strong>Getränke-Karte ca. 0,7 Sekunden gedrückt halten</strong> (ohne zu wischen) → Optionsmenü öffnet sich mit kurzer Vibration als Bestätigung.<br><strong>Listenansicht:</strong> Bearbeitungsformular für dieses Getränk öffnet sich direkt (Name, Preis, Kategorie-Auswahl, All-Inclusive-Status).<br>• <strong>Kategorie:</strong> Nur bestehende Kategorien per Dropdown auswählen – keine freie Eingabe nötig.<br>• <strong>Rückwirkend:</strong> Beim Bearbeiten kann gewählt werden, ob Änderungen nur für <em>zukünftige</em> Einträge gelten oder auch <em>vergangene Protokolleinträge</em> (Name und Preis) aktualisiert werden.<br><strong>Kachelansicht:</strong> Das ⋯-Menü öffnet sich mit allen Optionen: ✏️ Bearbeiten, 🎨 Kachelfarbe, ☆ Aus Favoriten entfernen.<br><em>Hinweis: In der Listenansicht reagiert der + Button weiterhin normal – Long-Press muss auf dem Getränkenamen oder der Karte selbst stattfinden.</em>','<strong>Hold a drink card for about 0.7 seconds</strong> (without swiping) → the options menu opens with a short vibration feedback.<br><strong>List view:</strong> Edit form opens directly (name, price, category picker, All Inclusive status).<br>• <strong>Category:</strong> Select from existing categories via dropdown – no free-text entry needed.<br>• <strong>Retroactive:</strong> When editing, you can choose whether changes apply only to <em>future</em> entries or also update <em>past log entries</em> (name and price).<br><strong>Tile view:</strong> The ⋯ menu opens with all options: ✏️ Edit, 🎨 Tile colour, ☆ Remove from favourites.<br><em>Note: In list view, the + button still responds normally – long-press must be on the drink name or card body.</em>')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">⋮ ${h('Protokoll-Menü','Log menu')}</span><span>${h('Im Protokoll-Tab: <strong>⋮</strong> Menü rechts bei jedem Eintrag antippen → Einträge bearbeiten oder löschen (Alternative zu Swipe-Gesten).','In the log tab: tap the <strong>⋮</strong> menu on any entry → edit or delete entries (alternative to swipe gestures.')}</span></div>
     </div>
 
