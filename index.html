@@ -538,7 +538,7 @@ body.ov-open .tabs{visibility:hidden;pointer-events:none}
 .tbar{padding:7px 14px;display:flex;justify-content:flex-end}
 .rbtn{padding:4px 10px;background:transparent;border:1px dashed #e0555577;color:#e0555577;border-radius:6px;cursor:pointer;font-size:11px;font-family:Georgia,serif;opacity:0.6}
 .fav-section{padding:0 14px 4px;background:var(--bg1);border-radius:10px;margin:0 4px}
-.fav-title{font-size:9px;color:var(--ac);font-weight:bold;letter-spacing:3px;text-transform:uppercase;padding:10px 2px 8px;cursor:pointer;user-select:none;-webkit-user-select:none;display:flex;align-items:center;gap:8px;touch-action:manipulation}
+.fav-title{font-size:9px;color:var(--ac);font-weight:bold;letter-spacing:3px;text-transform:uppercase;padding:7px 0px 6px;cursor:pointer;user-select:none;-webkit-user-select:none;display:flex;align-items:center;gap:8px;touch-action:manipulation}
 .fav-title::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--ac-27),transparent)}
 /* FIX V48: drow in Favoriten transparent -> sec-bg (ac-07) als einheitliche Zone.
    html-Prefix: Spezifitaet (0,0,2,1) schlaegt alle html[data-theme] .drow-Overrides. */
@@ -1042,9 +1042,9 @@ html .fav-section .drow.fl{background:rgba(255,255,255,0.07);border-left-color:v
 /* ── Username: full display, no truncation ─────────────────── */
 /* ── Favorites Sort Mode ─────────────────────────────────────── */
 .fav-sort-btn{
-  background:transparent;border:1px solid var(--ac-27);border-radius:12px;
-  color:var(--tx2);font-family:Georgia,serif;font-size:13px;cursor:pointer;
-  padding:5px 12px;margin-left:auto;white-space:nowrap;touch-action:manipulation;
+  background:transparent;border:1px solid var(--ac-27);border-radius:10px;
+  color:var(--tx2);font-family:Georgia,serif;font-size:12px;cursor:pointer;
+  padding:3px 9px;margin-left:auto;white-space:nowrap;touch-action:manipulation;
   flex-shrink:0;line-height:1.4;
 }
 .fav-sort-btn.active{background:var(--ac-13);color:var(--ac);border-color:var(--ac-40)}
@@ -1063,19 +1063,19 @@ html .fav-section .drow.fl{background:rgba(255,255,255,0.07);border-left-color:v
 /* ── FAVORITEN-KACHELANSICHT ────────────────────────────────── */
 /* Ansichts-Umschalter neben dem Favoriten-Titel */
 .fav-view-btns{display:flex;align-items:center;gap:3px;margin-left:4px;flex-shrink:0}
-.fav-view-btn{background:transparent;border:1px solid var(--ac-20);border-radius:7px;color:var(--tx2);font-size:16px;cursor:pointer;padding:5px 10px;touch-action:manipulation;line-height:1.5;transition:all .15s}
+.fav-view-btn{background:transparent;border:1px solid var(--ac-20);border-radius:7px;color:var(--tx2);font-size:15px;cursor:pointer;padding:3px 8px;touch-action:manipulation;line-height:1.4;transition:all .15s}
 .fav-view-btn.on{background:var(--ac-13);color:var(--ac);border-color:var(--ac-40)}
 
 /* Farb-Modus-Toggle-Button */
-.fav-color-btn{background:transparent;border:1px solid var(--ac-20);border-radius:7px;color:var(--tx2);font-size:12px;cursor:pointer;padding:5px 10px;touch-action:manipulation;line-height:1.5;transition:all .15s;white-space:nowrap;font-family:Georgia,serif;flex-shrink:0}
+.fav-color-btn{background:transparent;border:1px solid var(--ac-20);border-radius:7px;color:var(--tx2);font-size:11px;cursor:pointer;padding:3px 8px;touch-action:manipulation;line-height:1.4;transition:all .15s;white-space:nowrap;font-family:Georgia,serif;flex-shrink:0}
 .fav-color-btn.on{background:var(--ac-13);color:var(--ac);border-color:var(--ac-40)}
 
 /* Kachel-Raster – Mindesthöhe, aber Kachel darf bei langem Namen wachsen */
-.fav-tiles-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 0 4px;grid-auto-rows:minmax(120px,auto);touch-action:pan-y;align-items:start}
-body.fz-small .fav-tiles-grid{grid-auto-rows:minmax(100px,auto)}
-body.fz-large .fav-tiles-grid{grid-auto-rows:minmax(140px,auto)}
-body.fz-xlarge .fav-tiles-grid{grid-auto-rows:minmax(160px,auto)}
-/* Sortiermodus: Kacheln darf scrollen, daher touch-action auf auto */
+.fav-tiles-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 0 4px;grid-auto-rows:120px;touch-action:pan-y;align-items:start}
+body.fz-small .fav-tiles-grid{grid-auto-rows:100px}
+body.fz-large .fav-tiles-grid{grid-auto-rows:140px}
+body.fz-xlarge .fav-tiles-grid{grid-auto-rows:160px}
+/* Sortiermodus: Scrollen erlaubt, Drag nur per Long-Press */
 
 /* Einzelne Kachel */
 .fav-tile{
@@ -1083,10 +1083,10 @@ body.fz-xlarge .fav-tiles-grid{grid-auto-rows:minmax(160px,auto)}
   border-radius:14px;
   border:1.5px solid var(--ac-13);
   background:var(--bg3);
-  padding:11px 11px 9px;
+  padding:14px 11px 12px;
   cursor:pointer;
   display:flex;flex-direction:column;gap:0;
-  min-height:120px;
+  height:100%;
   box-sizing:border-box;
   overflow:hidden;
   transition:transform .1s,box-shadow .1s,opacity .15s;
@@ -1104,18 +1104,28 @@ body.fz-xlarge .fav-tiles-grid{grid-auto-rows:minmax(160px,auto)}
 .fav-tile-num.z{font-size:13px;color:var(--tx2);font-weight:normal}
 .fav-tile-sub{font-size:11px;color:var(--tx2);line-height:1;margin-top:2px;text-align:right}
 
-/* Kachel-Name: vollständig anzeigen, kein Clamp, füllt verbleibenden Platz */
-.fav-tile-name{font-size:15px;font-weight:bold;color:var(--tx0);line-height:1.3;flex:1;word-break:break-word;overflow:visible;white-space:normal;min-height:0}
+/* Kachel-Name: max. 2 Zeilen (S/M), 3 Zeilen (L/XL); Schrift skaliert wenn nötig */
+.fav-tile-name{font-size:15px;font-weight:bold;color:var(--tx0);line-height:1.3;word-break:break-word;overflow:hidden;white-space:normal;min-height:0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;/* JS überschreibt font-size bei Bedarf */}
+body.fz-large .fav-tile-name{-webkit-line-clamp:3}
+body.fz-xlarge .fav-tile-name{-webkit-line-clamp:3}
 .fav-tile-cat{font-size:11px;color:var(--tx2);margin-top:3px;display:flex;align-items:center;gap:3px;overflow:hidden;white-space:nowrap}
+
+/* Kachel im Sortiermodus: kräftige goldene Outline + Muster-Hintergrund */
+.fav-tile.fav-sort-mode-tile{
+  border:2px solid var(--ac);
+  box-shadow:0 0 0 1px var(--ac-40), inset 0 0 0 2px var(--ac-07);
+  cursor:grab;
+}
+.fav-tile.fav-sort-mode-tile:active{transform:none;opacity:1}
 
 /* Kachel-Fußzeile: Preis + Menü */
 .fav-tile-ftr{display:flex;align-items:center;justify-content:space-between;margin-top:6px;gap:4px}
 .fav-tile-price{font-size:12px;color:var(--tx1);display:flex;align-items:center;gap:4px}
 .fav-tile-more{background:none;border:none;color:var(--tx2);font-size:18px;cursor:pointer;padding:2px 0 2px 6px;touch-action:manipulation;line-height:1;flex-shrink:0}
 
-/* Kachel im Sort-Modus */
-.fav-tile.fav-tile-sort-active{opacity:.4;border-style:dashed}
-.fav-tile.fav-tile-drag-over{box-shadow:0 0 0 3px var(--ac)}
+/* Kachel im Sort-Modus: wird als Drag-Quelle gerade bewegt */
+.fav-tile.fav-tile-sort-active{opacity:.35;border-style:dashed}
+.fav-tile.fav-tile-drag-over{box-shadow:0 0 0 3px var(--ac),0 0 0 5px var(--ac-40)}
 .fav-tile-drag-handle{position:absolute;top:6px;left:50%;transform:translateX(-50%);font-size:13px;color:var(--tx2);opacity:.6;pointer-events:none;letter-spacing:-1px}
 
 /* Undo-Strip für Kacheln */
@@ -1135,7 +1145,7 @@ body.fz-xlarge .fav-tiles-grid{grid-auto-rows:minmax(160px,auto)}
 .tile-color-reset{grid-column:1/-1;background:var(--bg2);border:1px dashed var(--ac-40);border-radius:8px;color:var(--tx1);font-family:Georgia,serif;font-size:12px;padding:8px;cursor:pointer;touch-action:manipulation;text-align:center}
 
 /* ── Kachel-Schriftgrößen nach Schriftgrössen-Einstellung ──── */
-body.fz-small .fav-tile{padding:8px 8px 6px}
+body.fz-small .fav-tile{padding:10px 8px 9px}
 body.fz-small .fav-tile-num{font-size:12px}
 body.fz-small .fav-tile-num.z{font-size:11px}
 body.fz-small .fav-tile-sub{font-size:9px}
@@ -1143,7 +1153,7 @@ body.fz-small .fav-tile-name{font-size:12px}
 body.fz-small .fav-tile-cat{font-size:9px}
 body.fz-small .fav-tile-price{font-size:10px}
 
-body.fz-large .fav-tile{padding:13px 13px 10px}
+body.fz-large .fav-tile{padding:16px 13px 14px}
 body.fz-large .fav-tile-num{font-size:18px}
 body.fz-large .fav-tile-num.z{font-size:14px}
 body.fz-large .fav-tile-sub{font-size:13px}
@@ -1151,7 +1161,7 @@ body.fz-large .fav-tile-name{font-size:18px}
 body.fz-large .fav-tile-cat{font-size:13px}
 body.fz-large .fav-tile-price{font-size:14px}
 
-body.fz-xlarge .fav-tile{padding:15px 14px 11px}
+body.fz-xlarge .fav-tile{padding:18px 14px 16px}
 body.fz-xlarge .fav-tile-num{font-size:21px}
 body.fz-xlarge .fav-tile-num.z{font-size:17px}
 body.fz-xlarge .fav-tile-sub{font-size:15px}
@@ -5367,7 +5377,7 @@ function renderDrinks(forceSort){
     // Buttons: ⇅ → 🎨 → ☰/⊞ (alle rechts)
     favTitleEl.innerHTML=
       `<span style="cursor:pointer;display:flex;align-items:center;gap:5px;flex:1;min-width:0" data-fav-toggle="1"><span>${arr}</span><span>${T('fav.title')}</span></span>`+
-      `<div style="display:flex;align-items:center;gap:4px;flex-shrink:0;margin-left:auto">`+
+      `<div style="display:flex;align-items:center;gap:3px;flex-shrink:0;margin-left:auto;margin-right:-14px">`+
       `<button class="fav-sort-btn${sortActive?' active':''}" onclick="event.stopPropagation();toggleFavSortMode()" title="${L?'Sort':'Sortieren'}">⇅</button>`+
       (isTile?`<button class="fav-color-btn${S.favColorMode!=='theme'?' on':''}" onclick="event.stopPropagation();cycleFavColorMode()" title="${colorModeLbl}">${colorModeIcon}</button>`:'') +
       `<button class="fav-view-btn" onclick="event.stopPropagation();setFavViewMode('${viewToggleTarget}')" title="${viewToggleTitle}">${viewToggleIcon}</button>`+
@@ -5425,7 +5435,41 @@ function renderDrinks(forceSort){
   }
   renderSummary();updateHeader();
   // Scroll-Position im echten Container (#p0) wiederherstellen
-  requestAnimationFrame(()=>{if(_p0&&scrollY>0)_p0.scrollTop=scrollY;initDrinkSwipe();});
+  requestAnimationFrame(()=>{if(_p0&&scrollY>0)_p0.scrollTop=scrollY;initDrinkSwipe();_adjustTileNameFontSizes();});
+}
+
+/* ── Kachel-Namen: Schriftgröße automatisch verkleinern wenn zu lang ─────
+   S/M: max 2 Zeilen, L/XL: max 3 Zeilen.
+   Die Kachelgröße bleibt fix; nur die Schriftgröße der .fav-tile-name
+   wird schrittweise reduziert bis der Text passt. ─────────────────────── */
+function _adjustTileNameFontSizes(){
+  const grid=document.querySelector('.fav-tiles-grid');
+  if(!grid)return;
+  const fz=document.body.classList.contains('fz-small')?'small'
+           :document.body.classList.contains('fz-large')?'large'
+           :document.body.classList.contains('fz-xlarge')?'xlarge':'medium';
+  const maxLines=(fz==='large'||fz==='xlarge')?3:2;
+  const baseFontPx={'small':12,'medium':15,'large':18,'xlarge':21}[fz];
+  const minFontPx=Math.round(baseFontPx*0.65);/* nicht kleiner als 65% der Basis */
+  const lineH=1.3;/* entspricht line-height in CSS */
+  grid.querySelectorAll('.fav-tile').forEach(tile=>{
+    const nameEl=tile.querySelector('.fav-tile-name');
+    if(!nameEl)return;
+    /* Schriftgröße zurücksetzen damit wir sauber messen */
+    nameEl.style.fontSize='';
+    nameEl.style.webkitLineClamp=String(maxLines);
+    nameEl.style.lineClamp=String(maxLines);
+    let fs=baseFontPx;
+    /* Maximal erlaubte Höhe = maxLines × lineHeight × fontSize */
+    const maxH=Math.ceil(maxLines*lineH*fs)+1;
+    /* Iterativ verkleinern bis scrollHeight ≤ maxH */
+    while(nameEl.scrollHeight>maxH+2&&fs>minFontPx){
+      fs=Math.max(minFontPx,fs-1);
+      nameEl.style.fontSize=fs+'px';
+      const newMaxH=Math.ceil(maxLines*lineH*fs)+1;
+      if(nameEl.scrollHeight<=newMaxH+2)break;
+    }
+  });
 }
 
 function handleDrinkClick(e){
@@ -5653,7 +5697,7 @@ function favTileHTML(d,sortMode){
   const nameStyle=txStyle?`style="${txStyle}"`:'';
   const subStyle=txStyle?`style="opacity:.7;${txStyle}"`:'';
   const priceStyle=txStyle?`style="opacity:.85;${txStyle}"`:'';
-  const _tileOpen='<div class="fav-tile'+(fl?' fl':'')+'" data-tile-id="'+esc(d.id)+'" data-has="'+(c>0?'1':'')+'" style="'+(bgStyle+borderStyle)+'" role="button" aria-label="'+esc(d.name)+' '+(S.lang==='en'?'add':'hinzufügen')+'">';
+  const _tileOpen='<div class="fav-tile'+(fl?' fl':'')+(sortMode?' fav-sort-mode-tile':'')+'" data-tile-id="'+esc(d.id)+'" data-has="'+(c>0?'1':'')+'" style="'+(bgStyle+borderStyle)+'" role="button" aria-label="'+esc(d.name)+' '+(S.lang==='en'?'add':'hinzufügen')+'">';
   const _drag=dragHandle;
   // Kopfzeile: Stern links, Zähler rechts
   const _star='<span class="fav-tile-star"'+(txStyle?' style="'+txStyle+'"':'')+'>★</span>';
@@ -5661,8 +5705,11 @@ function favTileHTML(d,sortMode){
   const _hdr='<div class="fav-tile-hdr">'+_star+_cnt+'</div>';
   const _name='<div class="fav-tile-name"'+(txStyle?' style="'+txStyle+'"':'')+'>'+esc(d.name)+'</div>';
   const _cat='<div class="fav-tile-cat"'+(txStyle?' style="opacity:.7;'+txStyle+'"':'')+'><span style="background:'+col+';flex-shrink:0;width:9px;height:9px;border-radius:50%;display:inline-block"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(d.cat)+'</span></div>';
-  const _ftr='<div class="fav-tile-ftr"><div class="fav-tile-price"'+(txStyle?' style="opacity:.85;'+txStyle+'"':'')+'>'+eur(d.price)+' '+aiDot+'</div><button class="fav-tile-more" data-tile-more="'+esc(d.id)+'"'+(txStyle?' style="opacity:.7;'+txStyle+'"':'')+' aria-label="Optionen">⋯</button></div>';
-  return _tileOpen+_undoStrip+_drag+_hdr+_name+_cat+_ftr+'</div>';
+  const _ftr=sortMode
+    ?'<div class="fav-tile-ftr"><div class="fav-tile-price"'+(txStyle?' style="opacity:.85;'+txStyle+'"':'')+'>'+eur(d.price)+' '+aiDot+'</div></div>'
+    :'<div class="fav-tile-ftr"><div class="fav-tile-price"'+(txStyle?' style="opacity:.85;'+txStyle+'"':'')+'>'+eur(d.price)+' '+aiDot+'</div><button class="fav-tile-more" data-tile-more="'+esc(d.id)+'"'+(txStyle?' style="opacity:.7;'+txStyle+'"':'')+' aria-label="Optionen">⋯</button></div>';
+  const _strip=sortMode?'':_undoStrip;
+  return _tileOpen+_strip+_drag+_hdr+_name+_cat+_ftr+'</div>';
 }
 
 /* ── Kachel-Farbwahl-Overlay ────────────────────────────────── */
@@ -5731,6 +5778,7 @@ function setTileColor(drinkId,idx){
     _tSX=e.touches[0].clientX;_tSY=e.touches[0].clientY;
     _tFired=false;_tScrolled=false;
     _swActive=false;_swTile=null;_swHoriz=false;_swDir=0;
+    if(S.favSortMode){return;}/* Im Sortiermodus: kein Long-Press-Menü, kein Wischen */
     if(tile.dataset.has==='1'&&!S.favSortMode){
       _swActive=true;_swTile=tile;_swSX=_tSX;_swSY=_tSY;
     }
@@ -5797,6 +5845,7 @@ function setTileColor(drinkId,idx){
     }
     const tc=e.changedTouches[0];
     if(tc&&(Math.abs(tc.clientX-_tSX)>_MOVE_THRESHOLD||Math.abs(tc.clientY-_tSY)>_MOVE_THRESHOLD))return;
+    if(S.favSortMode)return;/* Sortiermodus: kein Hinzufügen per Tap */
     tapPlus(tile.dataset.tileId);
   },{passive:true});
 
@@ -5804,6 +5853,7 @@ function setTileColor(drinkId,idx){
     const tile=e.target.closest('.fav-tile[data-tile-id]');
     if(!tile)return;
     if(e.target.closest('[data-tile-more]'))return;
+    if(S.favSortMode)return;/* Sortiermodus: kein Hinzufügen */
     tapPlus(tile.dataset.tileId);
   });
 })();
@@ -5847,20 +5897,30 @@ function _showTileMenu(drinkId,anchor){
 }
 
 /* ── Kachel-Drag-and-Drop (Sortierung im Kachel-Modus) ──────── */
-var _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null};
+/* Scrollen immer möglich; Drag wird erst durch Long-Press (500ms) aktiviert */
+var _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null,lpt:null,lpFired:false,moved:false};
 function initFavTileDrag(){
   document.querySelectorAll('.fav-tile[data-tile-id]').forEach(tile=>{
     if(tile._ftdi)return;tile._ftdi=true;
     tile.addEventListener('touchstart',function(e){
       if(!S.favSortMode)return;
-      _ftd.active=true;_ftd.id=tile.dataset.tileId;_ftd.el=tile;
-      _ftd.startX=e.touches[0].clientX;_ftd.startY=e.touches[0].clientY;_ftd.lastOver=null;
-      tile.classList.add('fav-tile-sort-active');
-      e.preventDefault();
-    },{passive:false});
+      _ftd.id=tile.dataset.tileId;_ftd.el=tile;
+      _ftd.startX=e.touches[0].clientX;_ftd.startY=e.touches[0].clientY;
+      _ftd.lastOver=null;_ftd.lpFired=false;_ftd.active=false;_ftd.moved=false;
+      clearTimeout(_ftd.lpt);
+      _ftd.lpt=setTimeout(function(){
+        if(_ftd.moved)return;
+        _ftd.active=true;_ftd.lpFired=true;
+        tile.classList.add('fav-tile-sort-active');
+        try{if(typeof navigator.vibrate==='function')navigator.vibrate(30);}catch(_){}
+      },500);
+    },{passive:true});
     tile.addEventListener('touchmove',function(e){
-      if(!_ftd.active)return;
-      e.preventDefault();
+      if(!S.favSortMode)return;
+      const dx=Math.abs(e.touches[0].clientX-_ftd.startX);
+      const dy=Math.abs(e.touches[0].clientY-_ftd.startY);
+      if(!_ftd.active){if(dx>8||dy>8){_ftd.moved=true;clearTimeout(_ftd.lpt);}return;}
+      e.preventDefault();/* Scrollen unterbinden, sobald Drag aktiv */
       const x=e.touches[0].clientX,y=e.touches[0].clientY;
       const tiles=[...document.querySelectorAll('.fav-tile[data-tile-id]')];
       tiles.forEach(t=>t.classList.remove('fav-tile-drag-over'));
@@ -5874,11 +5934,11 @@ function initFavTileDrag(){
       else _ftd.lastOver=null;
     },{passive:false});
     tile.addEventListener('touchend',function(){
-      if(!_ftd.active)return;_ftd.active=false;
+      clearTimeout(_ftd.lpt);
       if(_ftd.el)_ftd.el.classList.remove('fav-tile-sort-active');
       const tiles=[...document.querySelectorAll('.fav-tile[data-tile-id]')];
       tiles.forEach(t=>t.classList.remove('fav-tile-drag-over'));
-      if(_ftd.lastOver){
+      if(_ftd.active&&_ftd.lastOver){
         const order=tiles.map(t=>t.dataset.tileId);
         const fi=order.indexOf(_ftd.id),ti=order.indexOf(_ftd.lastOver.dataset.tileId);
         if(fi!==-1&&ti!==-1&&fi!==ti){
@@ -5886,7 +5946,7 @@ function initFavTileDrag(){
           S.favOrder=no;saveState();renderDrinks(false);
         }
       }
-      _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null};
+      _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null,lpt:null,lpFired:false,moved:false};
     },{passive:true});
   });
 }
