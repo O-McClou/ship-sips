@@ -539,7 +539,7 @@ body.ov-open .tabs{visibility:hidden;pointer-events:none}
 .rbtn{padding:4px 10px;background:transparent;border:1px dashed #e0555577;color:#e0555577;border-radius:6px;cursor:pointer;font-size:11px;font-family:Georgia,serif;opacity:0.6}
 .fav-section{padding:0 14px 4px;background:var(--bg1);border-radius:10px;margin:0 4px}
 .fav-title{font-size:9px;color:var(--ac);font-weight:bold;letter-spacing:3px;text-transform:uppercase;padding:7px 0px 6px;cursor:pointer;user-select:none;-webkit-user-select:none;display:flex;align-items:center;gap:8px;touch-action:manipulation}
-.fav-title::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--ac-27),transparent)}
+.fav-title::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--ac-27),transparent);order:5}
 /* FIX V48: drow in Favoriten transparent -> sec-bg (ac-07) als einheitliche Zone.
    html-Prefix: Spezifitaet (0,0,2,1) schlaegt alle html[data-theme] .drow-Overrides. */
 html .fav-section .drow{background:transparent;border-color:rgba(255,255,255,0.06);border-left-color:rgba(255,255,255,0.12)}
@@ -1070,11 +1070,11 @@ html .fav-section .drow.fl{background:rgba(255,255,255,0.07);border-left-color:v
 .fav-color-btn{background:transparent;border:1px solid var(--ac-20);border-radius:7px;color:var(--tx2);font-size:11px;cursor:pointer;padding:3px 8px;touch-action:manipulation;line-height:1.4;transition:all .15s;white-space:nowrap;font-family:Georgia,serif;flex-shrink:0}
 .fav-color-btn.on{background:var(--ac-13);color:var(--ac);border-color:var(--ac-40)}
 
-/* Kachel-Raster – Mindesthöhe, aber Kachel darf bei langem Namen wachsen */
-.fav-tiles-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 0 4px;grid-auto-rows:120px;touch-action:pan-y;align-items:start}
-body.fz-small .fav-tiles-grid{grid-auto-rows:100px}
-body.fz-large .fav-tiles-grid{grid-auto-rows:140px}
-body.fz-xlarge .fav-tiles-grid{grid-auto-rows:160px}
+/* Kachel-Raster – fixe Zeilenhöhe je Schriftgröße (stretch = Kacheln immer genau so hoch wie Zeile) */
+.fav-tiles-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 0 4px;grid-auto-rows:150px;touch-action:pan-y;}
+body.fz-small .fav-tiles-grid{grid-auto-rows:130px}
+body.fz-large .fav-tiles-grid{grid-auto-rows:185px}
+body.fz-xlarge .fav-tiles-grid{grid-auto-rows:215px}
 /* Sortiermodus: Scrollen immer möglich, Drag erst per Long-Press */
 
 /* Einzelne Kachel */
@@ -1085,7 +1085,7 @@ body.fz-xlarge .fav-tiles-grid{grid-auto-rows:160px}
   background:var(--bg3);
   padding:14px 11px 12px;
   cursor:pointer;
-  display:flex;flex-direction:column;gap:0;
+  display:flex;flex-direction:column;justify-content:space-between;gap:0;
   height:100%;
   box-sizing:border-box;
   overflow:hidden;
@@ -1097,7 +1097,7 @@ body.fz-xlarge .fav-tiles-grid{grid-auto-rows:160px}
 .fav-tile.fl{box-shadow:0 0 0 2px var(--ac)}
 
 /* Kachel-Kopfzeile: Stern links, Zähler rechts */
-.fav-tile-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:4px;margin-bottom:6px}
+.fav-tile-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:4px;margin-bottom:0}
 .fav-tile-star{font-size:15px;color:var(--ac);line-height:1;flex-shrink:0;opacity:0.8}
 .fav-tile-cnt{display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0}
 .fav-tile-num{font-size:15px;font-weight:bold;line-height:1;color:var(--ac)}
@@ -1108,16 +1108,23 @@ body.fz-xlarge .fav-tiles-grid{grid-auto-rows:160px}
 .fav-tile-name{font-size:15px;font-weight:bold;color:var(--tx0);line-height:1.3;word-break:break-word;overflow:hidden;white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
 body.fz-large .fav-tile-name{-webkit-line-clamp:3}
 body.fz-xlarge .fav-tile-name{-webkit-line-clamp:3}
+/* Mittelteil der Kachel: dehnt sich zwischen Kopf- und Fußzeile (flex:1) */
+.fav-tile-body{flex:1;min-height:0;overflow:hidden;}
 .fav-tile-cat{font-size:11px;color:var(--tx2);margin-top:3px;display:flex;align-items:center;gap:3px;overflow:hidden;white-space:nowrap}
 
 /* Kachel-Fußzeile: Preis + Menü */
-.fav-tile-ftr{display:flex;align-items:center;justify-content:space-between;margin-top:6px;gap:4px}
+.fav-tile-ftr{display:flex;align-items:center;justify-content:space-between;margin-top:0;gap:4px}
 .fav-tile-price{font-size:12px;color:var(--tx1);display:flex;align-items:center;gap:4px}
 .fav-tile-more{background:none;border:none;color:var(--tx2);font-size:18px;cursor:pointer;padding:2px 0 2px 6px;touch-action:manipulation;line-height:1;flex-shrink:0}
 
-/* Kachel im Sort-Modus: goldene Umrandung zeigt Sortiermodus an */
-.fav-tile.fav-sort-mode-tile{border:2px solid var(--ac);box-shadow:0 0 0 2px var(--ac-40);cursor:grab}
-.fav-tile.fav-sort-mode-tile:active{transform:none;opacity:1}
+/* Sortiermodus-Animation */
+@keyframes sortTileGlow{
+  0%,100%{box-shadow:0 0 0 1px rgba(255,255,255,0.25),0 3px 10px rgba(0,0,0,0.25);}
+  50%{box-shadow:0 0 0 4px rgba(255,255,255,0.70),0 0 20px rgba(255,255,255,0.25);}
+}
+/* Kachel im Sort-Modus: gut sichtbare weiße gestrichelte Umrandung mit Puls-Animation */
+.fav-tile.fav-sort-mode-tile{border:3px dashed rgba(255,255,255,0.85)!important;cursor:grab;touch-action:none;animation:sortTileGlow 1.4s ease-in-out infinite;}
+.fav-tile.fav-sort-mode-tile:active{transform:none;opacity:1;touch-action:none}
 .fav-tile.fav-tile-sort-active{opacity:.35;border-style:dashed}
 .fav-tile.fav-tile-drag-over{box-shadow:0 0 0 4px var(--ac),0 0 12px var(--ac-40)}
 .fav-tile-drag-handle{position:absolute;top:6px;left:50%;transform:translateX(-50%);font-size:13px;color:var(--tx2);opacity:.6;pointer-events:none;letter-spacing:-1px}
@@ -5370,8 +5377,8 @@ function renderDrinks(forceSort){
     const viewToggleTarget=isTile?'list':'tile';
     // Buttons: ⇅ → 🎨 → ☰/⊞ (alle rechts)
     favTitleEl.innerHTML=
-      `<span style="cursor:pointer;display:flex;align-items:center;gap:5px;flex:1;min-width:0" data-fav-toggle="1"><span>${arr}</span><span>${T('fav.title')}</span></span>`+
-      `<div style="display:flex;align-items:center;gap:3px;flex-shrink:0;margin-left:auto;margin-right:-14px">`+
+      `<span style="cursor:pointer;display:flex;align-items:center;gap:5px;flex:1;min-width:0;order:1" data-fav-toggle="1"><span>${arr}</span><span>${T('fav.title')}</span></span>`+
+      `<div style="display:flex;align-items:center;gap:3px;flex-shrink:0;order:10;margin-left:auto">`+
       `<button class="fav-sort-btn${sortActive?' active':''}" onclick="event.stopPropagation();toggleFavSortMode()" title="${L?'Sort':'Sortieren'}">⇅</button>`+
       (isTile?`<button class="fav-color-btn${S.favColorMode!=='theme'?' on':''}" onclick="event.stopPropagation();cycleFavColorMode()" title="${colorModeLbl}">${colorModeIcon}</button>`:'') +
       `<button class="fav-view-btn" onclick="event.stopPropagation();setFavViewMode('${viewToggleTarget}')" title="${viewToggleTitle}">${viewToggleIcon}</button>`+
@@ -5442,20 +5449,22 @@ function _adjustTileNameFontSizes(){
         :document.body.classList.contains('fz-xlarge')?'xlarge':'medium';
   var maxLines=(fz==='large'||fz==='xlarge')?3:2;
   var basePx={'small':12,'medium':15,'large':18,'xlarge':21}[fz];
-  var minPx=Math.max(9,Math.round(basePx*0.62));
+  var minPx=Math.max(8,Math.round(basePx*0.58));
   var lh=1.3;
   grid.querySelectorAll('.fav-tile').forEach(function(tile){
     var nameEl=tile.querySelector('.fav-tile-name');
     if(!nameEl)return;
-    nameEl.style.fontSize='';/* Reset */
+    /* Reset auf Basisgröße */
+    nameEl.style.fontSize=basePx+'px';
     nameEl.style.webkitLineClamp=String(maxLines);
+    /* Max erlaubte Höhe für den Namen (maxLines × Zeilenhöhe) */
+    var maxH=Math.ceil(maxLines*lh*basePx)+4;
     var fs=basePx;
-    var maxH=Math.ceil(maxLines*lh*fs)+2;
-    /* Iterativ verkleinern bis scrollHeight passt */
-    while(nameEl.scrollHeight>maxH&&fs>minPx){
-      fs--;
+    /* Bis zu 20 Iterationen verkleinern */
+    for(var i=0;i<20&&nameEl.scrollHeight>maxH&&fs>minPx;i++){
+      fs=Math.max(minPx,fs-1);
       nameEl.style.fontSize=fs+'px';
-      maxH=Math.ceil(maxLines*lh*fs)+2;
+      maxH=Math.ceil(maxLines*lh*fs)+4;
     }
   });
 }
@@ -5697,7 +5706,8 @@ function favTileHTML(d,sortMode){
     ?'<div class="fav-tile-ftr"><div class="fav-tile-price"'+(txStyle?' style="opacity:.85;'+txStyle+'"':'')+'>'+eur(d.price)+' '+aiDot+'</div></div>'
     :'<div class="fav-tile-ftr"><div class="fav-tile-price"'+(txStyle?' style="opacity:.85;'+txStyle+'"':'')+'>'+eur(d.price)+' '+aiDot+'</div><button class="fav-tile-more" data-tile-more="'+esc(d.id)+'"'+(txStyle?' style="opacity:.7;'+txStyle+'"':'')+' aria-label="Optionen">⋯</button></div>';
   const _strip=sortMode?'':_undoStrip;
-  return _tileOpen+_strip+_drag+_hdr+_name+_cat+_ftr+'</div>';
+  const _body='<div class="fav-tile-body">'+_name+_cat+'</div>';
+  return _tileOpen+_strip+_drag+_hdr+_body+_ftr+'</div>';
 }
 
 /* ── Kachel-Farbwahl-Overlay ────────────────────────────────── */
@@ -5885,34 +5895,57 @@ function _showTileMenu(drinkId,anchor){
 }
 
 /* ── Kachel-Drag-and-Drop (Sortierung im Kachel-Modus) ──────── */
-/* Scrollen immer möglich. Drag wird erst durch Long-Press (600ms) aktiviert. */
-var _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null,lpt:null,moved:false};
+/* Drag startet sofort ab kleiner Bewegung (kein Long-Press nötig).  */
+var _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null,lpt:null,moved:false,ghost:null};
+function _ftdRemoveGhost(){if(_ftd.ghost){_ftd.ghost.remove();_ftd.ghost=null;}}
 function initFavTileDrag(){
+  /* Grid im Sortiermodus: Scrollen deaktivieren damit Drag funktioniert */
+  var grid=document.querySelector('.fav-tiles-grid');
+  if(grid)grid.style.touchAction='none';
+
   document.querySelectorAll('.fav-tile[data-tile-id]').forEach(tile=>{
     if(tile._ftdi)return;tile._ftdi=true;
+
     tile.addEventListener('touchstart',function(e){
       if(!S.favSortMode)return;
+      e.stopPropagation();
       _ftd.id=tile.dataset.tileId;_ftd.el=tile;
       _ftd.startX=e.touches[0].clientX;_ftd.startY=e.touches[0].clientY;
       _ftd.lastOver=null;_ftd.active=false;_ftd.moved=false;
-      clearTimeout(_ftd.lpt);
-      _ftd.lpt=setTimeout(function(){
-        if(_ftd.moved)return;
+      _ftdRemoveGhost();
+    },{passive:false});
+
+    tile.addEventListener('touchmove',function(e){
+      if(!S.favSortMode||!_ftd.el||_ftd.id!==tile.dataset.tileId)return;
+      e.preventDefault();e.stopPropagation();
+      const x=e.touches[0].clientX,y=e.touches[0].clientY;
+      const dx=Math.abs(x-_ftd.startX),dy=Math.abs(y-_ftd.startY);
+
+      /* Drag nach wenigen Pixeln aktivieren */
+      if(!_ftd.active&&(dx>5||dy>5)){
         _ftd.active=true;
         tile.classList.add('fav-tile-sort-active');
         try{if(typeof navigator.vibrate==='function')navigator.vibrate(30);}catch(_){}
-      },600);
-    },{passive:true});
-    tile.addEventListener('touchmove',function(e){
-      if(!S.favSortMode)return;
-      const dx=Math.abs(e.touches[0].clientX-_ftd.startX);
-      const dy=Math.abs(e.touches[0].clientY-_ftd.startY);
-      if(!_ftd.active){
-        if(dx>8||dy>8){_ftd.moved=true;clearTimeout(_ftd.lpt);}
-        return;/* noch kein Drag aktiv → Scrollen läuft normal */
+        /* Ghost-Klon erzeugen der dem Finger folgt */
+        _ftdRemoveGhost();
+        var g=tile.cloneNode(true);
+        var r=tile.getBoundingClientRect();
+        g.style.cssText='position:fixed;z-index:9999;opacity:0.80;pointer-events:none;'+
+          'left:'+r.left+'px;top:'+r.top+'px;width:'+r.width+'px;height:'+r.height+'px;'+
+          'border-radius:14px;transform:scale(1.06);transition:none;box-shadow:0 8px 32px rgba(0,0,0,0.5);';
+        document.body.appendChild(g);
+        _ftd.ghost=g;
+        _ftd.offX=x-r.left;_ftd.offY=y-r.top;
       }
-      e.preventDefault();/* Drag aktiv → Scrollen unterdrücken */
-      const x=e.touches[0].clientX,y=e.touches[0].clientY;
+      if(!_ftd.active)return;
+
+      /* Ghost mitbewegen */
+      if(_ftd.ghost){
+        _ftd.ghost.style.left=(x-(_ftd.offX||0))+'px';
+        _ftd.ghost.style.top=(y-(_ftd.offY||0))+'px';
+      }
+
+      /* Ziel-Kachel ermitteln */
       const tiles=[...document.querySelectorAll('.fav-tile[data-tile-id]')];
       tiles.forEach(t=>t.classList.remove('fav-tile-drag-over'));
       let target=null;
@@ -5924,8 +5957,9 @@ function initFavTileDrag(){
       if(target){target.classList.add('fav-tile-drag-over');_ftd.lastOver=target;}
       else _ftd.lastOver=null;
     },{passive:false});
+
     tile.addEventListener('touchend',function(){
-      clearTimeout(_ftd.lpt);
+      _ftdRemoveGhost();
       if(_ftd.el)_ftd.el.classList.remove('fav-tile-sort-active');
       const tiles=[...document.querySelectorAll('.fav-tile[data-tile-id]')];
       tiles.forEach(t=>t.classList.remove('fav-tile-drag-over'));
@@ -5937,7 +5971,14 @@ function initFavTileDrag(){
           S.favOrder=no;saveState();renderDrinks(false);
         }
       }
-      _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null,lpt:null,moved:false};
+      _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null,lpt:null,moved:false,ghost:null};
+    },{passive:true});
+
+    tile.addEventListener('touchcancel',function(){
+      _ftdRemoveGhost();
+      if(_ftd.el)_ftd.el.classList.remove('fav-tile-sort-active');
+      document.querySelectorAll('.fav-tile[data-tile-id]').forEach(t=>t.classList.remove('fav-tile-drag-over'));
+      _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null,lpt:null,moved:false,ghost:null};
     },{passive:true});
   });
 }
