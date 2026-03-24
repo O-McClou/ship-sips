@@ -1042,7 +1042,7 @@ html .fav-section .drow.fl{background:rgba(255,255,255,0.07);border-left-color:v
 /* ── Username: full display, no truncation ─────────────────── */
 /* ── Favorites Sort Mode ─────────────────────────────────────── */
 .fav-sort-btn{
-  background:transparent;border:1px solid var(--ac-27);border-radius:10px;
+  background:transparent;border:1px solid var(--ac-27);border-radius:9px;
   color:var(--tx2);font-family:Georgia,serif;font-size:12px;cursor:pointer;
   padding:3px 9px;margin-left:auto;white-space:nowrap;touch-action:manipulation;
   flex-shrink:0;line-height:1.4;
@@ -1075,7 +1075,7 @@ html .fav-section .drow.fl{background:rgba(255,255,255,0.07);border-left-color:v
 body.fz-small .fav-tiles-grid{grid-auto-rows:100px}
 body.fz-large .fav-tiles-grid{grid-auto-rows:140px}
 body.fz-xlarge .fav-tiles-grid{grid-auto-rows:160px}
-/* Sortiermodus: Scrollen erlaubt, Drag nur per Long-Press */
+/* Sortiermodus: Scrollen immer möglich, Drag erst per Long-Press */
 
 /* Einzelne Kachel */
 .fav-tile{
@@ -1104,28 +1104,22 @@ body.fz-xlarge .fav-tiles-grid{grid-auto-rows:160px}
 .fav-tile-num.z{font-size:13px;color:var(--tx2);font-weight:normal}
 .fav-tile-sub{font-size:11px;color:var(--tx2);line-height:1;margin-top:2px;text-align:right}
 
-/* Kachel-Name: max. 2 Zeilen (S/M), 3 Zeilen (L/XL); Schrift skaliert wenn nötig */
-.fav-tile-name{font-size:15px;font-weight:bold;color:var(--tx0);line-height:1.3;word-break:break-word;overflow:hidden;white-space:normal;min-height:0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;/* JS überschreibt font-size bei Bedarf */}
+/* Kachel-Name: max 2 Zeilen (S/M), max 3 Zeilen (L/XL); Schrift skaliert per JS */
+.fav-tile-name{font-size:15px;font-weight:bold;color:var(--tx0);line-height:1.3;word-break:break-word;overflow:hidden;white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
 body.fz-large .fav-tile-name{-webkit-line-clamp:3}
 body.fz-xlarge .fav-tile-name{-webkit-line-clamp:3}
 .fav-tile-cat{font-size:11px;color:var(--tx2);margin-top:3px;display:flex;align-items:center;gap:3px;overflow:hidden;white-space:nowrap}
-
-/* Kachel im Sortiermodus: kräftige goldene Outline + Muster-Hintergrund */
-.fav-tile.fav-sort-mode-tile{
-  border:2px solid var(--ac);
-  box-shadow:0 0 0 1px var(--ac-40), inset 0 0 0 2px var(--ac-07);
-  cursor:grab;
-}
-.fav-tile.fav-sort-mode-tile:active{transform:none;opacity:1}
 
 /* Kachel-Fußzeile: Preis + Menü */
 .fav-tile-ftr{display:flex;align-items:center;justify-content:space-between;margin-top:6px;gap:4px}
 .fav-tile-price{font-size:12px;color:var(--tx1);display:flex;align-items:center;gap:4px}
 .fav-tile-more{background:none;border:none;color:var(--tx2);font-size:18px;cursor:pointer;padding:2px 0 2px 6px;touch-action:manipulation;line-height:1;flex-shrink:0}
 
-/* Kachel im Sort-Modus: wird als Drag-Quelle gerade bewegt */
+/* Kachel im Sort-Modus: goldene Umrandung zeigt Sortiermodus an */
+.fav-tile.fav-sort-mode-tile{border:2px solid var(--ac);box-shadow:0 0 0 2px var(--ac-40);cursor:grab}
+.fav-tile.fav-sort-mode-tile:active{transform:none;opacity:1}
 .fav-tile.fav-tile-sort-active{opacity:.35;border-style:dashed}
-.fav-tile.fav-tile-drag-over{box-shadow:0 0 0 3px var(--ac),0 0 0 5px var(--ac-40)}
+.fav-tile.fav-tile-drag-over{box-shadow:0 0 0 4px var(--ac),0 0 12px var(--ac-40)}
 .fav-tile-drag-handle{position:absolute;top:6px;left:50%;transform:translateX(-50%);font-size:13px;color:var(--tx2);opacity:.6;pointer-events:none;letter-spacing:-1px}
 
 /* Undo-Strip für Kacheln */
@@ -5438,36 +5432,30 @@ function renderDrinks(forceSort){
   requestAnimationFrame(()=>{if(_p0&&scrollY>0)_p0.scrollTop=scrollY;initDrinkSwipe();_adjustTileNameFontSizes();});
 }
 
-/* ── Kachel-Namen: Schriftgröße automatisch verkleinern wenn zu lang ─────
-   S/M: max 2 Zeilen, L/XL: max 3 Zeilen.
-   Die Kachelgröße bleibt fix; nur die Schriftgröße der .fav-tile-name
-   wird schrittweise reduziert bis der Text passt. ─────────────────────── */
+/* ── Kachel-Namen: Schriftgröße auto-skalieren damit Name in max. Zeilen passt ─
+   S/M: 2 Zeilen · L/XL: 3 Zeilen. Kachelgröße bleibt fix. ─────────────────── */
 function _adjustTileNameFontSizes(){
-  const grid=document.querySelector('.fav-tiles-grid');
+  var grid=document.querySelector('.fav-tiles-grid');
   if(!grid)return;
-  const fz=document.body.classList.contains('fz-small')?'small'
-           :document.body.classList.contains('fz-large')?'large'
-           :document.body.classList.contains('fz-xlarge')?'xlarge':'medium';
-  const maxLines=(fz==='large'||fz==='xlarge')?3:2;
-  const baseFontPx={'small':12,'medium':15,'large':18,'xlarge':21}[fz];
-  const minFontPx=Math.round(baseFontPx*0.65);/* nicht kleiner als 65% der Basis */
-  const lineH=1.3;/* entspricht line-height in CSS */
-  grid.querySelectorAll('.fav-tile').forEach(tile=>{
-    const nameEl=tile.querySelector('.fav-tile-name');
+  var fz=document.body.classList.contains('fz-small')?'small'
+        :document.body.classList.contains('fz-large')?'large'
+        :document.body.classList.contains('fz-xlarge')?'xlarge':'medium';
+  var maxLines=(fz==='large'||fz==='xlarge')?3:2;
+  var basePx={'small':12,'medium':15,'large':18,'xlarge':21}[fz];
+  var minPx=Math.max(9,Math.round(basePx*0.62));
+  var lh=1.3;
+  grid.querySelectorAll('.fav-tile').forEach(function(tile){
+    var nameEl=tile.querySelector('.fav-tile-name');
     if(!nameEl)return;
-    /* Schriftgröße zurücksetzen damit wir sauber messen */
-    nameEl.style.fontSize='';
+    nameEl.style.fontSize='';/* Reset */
     nameEl.style.webkitLineClamp=String(maxLines);
-    nameEl.style.lineClamp=String(maxLines);
-    let fs=baseFontPx;
-    /* Maximal erlaubte Höhe = maxLines × lineHeight × fontSize */
-    const maxH=Math.ceil(maxLines*lineH*fs)+1;
-    /* Iterativ verkleinern bis scrollHeight ≤ maxH */
-    while(nameEl.scrollHeight>maxH+2&&fs>minFontPx){
-      fs=Math.max(minFontPx,fs-1);
+    var fs=basePx;
+    var maxH=Math.ceil(maxLines*lh*fs)+2;
+    /* Iterativ verkleinern bis scrollHeight passt */
+    while(nameEl.scrollHeight>maxH&&fs>minPx){
+      fs--;
       nameEl.style.fontSize=fs+'px';
-      const newMaxH=Math.ceil(maxLines*lineH*fs)+1;
-      if(nameEl.scrollHeight<=newMaxH+2)break;
+      maxH=Math.ceil(maxLines*lh*fs)+2;
     }
   });
 }
@@ -5778,8 +5766,8 @@ function setTileColor(drinkId,idx){
     _tSX=e.touches[0].clientX;_tSY=e.touches[0].clientY;
     _tFired=false;_tScrolled=false;
     _swActive=false;_swTile=null;_swHoriz=false;_swDir=0;
-    if(S.favSortMode){return;}/* Im Sortiermodus: kein Long-Press-Menü, kein Wischen */
-    if(tile.dataset.has==='1'&&!S.favSortMode){
+    if(S.favSortMode)return;/* Sortiermodus: kein Menü, kein Wischen, nur Scrollen */
+    if(tile.dataset.has==='1'){
       _swActive=true;_swTile=tile;_swSX=_tSX;_swSY=_tSY;
     }
     clearTimeout(_tT);
@@ -5845,7 +5833,7 @@ function setTileColor(drinkId,idx){
     }
     const tc=e.changedTouches[0];
     if(tc&&(Math.abs(tc.clientX-_tSX)>_MOVE_THRESHOLD||Math.abs(tc.clientY-_tSY)>_MOVE_THRESHOLD))return;
-    if(S.favSortMode)return;/* Sortiermodus: kein Hinzufügen per Tap */
+    if(S.favSortMode)return;/* Sortiermodus: kein Hinzufügen */
     tapPlus(tile.dataset.tileId);
   },{passive:true});
 
@@ -5897,8 +5885,8 @@ function _showTileMenu(drinkId,anchor){
 }
 
 /* ── Kachel-Drag-and-Drop (Sortierung im Kachel-Modus) ──────── */
-/* Scrollen immer möglich; Drag wird erst durch Long-Press (500ms) aktiviert */
-var _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null,lpt:null,lpFired:false,moved:false};
+/* Scrollen immer möglich. Drag wird erst durch Long-Press (600ms) aktiviert. */
+var _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null,lpt:null,moved:false};
 function initFavTileDrag(){
   document.querySelectorAll('.fav-tile[data-tile-id]').forEach(tile=>{
     if(tile._ftdi)return;tile._ftdi=true;
@@ -5906,21 +5894,24 @@ function initFavTileDrag(){
       if(!S.favSortMode)return;
       _ftd.id=tile.dataset.tileId;_ftd.el=tile;
       _ftd.startX=e.touches[0].clientX;_ftd.startY=e.touches[0].clientY;
-      _ftd.lastOver=null;_ftd.lpFired=false;_ftd.active=false;_ftd.moved=false;
+      _ftd.lastOver=null;_ftd.active=false;_ftd.moved=false;
       clearTimeout(_ftd.lpt);
       _ftd.lpt=setTimeout(function(){
         if(_ftd.moved)return;
-        _ftd.active=true;_ftd.lpFired=true;
+        _ftd.active=true;
         tile.classList.add('fav-tile-sort-active');
         try{if(typeof navigator.vibrate==='function')navigator.vibrate(30);}catch(_){}
-      },500);
+      },600);
     },{passive:true});
     tile.addEventListener('touchmove',function(e){
       if(!S.favSortMode)return;
       const dx=Math.abs(e.touches[0].clientX-_ftd.startX);
       const dy=Math.abs(e.touches[0].clientY-_ftd.startY);
-      if(!_ftd.active){if(dx>8||dy>8){_ftd.moved=true;clearTimeout(_ftd.lpt);}return;}
-      e.preventDefault();/* Scrollen unterbinden, sobald Drag aktiv */
+      if(!_ftd.active){
+        if(dx>8||dy>8){_ftd.moved=true;clearTimeout(_ftd.lpt);}
+        return;/* noch kein Drag aktiv → Scrollen läuft normal */
+      }
+      e.preventDefault();/* Drag aktiv → Scrollen unterdrücken */
       const x=e.touches[0].clientX,y=e.touches[0].clientY;
       const tiles=[...document.querySelectorAll('.fav-tile[data-tile-id]')];
       tiles.forEach(t=>t.classList.remove('fav-tile-drag-over'));
@@ -5946,7 +5937,7 @@ function initFavTileDrag(){
           S.favOrder=no;saveState();renderDrinks(false);
         }
       }
-      _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null,lpt:null,lpFired:false,moved:false};
+      _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null,lpt:null,moved:false};
     },{passive:true});
   });
 }
