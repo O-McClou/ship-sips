@@ -7969,7 +7969,7 @@ function exportVoyagePDF(){
         checkPage(7);
         if(even){doc.setFillColor(...BG);doc.rect(ML,yPos-4,CW,6.5,'F');}
         cols.forEach(c=>{
-          setFont(c.bold?'bold':'normal',c.size||8,c.gray?...TX2:...(c.bold?NAVY:TX1));
+          setFont(c.bold?'bold':'normal',c.size||8,...(c.gray?TX2:(c.bold?NAVY:TX1)));
           doc.text(String(c.label||''),c.x+(c.align==='right'?c.w:0),yPos,{align:c.align||'left'});
         });
         // Trennlinie
