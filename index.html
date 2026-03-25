@@ -1123,8 +1123,8 @@ body.fz-xlarge .fav-tile-name{-webkit-line-clamp:3}
   50%{box-shadow:0 0 0 4px rgba(255,255,255,0.70),0 0 20px rgba(255,255,255,0.25);}
 }
 /* Kachel im Sort-Modus: gut sichtbare weiße gestrichelte Umrandung mit Puls-Animation */
-.fav-tile.fav-sort-mode-tile{border:3px dashed rgba(255,255,255,0.85)!important;cursor:grab;touch-action:none;animation:sortTileGlow 1.4s ease-in-out infinite;}
-.fav-tile.fav-sort-mode-tile:active{transform:none;opacity:1;touch-action:none}
+.fav-tile.fav-sort-mode-tile{border:3px dashed rgba(255,255,255,0.85)!important;cursor:grab;touch-action:pan-y;animation:sortTileGlow 1.4s ease-in-out infinite;}
+.fav-tile.fav-sort-mode-tile:active{transform:none;opacity:1;touch-action:pan-y}
 .fav-tile.fav-tile-sort-active{opacity:.35;border-style:dashed}
 .fav-tile.fav-tile-drag-over{box-shadow:0 0 0 4px var(--ac),0 0 12px var(--ac-40)}
 .fav-tile-drag-handle{position:absolute;top:6px;left:50%;transform:translateX(-50%);font-size:13px;color:var(--tx2);opacity:.6;pointer-events:none;letter-spacing:-1px}
