@@ -4846,8 +4846,28 @@ function applyLang(){
 
 /* ═══ FONT SIZE ══════════════════════════════════════════════ */
 function setFontSize(sz){S.fontSize=sz;saveState();applyFontSize();}
-function setBtnLayout(v){S.btnLayout=v;saveState();renderDrinks(false);renderVerwaltung();}
-function applyFontSize(){document.body.classList.remove('fz-small','fz-large','fz-xlarge');if(S.fontSize==='small')document.body.classList.add('fz-small');else if(S.fontSize==='large')document.body.classList.add('fz-large');else if(S.fontSize==='xlarge')document.body.classList.add('fz-xlarge');['fzS','fzN','fzL','fzXL'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('on');});const m={small:'fzS',normal:'fzN',large:'fzL',xlarge:'fzXL'};const el=document.getElementById(m[S.fontSize||'normal']);if(el)el.classList.add('on');}
+function setBtnLayout(v){
+  S.btnLayout=v;saveState();renderDrinks(false);
+  // Direkte DOM-Aktualisierung – kein renderVerwaltung() → kein Ruckeln
+  var lEl=document.getElementById('blLeft'),rEl=document.getElementById('blRight');
+  if(lEl&&rEl){lEl.classList.toggle('on',(v||'plus-left')==='plus-left');rEl.classList.toggle('on',v==='plus-right');}
+}
+function applyFontSize(){
+  document.body.classList.remove('fz-small','fz-large','fz-xlarge');
+  if(S.fontSize==='small')document.body.classList.add('fz-small');
+  else if(S.fontSize==='large')document.body.classList.add('fz-large');
+  else if(S.fontSize==='xlarge')document.body.classList.add('fz-xlarge');
+  // Buttons direkt aktualisieren (IDs existieren wenn Einstellungen-Karte offen)
+  ['fzS','fzN','fzL','fzXL'].forEach(function(id){var el=document.getElementById(id);if(el)el.classList.remove('on');});
+  var fzMap={small:'fzS',normal:'fzN',large:'fzL',xlarge:'fzXL'};
+  var activeEl=document.getElementById(fzMap[S.fontSize||'normal']);if(activeEl)activeEl.classList.add('on');
+  // Akkordeon-Untertitel sofort aktualisieren ohne Re-render
+  var L=S.lang==='en';
+  var fzLbl=S.fontSize==='small'?'S':S.fontSize==='large'?'L':S.fontSize==='xlarge'?'XL':'M';
+  var blLbl=(S.btnLayout||'plus-left')==='plus-left'?(L?'+ left':'+ links'):(L?'+ right':'+ rechts');
+  var sub=document.getElementById('vwsettings-sub');
+  if(sub)sub.textContent=(S.lang==='de'?'🇩🇪 DE':'🇬🇧 EN')+' · '+(L?'Font':'Schrift')+' '+fzLbl+' · '+blLbl;
+}
 
 /* ═══ GOAL / LIMIT BAR ════════════════════════════════════════ */
 function updateGoalBar(){const sec=document.getElementById('goalBarSection');if(!S.dailyGoal){sec.style.display='none';updateLimitBanner();return;}const today=logicalTodayStr();const dt=S.log.filter(e=>entryLogicalDayStr(e)===today).reduce((s,e)=>s+(e.price||0),0); // FIX V32 K-3
@@ -8329,21 +8349,24 @@ function exportVoyageWord(){
 function toggleVwSec(k){
   if(!S.vwOpen)S.vwOpen={};
   S.vwOpen[k]=!S.vwOpen[k];
-  renderVerwaltung();
-  // FIX V44 #8: Geöffnetes Akkordeon sanft an den oberen Bildschirmrand scrollen
-  if(S.vwOpen[k]){
-    setTimeout(function(){
-      // Suche das adm-card-hdr-Element, das toggleVwSec(k) aufruft
-      var hdrs=document.querySelectorAll('.adm-card-hdr');
-      for(var i=0;i<hdrs.length;i++){
-        var oc=hdrs[i].getAttribute('onclick')||'';
-        if(oc.indexOf("'"+k+"'")!==-1||oc.indexOf('"'+k+'"')!==-1){
-          var card=hdrs[i].closest('.adm-card')||hdrs[i];
-          card.scrollIntoView({behavior:'smooth',block:'start'});
-          break;
-        }
-      }
-    },80);
+  // Direktes DOM-Toggle statt renderVerwaltung() → kein Ruckeln
+  var hdrEl=null;
+  var hdrs=document.querySelectorAll('.adm-card-hdr');
+  for(var i=0;i<hdrs.length;i++){
+    var oc=hdrs[i].getAttribute('onclick')||'';
+    if(oc.indexOf("'"+k+"'")!==-1||oc.indexOf('"'+k+'"')!==-1){hdrEl=hdrs[i];break;}
+  }
+  if(hdrEl){
+    var card=hdrEl.closest('.adm-card')||hdrEl.parentElement;
+    var body=card.querySelector('.adm-card-body');
+    var arr=hdrEl.querySelector('.adm-card-hdr-arr');
+    var isOpen=S.vwOpen[k];
+    if(body){body.classList.toggle('open',isOpen);}
+    if(arr){arr.classList.toggle('open',isOpen);}
+    if(isOpen&&card){setTimeout(function(){card.scrollIntoView({behavior:'smooth',block:'start'});},80);}
+  } else {
+    // Fallback: vollständiger Re-render (sollte nie eintreten)
+    renderVerwaltung();
   }
 }
 
@@ -8827,7 +8850,7 @@ function renderVerwaltung(){
       <span class="adm-card-hdr-ico">⚙️</span>
       <div class="adm-card-hdr-body">
         <div class="adm-card-hdr-title">${L?'Display Settings':'Anzeige-Einstellungen'}</div>
-        <div class="adm-card-hdr-sub">${S.lang==='de'?'🇩🇪 DE':'🇬🇧 EN'} · ${L?'Font':'Schrift'} ${S.fontSize==='small'?'S':S.fontSize==='normal'?'M':S.fontSize==='large'?'L':'XL'} · ${(S.btnLayout||'plus-left')==='plus-left'?(L?'+ left':'+ links'):(L?'+ right':'+ rechts')}</div>
+        <div id="vwsettings-sub" class="adm-card-hdr-sub">${S.lang==='de'?'🇩🇪 DE':'🇬🇧 EN'} · ${L?'Font':'Schrift'} ${S.fontSize==='small'?'S':(S.fontSize||'normal')==='normal'?'M':S.fontSize==='large'?'L':'XL'} · ${(S.btnLayout||'plus-left')==='plus-left'?(L?'+ left':'+ links'):(L?'+ right':'+ rechts')}</div>
       </div>
       <span class="adm-card-hdr-arr${S.vwOpen.settings?' open':''}">&#9658;</span>
     </div>
@@ -8848,10 +8871,10 @@ function renderVerwaltung(){
           <div style="font-size:10px;color:var(--tx2);margin-top:2px">${L?'Text size for buttons and lists.':'Textgröße für Buttons und Listen.'}</div>
         </div>
         <div class="adm-row-ctrl">
-          <button class="sbtn${S.fontSize==='small'?' on':''}" onclick="setFontSize('small')" style="font-size:10px">${T('fz.small')}</button>
-          <button class="sbtn${S.fontSize==='normal'?' on':''}" onclick="setFontSize('normal')" style="font-size:13px">${T('fz.normal')}</button>
-          <button class="sbtn${S.fontSize==='large'?' on':''}" onclick="setFontSize('large')" style="font-size:16px">${T('fz.large')}</button>
-          <button class="sbtn${S.fontSize==='xlarge'?' on':''}" onclick="setFontSize('xlarge')" style="font-size:19px">${T('fz.xlarge')}</button>
+          <button id="fzS" class="sbtn${S.fontSize==='small'?' on':''}" onclick="setFontSize('small')" style="font-size:10px">${T('fz.small')}</button>
+          <button id="fzN" class="sbtn${(S.fontSize||'normal')==='normal'?' on':''}" onclick="setFontSize('normal')" style="font-size:13px">${T('fz.normal')}</button>
+          <button id="fzL" class="sbtn${S.fontSize==='large'?' on':''}" onclick="setFontSize('large')" style="font-size:16px">${T('fz.large')}</button>
+          <button id="fzXL" class="sbtn${S.fontSize==='xlarge'?' on':''}" onclick="setFontSize('xlarge')" style="font-size:19px">${T('fz.xlarge')}</button>
         </div>
       </div>
       <div class="adm-row" style="padding-bottom:0;border-bottom:none">
@@ -8860,8 +8883,8 @@ function renderVerwaltung(){
           <div style="font-size:10px;color:var(--tx2);margin-top:2px">${L?'Position of + button on each drink row.':'Position des + Buttons in jeder Getränkezeile.'}</div>
         </div>
         <div class="adm-row-ctrl">
-          <button class="sbtn${(S.btnLayout||'plus-left')==='plus-left'?' on':''}" onclick="setBtnLayout('plus-left')">${T('settings.btnlayout.plus_left')} &#8722;</button>
-          <button class="sbtn${S.btnLayout==='plus-right'?' on':''}" onclick="setBtnLayout('plus-right')">&#8722; ${T('settings.btnlayout.plus_right')}</button>
+          <button id="blLeft" class="sbtn${(S.btnLayout||'plus-left')==='plus-left'?' on':''}" onclick="setBtnLayout('plus-left')">${T('settings.btnlayout.plus_left')} &#8722;</button>
+          <button id="blRight" class="sbtn${S.btnLayout==='plus-right'?' on':''}" onclick="setBtnLayout('plus-right')">&#8722; ${T('settings.btnlayout.plus_right')}</button>
         </div>
       </div>
     </div>
