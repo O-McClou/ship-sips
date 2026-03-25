@@ -5581,8 +5581,8 @@ setInterval(updateClock,1000);
 var _tapPlusLast={};
 var _tapMinusLast={};
 function tapPlus(id){
-  const now=Date.now();if(now-(_tapPlusLast[id]||0)<600)return;_tapPlusLast[id]=now; // V47+: pro-Getränk statt global
-  if(S.plusDebounce[id]&&now-S.plusDebounce[id]<500)return;S.plusDebounce[id]=now; // V40 T13: Debounce auf 500ms erhöht
+  const now=Date.now();if(now-(_tapPlusLast[id]||0)<180)return;_tapPlusLast[id]=now;
+  delete S.plusDebounce[id]; // zweiten Guard deaktivieren – 180 ms reicht
   // V45: Plus-Button kurz abdunkeln als visuelles Feedback
   const plusBtn=document.querySelector('[data-plus="'+id+'"]');if(plusBtn){plusBtn.style.opacity='0.5';setTimeout(()=>{plusBtn.style.opacity='';},600);}
   const d=S.drinks.find(x=>x.id===id);if(!d)return;
@@ -5599,7 +5599,7 @@ function tapPlus(id){
   if(S.dailyGoal>0){const t=logicalTodayStr();const dt=S.log.filter(e=>entryLogicalDayStr(e)===t).reduce((s,e)=>s+(e.price||0),0); // FIX V32 K-3
 if(dt>=S.dailyGoal){const justCrossed=(dt-d.price)<S.dailyGoal;if(justCrossed){showToast(T('goal.reached'),'error',4000);}else if(S.limitShownToday!==logicalTodayStr()){showToast(T('goal.exceeded'),'warn',3500);S.limitShownToday=logicalTodayStr();}updateLimitBanner();}}
   S.flashId=id;renderDrinks(false);
-  setTimeout(()=>{S.flashId=null;renderDrinks(false);},280);
+  setTimeout(()=>{S.flashId=null;renderDrinks(false);},150);
   clearTimeout(S.sortTimer);S.sortTimer=setTimeout(()=>{S.stableOrder=[];renderDrinks(true);},7000);
   clearTimeout(S.top10Timer);S.top10Timer=setTimeout(()=>{S.stableTop10=[];renderDrinks(false);},5000);
   // FIX V40: Undo-Toast auch für + Taste
