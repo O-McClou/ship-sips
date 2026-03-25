@@ -5256,7 +5256,10 @@ function doCSVImport(){if(!_csv){closeCSV();return;}const{drinks,nt1,nt2,importe
 function closeCSV(){_ovHide('csvOv');_csv=null;}
 
 /* ═══ TABS ═══════════════════════════════════════════════════ */
-function switchTab(i){S.activeTab=i;const _mtLabels=S.lang==='en'?['Drinks','Log','Stats','Settings','Help']:['Getränke','Protokoll','Statistik','Einstellungen','Hilfe'];['mt0','mt1','mt2','mt3','mt4'].forEach(function(id,j){const el=document.getElementById(id);if(el)el.textContent=_mtLabels[j];});['p0','p1','p2','p3','p4'].forEach((id,j)=>document.getElementById(id).style.display=j===i?'':'none');['t0','t1','t2','t3','t4'].forEach((id,j)=>document.getElementById(id).className='tab'+(j===i?' on':''));['mt0','mt1','mt2','mt3','mt4'].forEach((id,j)=>{const el=document.getElementById(id);if(el)el.className='mini-tab'+(j===i?' on':'');});const sb=document.getElementById('drinkSbar');if(sb)sb.style.display=i===0?'':'none';if(i!==1){const _fp=document.getElementById('logFilterPanel');if(_fp)_fp.style.display='none';closeLogMoreMenu();updateLogFilterBadge();}if(i===0){renderDrinks(false);checkBackupReminder();updateLimitBanner();renderCurrentLocationBar();updatePortQuickBar();checkShipTimeWarning();}else if(i===1){renderLog();maybeShowSwipeLegend();}else if(i===2)renderStats();else if(i===3)renderVerwaltung();else if(i===4)renderHelp();}
+function switchTab(i){
+  /* Sortiermodus beim Tab-Wechsel immer beenden */
+  if(i!==0&&S.favSortMode){S.favSortMode=false;if(typeof _ftdReset==='function')_ftdReset();}
+  S.activeTab=i;const _mtLabels=S.lang==='en'?['Drinks','Log','Stats','Settings','Help']:['Getränke','Protokoll','Statistik','Einstellungen','Hilfe'];['mt0','mt1','mt2','mt3','mt4'].forEach(function(id,j){const el=document.getElementById(id);if(el)el.textContent=_mtLabels[j];});['p0','p1','p2','p3','p4'].forEach((id,j)=>document.getElementById(id).style.display=j===i?'':'none');['t0','t1','t2','t3','t4'].forEach((id,j)=>document.getElementById(id).className='tab'+(j===i?' on':''));['mt0','mt1','mt2','mt3','mt4'].forEach((id,j)=>{const el=document.getElementById(id);if(el)el.className='mini-tab'+(j===i?' on':'');});const sb=document.getElementById('drinkSbar');if(sb)sb.style.display=i===0?'':'none';if(i!==1){const _fp=document.getElementById('logFilterPanel');if(_fp)_fp.style.display='none';closeLogMoreMenu();updateLogFilterBadge();}if(i===0){renderDrinks(false);checkBackupReminder();updateLimitBanner();renderCurrentLocationBar();updatePortQuickBar();checkShipTimeWarning();}else if(i===1){renderLog();maybeShowSwipeLegend();}else if(i===2)renderStats();else if(i===3)renderVerwaltung();else if(i===4)renderHelp();}
 
 /* ═══ DRINKS TAB ══════════════════════════════════════════════ */
 let _searchClearTimer=null;
@@ -5987,7 +5990,17 @@ function _showTileMenu(drinkId,anchor){
 /* Drag startet sofort ab kleiner Bewegung (kein Long-Press nötig).  */
 var _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null,lpt:null,moved:false,ghost:null};
 function _ftdRemoveGhost(){if(_ftd.ghost){_ftd.ghost.remove();_ftd.ghost=null;}}
+function _ftdReset(){
+  clearTimeout(_ftd.lpt);
+  _ftdRemoveGhost();
+  if(_ftd.el){try{_ftd.el.classList.remove('fav-tile-sort-active');}catch(e){}}
+  document.querySelectorAll('.fav-tile[data-tile-id]').forEach(function(t){t.classList.remove('fav-tile-drag-over');});
+  _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null,lpt:null,moved:false,ghost:null};
+}
 function initFavTileDrag(){
+  /* Immer zuerst aufräumen – verhindert Stuck-States nach re-render */
+  _ftdReset();
+
   /* Grid: touch-action:pan-y → normales Scrollen immer möglich.
      Drag wird erst nach 400 ms Long-Press aktiviert. */
   var grid=document.querySelector('.fav-tiles-grid');
@@ -5998,18 +6011,15 @@ function initFavTileDrag(){
 
     tile.addEventListener('touchstart',function(e){
       if(!S.favSortMode)return;
+      _ftdReset(); /* sicherstellen, dass kein alter State hängt */
       _ftd.id=tile.dataset.tileId;_ftd.el=tile;
       _ftd.startX=e.touches[0].clientX;_ftd.startY=e.touches[0].clientY;
-      _ftd.lastOver=null;_ftd.active=false;_ftd.moved=false;
-      _ftdRemoveGhost();
-      clearTimeout(_ftd.lpt);
       /* Long-Press-Timer: nach 400 ms Drag aktivieren */
       _ftd.lpt=setTimeout(function(){
-        if(_ftd.moved)return; /* Finger hat sich bewegt → Scroll, kein Drag */
+        if(_ftd.moved)return;
         _ftd.active=true;
         tile.classList.add('fav-tile-sort-active');
         try{if(typeof navigator.vibrate==='function')navigator.vibrate(40);}catch(_){}
-        /* Ghost-Klon erzeugen */
         _ftdRemoveGhost();
         var g=tile.cloneNode(true);
         var r=tile.getBoundingClientRect();
@@ -6028,15 +6038,10 @@ function initFavTileDrag(){
       if(!S.favSortMode||!_ftd.el||_ftd.id!==tile.dataset.tileId)return;
       const dx=Math.abs(e.touches[0].clientX-_ftd.startX);
       const dy=Math.abs(e.touches[0].clientY-_ftd.startY);
-      /* Sobald Finger >10 px bewegt UND Drag noch nicht aktiv → Scroll-Intent → Long-Press abbrechen */
       if(!_ftd.active){
-        if(dx>10||dy>10){
-          _ftd.moved=true;
-          clearTimeout(_ftd.lpt);
-        }
+        if(dx>10||dy>10){_ftd.moved=true;clearTimeout(_ftd.lpt);}
         return;
       }
-      /* Drag ist aktiv → Scrollen unterdrücken */
       e.preventDefault();
       const x=e.touches[0].clientX,y=e.touches[0].clientY;
       if(_ftd.ghost){
@@ -6061,23 +6066,23 @@ function initFavTileDrag(){
       if(_ftd.el)_ftd.el.classList.remove('fav-tile-sort-active');
       const tiles=[...document.querySelectorAll('.fav-tile[data-tile-id]')];
       tiles.forEach(t=>t.classList.remove('fav-tile-drag-over'));
-      if(_ftd.active&&_ftd.lastOver){
+      /* Swap merken, dann State VOR renderDrinks resetten */
+      const wasActive=_ftd.active;
+      const lastOver=_ftd.lastOver;
+      const dragId=_ftd.id;
+      _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null,lpt:null,moved:false,ghost:null};
+      if(wasActive&&lastOver){
         const order=tiles.map(t=>t.dataset.tileId);
-        const fi=order.indexOf(_ftd.id),ti=order.indexOf(_ftd.lastOver.dataset.tileId);
+        const fi=order.indexOf(dragId),ti=order.indexOf(lastOver.dataset.tileId);
         if(fi!==-1&&ti!==-1&&fi!==ti){
-          const no=[...order];no.splice(fi,1);no.splice(ti,0,_ftd.id);
+          const no=[...order];no.splice(fi,1);no.splice(ti,0,dragId);
           S.favOrder=no;saveState();renderDrinks(false);
         }
       }
-      _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null,lpt:null,moved:false,ghost:null};
     },{passive:true});
 
     tile.addEventListener('touchcancel',function(){
-      clearTimeout(_ftd.lpt);
-      _ftdRemoveGhost();
-      if(_ftd.el)_ftd.el.classList.remove('fav-tile-sort-active');
-      document.querySelectorAll('.fav-tile[data-tile-id]').forEach(t=>t.classList.remove('fav-tile-drag-over'));
-      _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null,lpt:null,moved:false,ghost:null};
+      _ftdReset();
     },{passive:true});
   });
 }
