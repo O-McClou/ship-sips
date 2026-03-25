@@ -4,13 +4,13 @@
    Cache-Version ship-sips-v48:
    FIX V48 F7: manifest.json in ASSETS ergänzt (war zuvor nicht
    gecacht – führte im Offline-Betrieb zu fehlender Manifest-Datei).
-   FIX V48.4: iOS Share-Bug behoben (title/text entfernt), Word-Export ergänzt, jsPDF CDN-Fallback –
+   FIX V48.5: iOS Share-Bug behoben (title/text entfernt), Word-Export ergänzt, jsPDF CDN-Fallback –
    Alle navigator.share()-Aufrufe nur noch mit files:[] – kein title/text mehr.
    Cache-Name auf v48-4 aktualisiert.
    skipWaiting() bleibt aktiv damit der neue Cache sofort greift.
    ═══════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'ship-sips-v48-4'; /* V48.3: Cache-Name an APP_VERSION V48.3 angeglichen */
+const CACHE_NAME = 'ship-sips-v48-5'; /* V48.3: Cache-Name an APP_VERSION V48.3 angeglichen */
 
 const ASSETS = [
   './index.html',

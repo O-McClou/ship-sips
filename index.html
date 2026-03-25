@@ -7786,7 +7786,7 @@ function renderStats(){
       ${lk.length>maxLegend?`<div style="font-size:10px;color:var(--tx2);text-align:center;margin-top:6px">+${lk.length-maxLegend} ${L?'more ports':'weitere Häfen'}</div>`:''}
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px;flex-wrap:wrap">
         <button onclick="exportVoyagePDF()" style="padding:8px 16px;background:var(--ac);color:var(--ac-fg);border:none;border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:11px;font-weight:bold;touch-action:manipulation;display:flex;align-items:center;gap:6px">📄 ${L?'Voyage PDF Report':'PDF-Reisebericht'}</button>
-        <button onclick="exportVoyageWord()" style="padding:8px 16px;background:transparent;color:var(--tx0);border:1px solid var(--ac-07);border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:11px;font-weight:bold;touch-action:manipulation;display:flex;align-items:center;gap:6px">📝 ${L?'Word Report':'Word-Bericht'}</button>
+        <button onclick="exportVoyageWord()" style="padding:8px 16px;background:transparent;color:var(--tx0);border:1px solid var(--ac-07);border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:11px;font-weight:bold;touch-action:manipulation;display:flex;align-items:center;gap:6px">📝 ${L?'Word (.rtf)':'Word (.rtf)'}</button>
       </div>
     </div>`;
   }
@@ -7846,7 +7846,7 @@ function renderStats(){
     </button>
     <button onclick="exportVoyageWord()" style="padding:12px 24px;background:linear-gradient(135deg,#1a3a5c,#0d2030);color:var(--tx0);border:1px solid var(--ac-07);border-radius:12px;cursor:pointer;font-family:Georgia,serif;font-size:13px;font-weight:bold;touch-action:manipulation;display:inline-flex;align-items:center;gap:8px">
       <span style="font-size:18px">📝</span>
-      <span>${L?'Download Voyage Word Report':'Word-Reisebericht herunterladen'}</span>
+      <span>${L?'Download Voyage Word Report (.rtf)':'Word-Reisebericht herunterladen (.rtf)'}</span>
     </button>
     <div style="font-size:10px;color:var(--tx2);margin-top:2px;line-height:1.5">${L?'Port timeline · Category breakdown · All entries':'Hafen-Timeline · Kategorien · Alle Einträge'}</div>
   </div>`;
@@ -8111,94 +8111,215 @@ function _pdfDownloadFallback(doc,fname){
 }
 /* ════════════════════════════════════════════════════════════════ */
 
-/* ── Word-Reisebericht (.doc) ─────────────────────────────────────
-   Erzeugt einen Reisebericht als Word-kompatible HTML-Datei (.doc).
-   Word öffnet diese Dateien nativ – keine externe Bibliothek nötig.
+/* ── Word-Reisebericht (.rtf) ─────────────────────────────────────
+   Erzeugt einen vollständigen Reisebericht im RTF-Format.
+   RTF öffnet auf iOS (Pages), macOS (Pages/Word), Windows (Word)
+   nativ – ohne externe Bibliothek, vollständig offline.
+   Inhalt identisch zur PDF: Übersicht, Top 10, Kategorien, Tage.
    ──────────────────────────────────────────────────────────────── */
 function exportVoyageWord(){
   const L=S.lang==='en';
-  showToast(L?'⏳ Preparing Word doc…':'⏳ Word-Dokument wird erstellt…','info',2000);
+  showToast(L?'⏳ Preparing Word report…':'⏳ Word-Reisebericht wird erstellt…','info',3000);
   try{
     const cur=S.currency||'€';
     const nm=appNameClean();
-    const title=(S.appTitle1||'Ship-Sips')+' – '+(S.appTitle2||'Reisebericht');
-    const dateStr=new Date().toLocaleDateString(L?'en-US':'de-DE');
 
-    // Statistik berechnen
-    const allLog=S.log.filter(e=>!e._marker);
-    const total=allLog.reduce((s,e)=>s+(parseFloat(e.price)||0),0);
-    const inclLog=allLog.filter(e=>{const d=S.drinks.find(x=>x.id===e.drinkId);return d&&d.included;});
-    const exclLog=allLog.filter(e=>{const d=S.drinks.find(x=>x.id===e.drinkId);return !d||!d.included;});
-    const exclTotal=exclLog.reduce((s,e)=>s+(parseFloat(e.price)||0),0);
-    const days=[...new Set(allLog.map(e=>e.time.slice(0,10)))].length||1;
+    /* ── RTF-Zeichencodierung (CP1252 + Unicode-Fallback) ── */
+    function rc(str){
+      const map={'ä':"\\\'e4",'ö':"\\\'f6",'ü':"\\\'fc",'Ä':"\\\'c4",'Ö':"\\\'d6",'Ü':"\\\'dc",
+        'ß':"\\\'df",'€':"\\\'80",'á':"\\\'e1",'é':"\\\'e9",'í':"\\\'ed",'ó':"\\\'f3",
+        'ú':"\\\'fa",'à':"\\\'e0",'è':"\\\'e8",'ò':"\\\'f2",'ù':"\\\'f9",'ñ':"\\\'f1",
+        'ç':"\\\'e7",'°':"\\\'b0",'·':"\\\'b7",'–':"\\u8211?",'—':"\\u8212?",'×':"\\u215?"};
+      return String(str||'').replace(/[\\{}]/g,c=>'\\'+c)
+        .split('').map(c=>{
+          if(map[c])return map[c];
+          const n=c.charCodeAt(0);
+          if(n<128)return c;
+          if(n<=255)return "\\'"+n.toString(16).padStart(2,'0');
+          return'\\u'+n+'?';
+        }).join('');
+    }
 
-    function esc(t){return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    /* ── Daten berechnen (identisch zur PDF) ── */
+    const allLog=S.log.filter(e=>!e._marker&&(e.price||0)>=0);
+    const totalAmt=allLog.reduce((s,e)=>s+(parseFloat(e.price)||0),0);
+    const timestamps=allLog.map(e=>new Date(e.time).getTime()).filter(Boolean);
+    const firstDate=timestamps.length?new Date(Math.min(...timestamps)):null;
+    const lastDate=timestamps.length?new Date(Math.max(...timestamps)):null;
+    const fmtD=d=>d?d.toLocaleDateString(L?'en-US':'de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}):'–';
+    const allDays=[...new Set(allLog.map(e=>entryLogicalDayStr(e)))];
+    const totalDays=allDays.length||1;
+    const avgDay=totalAmt/totalDays;
+    const tzWechsel=(S.tzChangeLog||[]).length;
+    const fmtAmt=v=>parseFloat(v||0).toFixed(2).replace('.',',')+' '+cur;
 
-    let html="<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>";
-    html+="<head><meta charset='utf-8'><title>"+esc(title)+"</title>";
-    html+="<style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#1a1a2e;margin:2cm;}";
-    html+="h1{font-size:18pt;color:#06101E;border-bottom:2px solid #B58E3C;padding-bottom:6pt;margin-bottom:6pt;}";
-    html+="h2{font-size:13pt;color:#06101E;margin-top:14pt;margin-bottom:4pt;}";
-    html+="table{border-collapse:collapse;width:100%;margin-bottom:14pt;}";
-    html+="th{background:#06101E;color:#B58E3C;padding:5pt 8pt;text-align:left;font-size:10pt;}";
-    html+="td{padding:4pt 8pt;font-size:10pt;border-bottom:1px solid #dde;}";
-    html+="tr:nth-child(even) td{background:#f5f6fa;}";
-    html+=".stat-box{background:#f5f6fa;border:1px solid #dde;padding:8pt 12pt;margin-bottom:10pt;}";
-    html+=".stat-lbl{color:#555;font-size:9pt;}";
-    html+=".stat-val{font-size:14pt;font-weight:bold;color:#06101E;}";
-    html+=".incl{color:#2ecc71;font-weight:bold;} .extra{color:#e67e22;font-weight:bold;}";
-    html+="</style></head><body>";
+    /* ── RTF-Hilfsfunktionen ── */
+    // Seitenbreite A4: 11906 twips, Ränder 1134 je Seite → Nutzbreite 9638
+    const CW=9638;
+    function sectionHeader(title){
+      return '\\pard\\sb280\\sa0\\f0\\fs22\\b\\cf1 '+rc(title)+'\\b0\\par\n'+
+             '\\pard\\sb0\\sa60\\f0\\fs18\\cf2{\\*\\do\\dobxcolumn\\dobypara\\dodhgt225\\dpline\\dpx0\\dpy0\\dpxsize'+CW+'\\dpysize0\\dplinew15\\dplinecol2}\\par\n';
+    }
+    // Tabellenkopf-Zeile (navy bg, gold text)
+    function thRow(cols,widths){
+      let s='\\trowd\\trgaph60\\trrh-360\n';
+      let x=0;
+      widths.forEach((w,i)=>{x+=w;s+='\\clcbpat1\\clbrdrl\\brdrw0\\brdrnone\\clbrdrt\\brdrw0\\brdrnone\\clbrdrr\\brdrw0\\brdrnone\\clbrdrb\\brdrw0\\brdrnone\\cellx'+x+'\n';});
+      s+='\\pard\\intbl ';
+      cols.forEach((c,i)=>{
+        if(i>0)s+='\\cell\\pard\\intbl ';
+        const align=c.right?'\\qr ':'\\ql ';
+        s+=align+'\\f0\\fs18\\b\\cf2 '+rc(c.t||c);
+      });
+      s+='\\b0\\cell\\row\n';
+      return s;
+    }
+    // Daten-Zeile (abwechselnd hell/weiß)
+    function tdRow(cols,widths,even){
+      let s='\\trowd\\trgaph60\\trrh-300\n';
+      let x=0;
+      widths.forEach((w,i)=>{x+=w;
+        s+=(even?'\\clcbpat6':'\\clcbpat5')+'\\clbrdrl\\brdrw0\\brdrnone\\clbrdrt\\brdrw0\\brdrnone\\clbrdrr\\brdrw0\\brdrnone\\clbrdrb\\brdrw5\\brdrs\\brdrcf7\\cellx'+x+'\n';
+      });
+      s+='\\pard\\intbl ';
+      cols.forEach((c,i)=>{
+        if(i>0)s+='\\cell\\pard\\intbl ';
+        const txt=typeof c==='object'?c.t:c;
+        const bold=typeof c==='object'&&c.b;
+        const right=typeof c==='object'&&c.r;
+        const gray=typeof c==='object'&&c.g;
+        const align=right?'\\qr ':'\\ql ';
+        s+=align+(bold?'\\b ':'')+'\\f0\\fs18\\cf'+(gray?'3':'1')+' '+rc(txt)+(bold?'\\b0 ':'');
+      });
+      s+='\\cell\\row\n';
+      return s;
+    }
+    // Stat-Box (2 Zeilen: Label klein + Wert groß)
+    function statCell(label,value,cellx){
+      return '\\clcbpat6\\clbrdrl\\brdrw0\\brdrnone\\clbrdrt\\brdrw0\\brdrnone\\clbrdrr\\brdrw15\\brdrs\\brdrcf7\\clbrdrb\\brdrw0\\brdrnone\\cellx'+cellx+'\n'+
+             '\\pard\\intbl\\ql\\f0\\fs16\\cf3 '+rc(label)+'\\line\\fs26\\b\\cf1 '+rc(value)+'\\b0\\fs18\\cell\n';
+    }
 
-    html+="<h1>"+esc(title)+"</h1>";
-    html+="<p style='color:#555;font-size:9pt;margin-top:0'>"+(L?'Created on: ':'Erstellt am: ')+esc(dateStr)+"</p>";
+    /* ── RTF aufbauen ── */
+    let rtf='';
+    // Header
+    rtf+='{\\rtf1\\ansi\\ansicpg1252\\deff0\\nouicompat\n';
+    rtf+='{\\fonttbl{\\f0\\fswiss\\fcharset0 Arial;}{\\f1\\froman\\fcharset0 Times New Roman;}}\n';
+    // Farben: 1=navy, 2=gold, 3=grau, 4=hellgrau, 5=weiß, 6=zeilenhell, 7=tabellenrand
+    rtf+='{\\colortbl;\\red6\\green16\\blue30;\\red181\\green142\\blue60;\\red85\\green85\\blue85;\\red170\\green170\\blue190;\\red255\\green255\\blue255;\\red245\\green248\\blue252;\\red200\\green210\\blue220;}\n';
+    rtf+='\\paperw11906\\paperh16838\\margl1134\\margr1134\\margt1134\\margb1134\n';
+    rtf+='\\widowctrl\\hyphauto\n\n';
 
-    // Zusammenfassung
-    html+="<h2>"+(L?'📊 Summary':'📊 Zusammenfassung')+"</h2>";
-    html+="<table><tr>";
-    html+="<td class='stat-box'><div class='stat-lbl'>"+(L?'Total entries':'Einträge gesamt')+"</div><div class='stat-val'>"+allLog.length+"</div></td>";
-    html+="<td class='stat-box'><div class='stat-lbl'>"+(L?'Days':'Tage')+"</div><div class='stat-val'>"+days+"</div></td>";
-    html+="<td class='stat-box'><div class='stat-lbl'>"+(L?'Total value':'Gesamtwert')+"</div><div class='stat-val'>"+total.toFixed(2)+' '+esc(cur)+"</div></td>";
-    html+="<td class='stat-box'><div class='stat-lbl'>"+(L?'Extra costs':'Aufpreis gesamt')+"</div><div class='stat-val'>"+exclTotal.toFixed(2)+' '+esc(cur)+"</div></td>";
-    html+="</tr></table>";
+    // ── TITEL ──────────────────────────────────────────────────
+    rtf+='\\pard\\sb0\\sa0\\f0\\fs36\\b\\cf2 '+rc(S.appTitle1||'Ship-Sips')+'\\b0\\par\n';
+    rtf+='\\pard\\sb40\\sa0\\f0\\fs22\\cf3 '+rc(S.appTitle2||'')+'\\par\n';
+    rtf+='\\pard\\sb40\\sa0\\f0\\fs18\\cf4 '+(L?'Voyage Report':'Reisebericht')+' \\cf3\\bullet  '+(L?'Created: ':'Erstellt: ')+rc(new Date().toLocaleDateString(L?'en-US':'de-DE'))+(firstDate?' \\cf3\\bullet  '+(L?'Period: ':'Zeitraum: ')+rc(fmtD(firstDate)+' \u2013 '+fmtD(lastDate)):'')+'\\par\n';
+    rtf+='\\pard\\sb80\\sa200{\\*\\do\\dobxcolumn\\dobypara\\dodhgt180\\dpline\\dpx0\\dpy0\\dpxsize'+CW+'\\dpysize0\\dplinew30\\dplinecol2}\\par\n\n';
 
-    // Protokoll-Tabelle
-    html+="<h2>"+(L?'🥂 Drink Log':'🥂 Getränke-Protokoll')+"</h2>";
-    html+="<table><tr><th>"+(L?'Date':'Datum')+"</th><th>"+(L?'Time':'Uhrzeit')+"</th><th>"+(L?'Drink':'Getränk')+"</th><th>"+(L?'Price':'Preis')+"</th><th>"+(L?'Included':'Inklusiv')+"</th><th>"+(L?'Location':'Ort')+"</th><th>"+(L?'Note':'Hinweis')+"</th></tr>";
+    // ── ÜBERSICHT: 5 Stat-Boxen ────────────────────────────────
+    rtf+=sectionHeader(L?'Overview':'Übersicht');
+    const w5=Math.floor(CW/5);
+    const w5last=CW-w5*4;
+    rtf+='\\trowd\\trgaph60\\trrh-700\n';
+    rtf+=statCell(L?'ENTRIES':'EINTRÄGE',String(allLog.length),w5);
+    rtf+=statCell(L?'TOTAL':'GESAMT',fmtAmt(totalAmt),w5*2);
+    rtf+=statCell(L?'TRAVEL DAYS':'REISETAGE',String(totalDays),w5*3);
+    rtf+=statCell(L?'AVG / DAY':'Ø PRO TAG',fmtAmt(avgDay),w5*4);
+    rtf+=statCell(L?'TZ CHANGES':'TZ-WECHSEL',String(tzWechsel),CW);
+    rtf+='\\row\n\n';
 
-    const sorted=[...allLog].sort((a,b)=>new Date(a.time)-new Date(b.time));
-    sorted.forEach(e=>{
-      const off=typeof e.tz==='number'?e.tz:0;
-      const d=new Date(new Date(e.time).getTime()+off*60000);
-      const dateS=String(d.getUTCDate()).padStart(2,'0')+'.'+(String(d.getUTCMonth()+1).padStart(2,'0'))+'.'+d.getUTCFullYear();
-      const timeS=String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0');
-      const drObj=S.drinks.find(x=>x.id===e.drinkId);
-      const isIncl=drObj&&drObj.included;
-      const inclCell=isIncl?"<span class='incl'>●</span>":"<span class='extra'>+</span>";
-      html+="<tr><td>"+esc(dateS)+"</td><td>"+esc(timeS)+"</td><td>"+esc(e.name)+"</td>";
-      html+="<td style='text-align:right'>"+parseFloat(e.price||0).toFixed(2)+' '+esc(cur)+"</td>";
-      html+="<td style='text-align:center'>"+inclCell+"</td>";
-      html+="<td>"+esc(e.location||'')+"</td><td>"+esc(e.note||'')+"</td></tr>";
+    // ── PRO PERSON ─────────────────────────────────────────────
+    if(S.users&&S.users.length>0){
+      const usersWithData=S.users.filter(u=>allLog.some(e=>e.userId===u.id));
+      if(usersWithData.length>0){
+        rtf+=sectionHeader(L?'Per Person':'Pro Person');
+        const pw=[2500,1800,2000,1800,1538];
+        let px=0; const pxArr=pw.map(w=>{px+=w;return px;});
+        rtf+=thRow([L?'Name':'Name',{t:L?'Entries':'Einträge',right:true},{t:L?'Total':'Gesamt',right:true},{t:L?'Share':'Anteil',right:true},{t:L?'Budget':'Budget',right:true}],pw);
+        usersWithData.forEach((u,i)=>{
+          const uLog=allLog.filter(e=>e.userId===u.id);
+          const uTotal=uLog.reduce((s,e)=>s+(parseFloat(e.price)||0),0);
+          const uPct=totalAmt>0?(uTotal/totalAmt*100).toFixed(1)+'%':'–';
+          const bud=S.userBudgets&&S.userBudgets[u.id]?fmtAmt(S.userBudgets[u.id]):(L?'no limit':'kein Limit');
+          rtf+=tdRow([{t:u.name,b:true},{t:String(uLog.length),r:true},{t:fmtAmt(uTotal),r:true,b:true},{t:uPct,r:true,g:true},{t:bud,r:true,g:true}],pw,i%2===1);
+        });
+        rtf+='\\pard\\sb20\\par\n\n';
+      }
+    }
+
+    // ── TOP 10 GETRÄNKE ────────────────────────────────────────
+    const drinkCount={};
+    allLog.forEach(e=>{
+      if(!drinkCount[e.name])drinkCount[e.name]={count:0,total:0};
+      drinkCount[e.name].count++;
+      drinkCount[e.name].total+=(parseFloat(e.price)||0);
     });
-    html+="</table>";
+    const top10=Object.entries(drinkCount).sort((a,b)=>b[1].count-a[1].count).slice(0,10);
+    if(top10.length){
+      rtf+=sectionHeader(L?'Top 10 Drinks':'Top 10 Getränke');
+      const tw=[380,2820,1500,1800,1200,1938];
+      rtf+=thRow([{t:'#',right:true},{t:L?'Drink':'Getränk'},{t:L?'Count':'Anzahl',right:true},{t:L?'Total':'Gesamt',right:true},{t:L?'Share':'Anteil',right:true},{t:L?'Frequency':'Häufigkeit',right:true}],tw);
+      top10.forEach(([name,st],i)=>{
+        const pct=totalAmt>0?(st.total/totalAmt*100).toFixed(1)+'%':'–';
+        const freq=totalDays>0?((st.count/totalDays).toFixed(1)+'/'+( L?'day':'Tag')):'–';
+        rtf+=tdRow([{t:String(i+1),r:true,g:true},name,{t:st.count+'×',r:true},{t:fmtAmt(st.total),r:true,b:true},{t:pct,r:true,g:true},{t:freq,r:true,g:true}],tw,i%2===1);
+      });
+      rtf+='\\pard\\sb20\\par\n\n';
+    }
 
-    // Getränkekarte
-    html+="<h2>"+(L?'🍹 Drink Menu':'🍹 Getränkekarte')+"</h2>";
-    html+="<table><tr><th>"+(L?'Category':'Kategorie')+"</th><th>"+(L?'Name':'Name')+"</th><th>"+(L?'Price':'Preis')+"</th><th>"+(L?'Included':'Inklusiv')+"</th></tr>";
-    S.drinks.forEach(d=>{
-      html+="<tr><td>"+esc(d.cat)+"</td><td>"+esc(d.name)+"</td>";
-      html+="<td style='text-align:right'>"+parseFloat(d.price||0).toFixed(2)+' '+esc(cur)+"</td>";
-      html+="<td style='text-align:center'>"+(d.included?"<span class='incl'>●</span>":"<span class='extra'>+</span>")+"</td></tr>";
+    // ── NACH KATEGORIE ─────────────────────────────────────────
+    const catMap={};
+    allLog.forEach(e=>{
+      const d=S.drinks.find(x=>x.id===e.drinkId);
+      const cat=d?d.cat:(L?'Other':'Sonstiges');
+      if(!catMap[cat])catMap[cat]={count:0,total:0};
+      catMap[cat].count++;catMap[cat].total+=(parseFloat(e.price)||0);
     });
-    html+="</table>";
+    const sortedCats=Object.entries(catMap).sort((a,b)=>b[1].total-a[1].total);
+    if(sortedCats.length){
+      rtf+=sectionHeader(L?'By Category':'Nach Kategorie');
+      const cw=[3400,1800,2200,2238];
+      rtf+=thRow([L?'Category':'Kategorie',{t:L?'Count':'Anzahl',right:true},{t:L?'Total':'Gesamt',right:true},{t:L?'Share':'Anteil',right:true}],cw);
+      sortedCats.forEach(([cat,st],i)=>{
+        const pct=totalAmt>0?(st.total/totalAmt*100).toFixed(1)+'%':'–';
+        rtf+=tdRow([cat,{t:st.count+'×',r:true},{t:fmtAmt(st.total),r:true,b:true},{t:pct,r:true,g:true}],cw,i%2===1);
+      });
+      rtf+='\\pard\\sb20\\par\n\n';
+    }
 
-    html+="</body></html>";
+    // ── TAGESÜBERSICHT ─────────────────────────────────────────
+    if(allDays.length){
+      rtf+=sectionHeader(L?'Daily Overview':'Tagesübersicht');
+      const dw=[1800,1700,2300,2000,1838];
+      rtf+=thRow([L?'Date':'Datum',{t:L?'Entries':'Einträge',right:true},{t:L?'Total':'Gesamt',right:true},{t:L?'vs Avg':'vs Ø',right:true},{t:L?'Day Goal':'Tagesziel',right:true}],dw);
+      const sortedDays=allDays.slice().sort();
+      const dayGoal=S.dailyGoal||0;
+      sortedDays.forEach((dayStr,i)=>{
+        const dayLog=allLog.filter(e=>entryLogicalDayStr(e)===dayStr);
+        const dayTotal=dayLog.reduce((s,e)=>s+(parseFloat(e.price)||0),0);
+        const diff=dayTotal-avgDay;
+        const diffStr=(diff>=0?'+':'')+fmtAmt(diff);
+        const goalStr=dayGoal>0?fmtAmt(dayGoal):'–';
+        // Datum aus dayStr (YYYY-MM-DD) lesbar machen
+        const dp=dayStr.split('-');
+        const dn=new Date(parseInt(dp[0]),parseInt(dp[1])-1,parseInt(dp[2]));
+        const dayLabel=dn.toLocaleDateString(L?'en-US':'de-DE',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});
+        rtf+=tdRow([dayLabel,{t:String(dayLog.length),r:true},{t:fmtAmt(dayTotal),r:true,b:true},{t:diffStr,r:true,g:true},{t:goalStr,r:true,g:true}],dw,i%2===1);
+      });
+      rtf+='\\pard\\sb20\\par\n\n';
+    }
 
-    const fname=(S.appTitle1||'Ship-Sips').replace(/[^a-z0-9]/gi,'_')+'_Reisebericht_'+new Date().toISOString().slice(0,10)+'.doc';
-    shareOrDownload(html,fname,'application/msword');
-    showToast('📝 '+(L?'Word report ready!':'Word-Reisebericht fertig!'),'info',3500);
+    // ── FOOTER ────────────────────────────────────────────────
+    rtf+='\\pard\\sb400\\sa0{\\*\\do\\dobxcolumn\\dobypara\\dodhgt90\\dpline\\dpx0\\dpy0\\dpxsize'+CW+'\\dpysize0\\dplinew15\\dplinecol2}\\par\n';
+    rtf+='\\pard\\sb60\\sa0\\f0\\fs16\\cf4 '+(S.appTitle1||'Ship-Sips')+' \\bullet  '+(L?'Voyage Report':'Reisebericht')+' \\bullet  '+rc(new Date().toLocaleDateString(L?'en-US':'de-DE'))+'\\par\n';
+    rtf+='}';
+
+    const fname=nm+'_Reisebericht_'+new Date().toISOString().slice(0,10)+'.rtf';
+    shareOrDownload(rtf,fname,'application/rtf');
+    showToast('📝 '+(L?'Word report ready! (.rtf)':'Word-Reisebericht fertig! (.rtf)'),'info',3500);
   }catch(err){
-    console.error('[Word]',err);
-    showToast((L?'⚠️ Word export error: ':'⚠️ Word-Export-Fehler: ')+err.message,'error',6000);
+    console.error('[Word/RTF]',err);
+    showToast((L?'⚠️ Report error: ':'⚠️ Bericht-Fehler: ')+err.message,'error',6000);
   }
 }
 /* ════════════════════════════════════════════════════════════════ */
