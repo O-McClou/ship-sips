@@ -1541,7 +1541,7 @@ details.hlp-acc summary:active{opacity:.75}
   </div>
   <div id="top10section" style="display:none">
     <div class="top10-section">
-      <div class="top10-title" id="top10title">⭐ Häufig bestellt</div>
+      <div class="top10-title" id="top10title">🏆 TOP TEN</div>
       <div id="top10list" class="dlist" style="padding:0"></div>
       <div id="top10TilesGrid" style="display:none"></div>
     </div>
@@ -2127,7 +2127,7 @@ const I18N = {
     'stat.overview':'📈 Gesamtübersicht','stat.total':'Gesamt','stat.entries':'Einträge','stat.days':'Tage',
     'stat.avg_day':'∅/Tag','stat.avg_drinks':'∅ Drinks','stat.avg_price':'∅ Preis',
     'stat.top':'🏆 Top Getränke','stat.by_day':'📅 Tagesvergleich','stat.daychart':'📈 Tagesverlauf','stat.by_cat':'📂 Nach Kategorie',
-    'fav.title':'★ Favoriten','top10.title':'⭐ Häufig bestellt',
+    'fav.title':'Favoriten','top10.title':'TOP TEN',
     'undo':'↩ Rückgängig','no_results':'Keine Getränke gefunden',
     'goal.label':'Tageslimit','goal.reached':'🚨 Tageslimit erreicht!','goal.exceeded':'🚨 Tageslimit überschritten!',
     'goal.limit_banner':'Tageslimit erreicht!',
@@ -2243,7 +2243,7 @@ const I18N = {
     'stat.overview':'📈 Overview','stat.total':'Total','stat.entries':'Entries','stat.days':'Days',
     'stat.avg_day':'∅/Day','stat.avg_drinks':'∅ Drinks','stat.avg_price':'∅ Price',
     'stat.top':'🏆 Top Drinks','stat.by_day':'📅 Daily Comparison','stat.daychart':'📈 Daily Trend','stat.by_cat':'📂 By Category',
-    'fav.title':'★ Favorites','top10.title':'⭐ Most Ordered',
+    'fav.title':'Favorites','top10.title':'TOP TEN',
     'undo':'↩ Undo','no_results':'No drinks found',
     'goal.label':'Daily Limit','goal.reached':'🚨 Daily limit reached!','goal.exceeded':'🚨 Daily limit exceeded!',
     'goal.limit_banner':'Daily limit reached!',
@@ -5380,8 +5380,12 @@ function renderDrinks(forceSort){
     const viewToggleTarget=isTile?'list':'tile';
     // Buttons: ⇅ → 🎨 → ☰/⊞ (alle rechts)
     favTitleEl.innerHTML=
-      `<span style="cursor:pointer;display:flex;align-items:center;gap:5px;flex:1;min-width:0;order:1" data-fav-toggle="1"><span>${arr}</span><span>${T('fav.title')}</span></span>`+
-      `<div style="display:flex;align-items:center;gap:3px;flex-shrink:0;order:10;margin-left:auto">`+
+      `<span style="cursor:pointer;display:flex;align-items:center;gap:6px;order:1;min-width:0" data-fav-toggle="1">`+
+        `<span style="font-size:13px;line-height:1">★</span>`+
+        `<span style="flex:1;min-width:0">${T('fav.title')}</span>`+
+        `<span style="opacity:.55;font-size:10px">${arr}</span>`+
+      `</span>`+
+      `<div style="display:flex;align-items:center;gap:3px;flex-shrink:0;order:10">`+
       `<button class="fav-sort-btn${sortActive?' active':''}" onclick="event.stopPropagation();toggleFavSortMode()" title="${L?'Sort':'Sortieren'}">⇅</button>`+
       (isTile?`<button class="fav-color-btn${S.favColorMode!=='theme'?' on':''}" onclick="event.stopPropagation();cycleFavColorMode()" title="${colorModeLbl}">${colorModeIcon}</button>`:'') +
       `<button class="fav-view-btn" onclick="event.stopPropagation();setFavViewMode('${viewToggleTarget}')" title="${viewToggleTitle}">${viewToggleIcon}</button>`+
@@ -5435,8 +5439,12 @@ function renderDrinks(forceSort){
       const t10ColorModeLbl=S.top10ColorMode==='color'?(L?'Color':'Farbe'):S.top10ColorMode==='tinted'?(L?'Tinted':'Getönt'):(L?'Theme':'Theme');
       const t10ColorModeIcon=S.top10ColorMode==='color'?'🎨':S.top10ColorMode==='tinted'?'🖌':'🎨';
       document.getElementById('top10title').innerHTML=
-        `<span data-top10-toggle="1" style="cursor:pointer;display:flex;align-items:center;gap:5px;flex:1;min-width:0"><span>${arr10}</span><span>${T('top10.title')}</span></span>`+
-        `<div style="display:flex;align-items:center;gap:3px;flex-shrink:0;margin-left:auto">`+
+        `<span data-top10-toggle="1" style="cursor:pointer;display:flex;align-items:center;gap:6px;order:1;min-width:0">`+
+          `<span style="font-size:13px;line-height:1">🏆</span>`+
+          `<span style="flex:1;min-width:0">${T('top10.title')}</span>`+
+          `<span style="opacity:.55;font-size:10px">${arr10}</span>`+
+        `</span>`+
+        `<div style="display:flex;align-items:center;gap:3px;flex-shrink:0;order:10">`+
         (isTile10?`<button class="fav-color-btn${S.top10ColorMode!=='theme'?' on':''}" onclick="event.stopPropagation();cycleTop10ColorMode()" title="${t10ColorModeLbl}">${t10ColorModeIcon}</button>`:'') +
         `<button class="fav-view-btn${isTile10?' on':''}" onclick="event.stopPropagation();setTop10ViewMode('${t10ViewToggleTarget}')" title="${t10ViewToggleTitle}">${t10ViewToggleIcon}</button>`+
         `</div>`;
@@ -5767,6 +5775,10 @@ function top10TileHTML(d,rank){
     ?`<span class="incl-dot filled" style="background:${AI_COLOR};width:11px;height:11px;border-radius:50%;display:inline-block;flex-shrink:0"></span>`
     :`<span class="incl-dot outline" style="width:11px;height:11px;border-radius:50%;border:1.5px solid ${col};display:inline-block;flex-shrink:0"></span>`;
   const _tileOpen='<div class="fav-tile'+(fl?' fl':'')+'" data-top10-tile-id="'+esc(d.id)+'" data-has="'+(c>0?'1':'')+'" style="'+(bgStyle+borderStyle)+'" role="button" aria-label="'+esc(d.name)+' '+(S.lang==='en'?'add':'hinzufügen')+'">';
+  // Undo-Strip (gleiche Seite wie Listenansicht)
+  const _plusRight=S.btnLayout==='plus-right';
+  const _undoSide=_plusRight?'strip-left':'strip-right';
+  const _undoStrip='<div class="fav-tile-undo-strip '+_undoSide+'"></div>';
   // Kopfzeile: Rang-Badge links, Zähler rechts
   const rankColors=['#FFD700','#C0C0C0','#CD7F32'];
   const rankStyle=rank<3?'background:'+rankColors[rank]+';color:#1a1a1a;':('background:var(--bg4);color:var(--tx2);');
@@ -5777,7 +5789,7 @@ function top10TileHTML(d,rank){
   const _cat='<div class="fav-tile-cat"'+(txStyle?' style="opacity:.7;'+txStyle+'"':'')+'><span style="background:'+col+';flex-shrink:0;width:9px;height:9px;border-radius:50%;display:inline-block"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(d.cat)+'</span></div>';
   const _ftr='<div class="fav-tile-ftr"><div class="fav-tile-price"'+(txStyle?' style="opacity:.85;'+txStyle+'"':'')+'>'+eur(d.price)+' '+aiDot+'</div></div>';
   const _body='<div class="fav-tile-body">'+_name+_cat+'</div>';
-  return _tileOpen+_hdr+_body+_ftr+'</div>';
+  return _tileOpen+_undoStrip+_hdr+_body+_ftr+'</div>';
 }
 function openTileColorPicker(drinkId){
   const d=S.drinks.find(x=>x.id===drinkId);if(!d)return;
@@ -5845,10 +5857,11 @@ function setTileColor(drinkId,idx){
     _tSX=e.touches[0].clientX;_tSY=e.touches[0].clientY;
     _tFired=false;_tScrolled=false;
     _swActive=false;_swTile=null;_swHoriz=false;_swDir=0;
-    if(S.favSortMode)return;/* Sortiermodus: kein Menü, kein Wischen, nur Scrollen */
-    // Undo-Wischen nur für Favoriten-Kacheln (nicht Top10)
-    if(tile&&tile.dataset.has==='1'){
-      _swActive=true;_swTile=tile;_swSX=_tSX;_swSY=_tSY;
+    if(S.favSortMode)return;
+    // Undo-Wischen für Favoriten- UND Top10-Kacheln wenn Getränk bereits erfasst
+    const activeTile=tile||t10tile;
+    if(activeTile&&activeTile.dataset.has==='1'){
+      _swActive=true;_swTile=activeTile;_swSX=_tSX;_swSY=_tSY;
     }
     if(t10tile)return;/* Top10: kein Long-Press-Menü */
     clearTimeout(_tT);
@@ -5897,7 +5910,10 @@ function setTileColor(drinkId,idx){
       const strip=_swTile.querySelector('.fav-tile-undo-strip');
       if(strip){strip.style.transition='opacity .2s';strip.style.opacity=_swTile.dataset.has==='1'?'0.45':'0';}
       setTimeout(()=>{if(_swTile){_swTile.style.transition='';const s=_swTile.querySelector('.fav-tile-undo-strip');if(s)s.style.transition='';}},220);
-      if(triggered)tapMinus(_swTile.dataset.tileId);
+      if(triggered){
+        const swId=_swTile.dataset.tileId||_swTile.dataset.top10TileId;
+        tapMinus(swId);
+      }
       _swActive=false;_swTile=null;_swHoriz=false;
       clearTimeout(_tT);_tT=null;
       return;
