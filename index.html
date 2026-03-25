@@ -5383,7 +5383,7 @@ function renderDrinks(forceSort){
       `<span style="cursor:pointer;display:flex;align-items:center;gap:6px;order:1;min-width:0" data-fav-toggle="1">`+
         `<span style="font-size:13px;line-height:1">★</span>`+
         `<span style="flex:1;min-width:0">${T('fav.title')}</span>`+
-        `<span style="opacity:.55;font-size:10px">${arr}</span>`+
+        `<span style="font-size:16px;opacity:.75;line-height:1">${arr}</span>`+
       `</span>`+
       `<div style="display:flex;align-items:center;gap:3px;flex-shrink:0;order:10">`+
       `<button class="fav-sort-btn${sortActive?' active':''}" onclick="event.stopPropagation();toggleFavSortMode()" title="${L?'Sort':'Sortieren'}">⇅</button>`+
@@ -5396,7 +5396,7 @@ function renderDrinks(forceSort){
       favListEl.style.display='none';
       favTilesEl.style.display=contentVisible?'':'none';
       if(contentVisible){
-        const sortBanner=sortActive?`<div class="fav-sort-banner">⇅ ${L?'Sort mode – drag tiles to reorder':'Sortiermodus – Kacheln ziehen zum Umsortieren'}</div>`:'' ;
+        const sortBanner=sortActive?`<div class="fav-sort-banner">⇅ ${L?'Sort mode – hold tile 0.4 s, then drag to swap':'Sortiermodus – Kachel 0,4 s halten, dann ziehen zum Tauschen'}</div>`:'' ;
         if(sortActive){
           favTilesEl.innerHTML=sortBanner+'<div class="fav-tiles-grid">'+favFiltered.map(d=>favTileHTML(d,true)).join('')+'</div>';
           initFavTileDrag();
@@ -5442,7 +5442,7 @@ function renderDrinks(forceSort){
         `<span data-top10-toggle="1" style="cursor:pointer;display:flex;align-items:center;gap:6px;order:1;min-width:0">`+
           `<span style="font-size:13px;line-height:1">🏆</span>`+
           `<span style="flex:1;min-width:0">${T('top10.title')}</span>`+
-          `<span style="opacity:.55;font-size:10px">${arr10}</span>`+
+          `<span style="font-size:16px;opacity:.75;line-height:1">${arr10}</span>`+
         `</span>`+
         `<div style="display:flex;align-items:center;gap:3px;flex-shrink:0;order:10">`+
         (isTile10?`<button class="fav-color-btn${S.top10ColorMode!=='theme'?' on':''}" onclick="event.stopPropagation();cycleTop10ColorMode()" title="${t10ColorModeLbl}">${t10ColorModeIcon}</button>`:'') +
@@ -5988,53 +5988,61 @@ function _showTileMenu(drinkId,anchor){
 var _ftd={active:false,id:null,el:null,startX:0,startY:0,lastOver:null,lpt:null,moved:false,ghost:null};
 function _ftdRemoveGhost(){if(_ftd.ghost){_ftd.ghost.remove();_ftd.ghost=null;}}
 function initFavTileDrag(){
-  /* Grid im Sortiermodus: Scrollen deaktivieren damit Drag funktioniert */
+  /* Grid: touch-action:pan-y → normales Scrollen immer möglich.
+     Drag wird erst nach 400 ms Long-Press aktiviert. */
   var grid=document.querySelector('.fav-tiles-grid');
-  if(grid)grid.style.touchAction='none';
+  if(grid)grid.style.touchAction='pan-y';
 
   document.querySelectorAll('.fav-tile[data-tile-id]').forEach(tile=>{
     if(tile._ftdi)return;tile._ftdi=true;
 
     tile.addEventListener('touchstart',function(e){
       if(!S.favSortMode)return;
-      e.stopPropagation();
       _ftd.id=tile.dataset.tileId;_ftd.el=tile;
       _ftd.startX=e.touches[0].clientX;_ftd.startY=e.touches[0].clientY;
       _ftd.lastOver=null;_ftd.active=false;_ftd.moved=false;
       _ftdRemoveGhost();
-    },{passive:false});
-
-    tile.addEventListener('touchmove',function(e){
-      if(!S.favSortMode||!_ftd.el||_ftd.id!==tile.dataset.tileId)return;
-      e.preventDefault();e.stopPropagation();
-      const x=e.touches[0].clientX,y=e.touches[0].clientY;
-      const dx=Math.abs(x-_ftd.startX),dy=Math.abs(y-_ftd.startY);
-
-      /* Drag nach wenigen Pixeln aktivieren */
-      if(!_ftd.active&&(dx>5||dy>5)){
+      clearTimeout(_ftd.lpt);
+      /* Long-Press-Timer: nach 400 ms Drag aktivieren */
+      _ftd.lpt=setTimeout(function(){
+        if(_ftd.moved)return; /* Finger hat sich bewegt → Scroll, kein Drag */
         _ftd.active=true;
         tile.classList.add('fav-tile-sort-active');
-        try{if(typeof navigator.vibrate==='function')navigator.vibrate(30);}catch(_){}
-        /* Ghost-Klon erzeugen der dem Finger folgt */
+        try{if(typeof navigator.vibrate==='function')navigator.vibrate(40);}catch(_){}
+        /* Ghost-Klon erzeugen */
         _ftdRemoveGhost();
         var g=tile.cloneNode(true);
         var r=tile.getBoundingClientRect();
-        g.style.cssText='position:fixed;z-index:9999;opacity:0.80;pointer-events:none;'+
+        g.style.cssText='position:fixed;z-index:9999;opacity:0.82;pointer-events:none;'+
           'left:'+r.left+'px;top:'+r.top+'px;width:'+r.width+'px;height:'+r.height+'px;'+
-          'border-radius:14px;transform:scale(1.06);transition:none;box-shadow:0 8px 32px rgba(0,0,0,0.5);';
+          'border-radius:14px;transform:scale(1.07);transition:none;'+
+          'box-shadow:0 10px 36px rgba(0,0,0,0.55),0 0 0 3px rgba(255,255,255,0.5);';
         document.body.appendChild(g);
         _ftd.ghost=g;
-        _ftd.offX=x-r.left;_ftd.offY=y-r.top;
-      }
-      if(!_ftd.active)return;
+        _ftd.offX=_ftd.startX-r.left;
+        _ftd.offY=_ftd.startY-r.top;
+      },400);
+    },{passive:true});
 
-      /* Ghost mitbewegen */
+    tile.addEventListener('touchmove',function(e){
+      if(!S.favSortMode||!_ftd.el||_ftd.id!==tile.dataset.tileId)return;
+      const dx=Math.abs(e.touches[0].clientX-_ftd.startX);
+      const dy=Math.abs(e.touches[0].clientY-_ftd.startY);
+      /* Sobald Finger >10 px bewegt UND Drag noch nicht aktiv → Scroll-Intent → Long-Press abbrechen */
+      if(!_ftd.active){
+        if(dx>10||dy>10){
+          _ftd.moved=true;
+          clearTimeout(_ftd.lpt);
+        }
+        return;
+      }
+      /* Drag ist aktiv → Scrollen unterdrücken */
+      e.preventDefault();
+      const x=e.touches[0].clientX,y=e.touches[0].clientY;
       if(_ftd.ghost){
         _ftd.ghost.style.left=(x-(_ftd.offX||0))+'px';
         _ftd.ghost.style.top=(y-(_ftd.offY||0))+'px';
       }
-
-      /* Ziel-Kachel ermitteln */
       const tiles=[...document.querySelectorAll('.fav-tile[data-tile-id]')];
       tiles.forEach(t=>t.classList.remove('fav-tile-drag-over'));
       let target=null;
@@ -6048,6 +6056,7 @@ function initFavTileDrag(){
     },{passive:false});
 
     tile.addEventListener('touchend',function(){
+      clearTimeout(_ftd.lpt);
       _ftdRemoveGhost();
       if(_ftd.el)_ftd.el.classList.remove('fav-tile-sort-active');
       const tiles=[...document.querySelectorAll('.fav-tile[data-tile-id]')];
@@ -6064,6 +6073,7 @@ function initFavTileDrag(){
     },{passive:true});
 
     tile.addEventListener('touchcancel',function(){
+      clearTimeout(_ftd.lpt);
       _ftdRemoveGhost();
       if(_ftd.el)_ftd.el.classList.remove('fav-tile-sort-active');
       document.querySelectorAll('.fav-tile[data-tile-id]').forEach(t=>t.classList.remove('fav-tile-drag-over'));
@@ -9292,16 +9302,18 @@ function renderHelp(){
       <div class="hlp-row"><span class="hlp-badge blue">⏱ ${h('Long-Press (0,7 s)','Long-press (0.7 s)')}</span><span>${h('Kachel ca. 0,7 Sekunden gedrückt halten → öffnet das ⋯-Optionsmenü direkt (gleicher Inhalt wie ⋯-Button). Kurze Vibration bestätigt die Auslösung. Scrollbewegungen werden erkannt – ein versehentliches Auslösen beim Scrollen ist damit ausgeschlossen.','Hold a tile for about 0.7 seconds → the ⋯ options menu opens directly (same content as ⋯ button). A short vibration confirms. Scroll movements are detected – accidental triggering while scrolling is prevented.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">🎨 ${h('Farbmodi','Colour modes')}</span><span>${h('Im Kachelmodus erscheint neben dem Favoriten-Titel ein <strong>🎨 Farbe</strong>-Button. Antippen wechselt durch drei Modi:<br>• <strong>Theme</strong> – App-Designfarben (passt sich jedem Design an)<br>• <strong>Farbe</strong> – volle Sättigung aus dem 36er-Farbrad; Textfarbe wird automatisch weiß oder dunkel gewählt<br>• <strong>Getönt</strong> – dieselben Farben als halbtransparente Tönung über den App-Hintergrund<br>Ohne individuelle Zuweisung werden Farben automatisch rotierend nach Reihenfolge vergeben.','In tile mode, a <strong>🎨 Colour</strong> button appears next to the Favourites title. Tap to cycle through three modes:<br>• <strong>Theme</strong> – app design colours (adapts to every design)<br>• <strong>Colour</strong> – full saturation from the 36-colour wheel; text colour is automatically chosen white or dark<br>• <strong>Tinted</strong> – the same colours as a semi-transparent tint over the app background<br>Without individual assignment, colours are assigned automatically in rotation.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge gold">🎨 ${h('Kachelfarbe ändern','Change tile colour')}</span><span>${h('⋯ Menü → <strong>🎨 Kachelfarbe</strong> → Farbauswahl-Panel öffnet sich. 36 Felder aus dem Farbrad in drei Ringen (gesättigt / mittel / pastell), angeordnet in 6×6-Grid. Aktuelle Farbe ist mit Haken markiert. <strong>↩ Zurück zu Theme / Auto</strong> entfernt die individuelle Zuweisung.','⋯ menu → <strong>🎨 Tile colour</strong> → colour picker opens. 36 swatches from the colour wheel in three rings (saturated / medium / pastel), arranged in a 6×6 grid. Current colour is marked with a checkmark. <strong>↩ Reset to Theme / Auto</strong> removes the individual assignment.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">⇅ ${h('Sortierung','Sort order')}</span><span>${h('<strong>⇅ Sortieren</strong>-Button → Kacheln leicht abgedunkelt mit gestricheltem Rahmen. Kachel gedrückt halten und auf eine andere Zielkachel ziehen → Reihenfolge tauschen. Die Reihenfolge gilt für Liste und Kacheln gleichermaßen.','<strong>⇅ Sort</strong> button → tiles slightly darkened with dashed border. Hold a tile and drag onto another target tile → swap order. The order is shared between list and tile view.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">⇅ ${h('Sortierung','Sort order')}</span><span>${h('<strong>⇅ Sortieren</strong>-Button → Kacheln erhalten gestrichelten blinkenden Rahmen. <strong>Kachel ca. 0,4 Sekunden gedrückt halten</strong> bis die Vibration kommt und die Kachel sich hebt (Ghost-Klon erscheint) → auf eine andere Zielkachel ziehen → Reihenfolge tauschen. Beim kurzen Antippen und normalen Scrollen passiert nichts, der Drag startet erst nach dem kurzen Gedrückthalten. Die Reihenfolge gilt für Liste und Kacheln gleichermaßen.','<strong>⇅ Sort</strong> button → tiles get a pulsing dashed border. <strong>Hold a tile for about 0.4 seconds</strong> until the vibration fires and the tile lifts (ghost clone appears) → drag onto another target tile → swap order. Brief taps and normal scrolling are not affected – drag only starts after the short hold. The order is shared between list and tile view.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('Schriftgröße &amp; Kachelgröße','Font size &amp; tile height')}</span><span>${h('Die Kacheln passen sich der gewählten Schriftgröße aus den Einstellungen an. Kleine Schrift → kompaktere Kacheln; Große / Extra-Große Schrift → höhere Kacheln mit mehr Abstand.','Tiles adapt to the font size set in settings. Small font → more compact tiles; Large / Extra-large font → taller tiles with more spacing.')}</span></div>
       <div class="hlp-tip">💡 ${h('Tipp: Kachelansicht + bunter Farbmodus eignet sich ideal für das Erfassen am Abend auf dem Sonnendeck – jedes Getränk hat seine eigene Farbe und ist sofort erkennbar, auch wenn die Liste lang ist.','Tip: tile view + colourful mode is ideal for recording drinks on the sun deck in the evening – each drink has its own colour and is instantly recognisable, even with a long list.')}</div>
     </div>
 
     <div class="hlp-card">
-      <div class="hlp-card-title">⭐ ${h('Häufig bestellt – automatische Empfehlungen','Most Ordered – automatic recommendations')}</div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('Automatisch befüllt','Filled automatically')}</span><span>${h('Der Bereich <strong>⭐ Häufig bestellt</strong> erscheint unterhalb der Favoriten, sobald genug Einträge vorhanden sind. Er zeigt die bis zu <strong>10 am häufigsten erfassten Getränke</strong> aus dem gesamten Protokoll – vollautomatisch berechnet, keine manuelle Pflege nötig.','The <strong>⭐ Most Ordered</strong> section appears below favourites once enough entries exist. It shows up to <strong>10 most-recorded drinks</strong> from the entire log – calculated fully automatically, no manual maintenance needed.')}</span></div>
+      <div class="hlp-card-title">🏆 ${h('TOP TEN – automatische Empfehlungen','TOP TEN – automatic recommendations')}</div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('Automatisch befüllt','Filled automatically')}</span><span>${h('Der Bereich <strong>🏆 TOP TEN</strong> erscheint unterhalb der Favoriten, sobald genug Einträge vorhanden sind. Er zeigt die bis zu <strong>10 am häufigsten erfassten Getränke</strong> aus dem gesamten Protokoll – vollautomatisch berechnet, keine manuelle Pflege nötig.','The <strong>🏆 TOP TEN</strong> section appears below favourites once enough entries exist. It shows up to <strong>10 most-recorded drinks</strong> from the entire log – calculated fully automatically, no manual maintenance needed.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('Stabile Reihenfolge','Stable order')}</span><span>${h('Die Reihenfolge bleibt während einer Sitzung stabil und aktualisiert sich erst nach einer kurzen Pause (7 Sekunden nach der letzten Erfassung), um störende Sprünge beim aktiven Buchen zu vermeiden. So bleibt der <strong>+</strong>-Button immer an derselben Stelle.','The order stays stable during a session and updates only after a short pause (7 seconds after the last recording), to avoid distracting jumps while actively booking. This keeps the <strong>+</strong> button always in the same spot.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">${h('Unterschied zu Favoriten','Difference from Favourites')}</span><span>${h('"Häufig bestellt" berechnet sich aus dem gesamten Protokoll und ändert sich automatisch. Favoriten sind manuell ausgewählt und bleiben unverändert, bis der Stern entfernt wird. Beide Bereiche sind von der Sortierung unabhängig.','The "Most Ordered" section is calculated from the entire log and changes automatically. Favourites are manually selected and remain fixed until the star is removed. Both sections are independent of the sort order.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('Rang-Abzeichen','Rank badge')}</span><span>${h('In der Kachelansicht zeigt jede TOP TEN-Kachel links oben ein Rang-Abzeichen: <strong>🥇 Gold</strong> für Platz 1, <strong>🥈 Silber</strong> für Platz 2, <strong>🥉 Bronze</strong> für Platz 3 – danach neutral grau.','In tile view each TOP TEN tile shows a rank badge top-left: <strong>🥇 Gold</strong> for rank 1, <strong>🥈 Silver</strong> for rank 2, <strong>🥉 Bronze</strong> for rank 3 – then neutral grey.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge gold">☰ / ⊞ ${h('Kachelansicht','Tile view')}</span><span>${h('Der <strong>⊞</strong>-Button rechts neben dem Titel schaltet in die Kachelansicht um. Kacheln antippen → Getränk buchen (+1). Undo-Wischen funktioniert wie bei Favoriten. Keine manuelle Sortierung – Reihenfolge wird automatisch durch Häufigkeit bestimmt.','The <strong>⊞</strong> button to the right of the title switches to tile view. Tap tiles → book drink (+1). Undo-swipe works as with Favourites. No manual sorting – order is automatically determined by frequency.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">${h('Unterschied zu Favoriten','Difference from Favourites')}</span><span>${h('"TOP TEN" berechnet sich aus dem gesamten Protokoll und ändert sich automatisch. Favoriten sind manuell ausgewählt und bleiben unverändert, bis der Stern entfernt wird.','The "TOP TEN" section is calculated from the entire log and changes automatically. Favourites are manually selected and remain fixed until the star is removed.')}</span></div>
     </div>
 
     <div class="hlp-card">
@@ -9310,7 +9322,7 @@ function renderHelp(){
       <div class="hlp-row"><span class="hlp-badge blue">○ ${h('Umriss-Kreis','Outline circle')}</span><span>${h('Ein <strong>Umriss-Kreis ○</strong> (nur Rand, nicht gefüllt) hinter dem Preis zeigt an: dieses Getränk ist <strong>nicht inklusive</strong> und wird extra berechnet.','An <strong>outline circle ○</strong> (border only, not filled) behind the price indicates: this drink is <strong>not included</strong> and will be charged separately.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">${h('Wo sichtbar','Where visible')}</span><span>${h('Der Kreis erscheint überall, wo Preise angezeigt werden: Getränkeliste, Protokoll, Statistik und im PDF-Reisebericht.','The circle appears everywhere prices are shown: drink list, log, statistics and the PDF voyage report.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge green">${h('Status setzen','Set status')}</span><span>${h('Tab <strong>VERWALTUNG</strong> → <strong>Getränke &amp; Kategorien</strong> → Kategorie aufklappen → bei jedem Getränk erscheint ein Kreis-Button hinter dem Preis. Antippen wechselt zwischen <span style="color:#1EC87A">⬤</span> (All Inclusive, grün) und ○ (nicht inklusive). Der Status wird sofort gespeichert. Im Getränke-Tab erscheint ein grüner Punkt <span style="color:#1EC87A">⬤</span> hinter dem Preis; der Filter-Tab <strong style="color:#1EC87A">AI</strong> zeigt alle inklusive Getränke auf einen Blick.<br>Alternativ: <strong>Long-Press → Bearbeiten</strong> → im Formular den <strong>All-Inclusive-Schalter</strong> aktivieren.','Tab <strong>MANAGEMENT</strong> → <strong>Drinks &amp; Categories</strong> → expand a category → each drink shows a circle button behind its price. Tap to toggle between <span style="color:#1EC87A">⬤</span> (All Inclusive, green) and ○ (not included). The status is saved immediately. In the Drinks tab a green dot <span style="color:#1EC87A">⬤</span> appears behind the price; the filter tab <strong style="color:#1EC87A">AI</strong> shows all included drinks at a glance.<br>Alternatively: <strong>Long-press → Edit</strong> → toggle the <strong>All Inclusive switch</strong> in the form.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">⇅ ${h('Sortiermodus','Sort mode')}</span><span>${h('Im Favoriten-Bereich: Schaltfläche <strong>⇅ Sortieren</strong> antippen → ein goldener Banner zeigt an, dass der Sortiermodus aktiv ist. Einträge lassen sich durch Ziehen umordnen – dabei bleibt normales Scrollen möglich (Ziehen am Anfasser ⠿). Sortiermodus beenden durch erneutes Antippen von <strong>⇅ Sortieren</strong>.','In the favourites section: tap the <strong>⇅ Sort</strong> button → a gold banner shows that sort mode is active. Entries can be reordered by dragging – normal scrolling remains possible (drag the ⠿ handle). End sort mode by tapping <strong>⇅ Sort</strong> again.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">⇅ ${h('Sortiermodus','Sort mode')}</span><span>${h('Im Favoriten-Bereich: Schaltfläche <strong>⇅ Sortieren</strong> antippen → ein goldener Banner zeigt an, dass der Sortiermodus aktiv ist. Einträge lassen sich durch Ziehen umordnen – dabei bleibt normales Scrollen möglich. In der <strong>Kachelansicht</strong>: Kachel ca. 0,4 Sekunden gedrückt halten bis Vibration → Kachel hebt sich → auf Zielkachel ziehen. Sortiermodus beenden durch erneutes Antippen von <strong>⇅ Sortieren</strong>.','In the favourites section: tap the <strong>⇅ Sort</strong> button → a gold banner shows that sort mode is active. Entries can be reordered by dragging – normal scrolling remains possible. In <strong>tile view</strong>: hold a tile for about 0.4 seconds until vibration → tile lifts → drag onto target. End sort mode by tapping <strong>⇅ Sort</strong> again.')}</span></div>
       <div class="hlp-tip">💡 ${h('Tipp: Beim CSV-Export der Getränkeliste wird die Inklusive-Kennzeichnung als <strong>●</strong> in der Spalte „Inklusive" mitexportiert. Beim Re-Import wird der Status automatisch wiederhergestellt.','Tip: When exporting the drink list as CSV, the inclusion marker is exported as <strong>●</strong> in the "Inklusive" column. On re-import the status is automatically restored.')}</div>
     </div>
 
