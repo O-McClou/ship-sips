@@ -3391,7 +3391,7 @@ function shareThemeExportCode(){
     try{
       const file=new File([code],'farbkonzept.txt',{type:'text/plain'});
       if(navigator.canShare&&navigator.canShare({files:[file]})){
-        navigator.share({files:[file],title:(L?'Color Concept':'Farbkonzept')}).catch(()=>navigator.share(shareData).catch(()=>{}));
+        navigator.share({files:[file]}).catch(()=>navigator.share(shareData).catch(()=>{}));
         return;
       }
     }catch(e){}
@@ -4908,7 +4908,7 @@ async function shareOrDownload(content, filename, mime){
     const blob=new Blob([content],{type:mime});
     const file=new File([blob],filename,{type:mime});
     if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
-      await navigator.share({files:[file],title:filename});
+      await navigator.share({files:[file]});
     }else{
       dl(content,filename,mime);
     }
@@ -5173,7 +5173,7 @@ async function internalClearAll(){
 }
 
 /* ═══ EXPORT CSV DRINKS ══════════════════════════════════════ */
-function exportDrinksCSV(){const nm=appNameClean();const BOM='\uFEFF';const meta='#TITEL;'+csvEsc(S.appTitle1)+';'+csvEsc(S.appTitle2)+'\n'+'#CURRENCY;'+csvEsc(S.currency)+'\n';const hdr='ID;Kategorie;Name;Preis;Währung;Inklusive\n';const rows=S.drinks.map(d=>[csvEsc(d.id),csvEsc(d.cat),csvEsc(d.name),(()=>{const p=d.price||0;const lang=(S&&S.lang)||'de';const parts=p.toFixed(2).split('.');const intP=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return intP+','+parts[1];})(),csvEsc(S.currency),d.included?'●':''].join(';')).join('\n');const dateStr=new Date().toLocaleDateString(S.lang==='en'?'en-US':'de-DE').replace(/[/.]/g,'-');shareOrDownload(BOM+meta+hdr+rows,'Getrankeliste_'+nm+'_'+dateStr+'.csv','text/csv;charset=utf-8;');showToast('✅ Getränkeliste '+T('toast.exported'));}
+function exportDrinksCSV(){const nm=appNameClean();const BOM='\uFEFF';const meta='#TITEL;'+csvEsc(S.appTitle1)+';'+csvEsc(S.appTitle2)+'\n'+'#CURRENCY;'+csvEsc(S.currency)+'\n';const hdr='ID;Kategorie;Name;Preis;Währung;Inklusive\n';const rows=S.drinks.map(d=>[csvEsc(d.id),csvEsc(d.cat),csvEsc(d.name),(()=>{const p=d.price||0;const lang=(S&&S.lang)||'de';const parts=p.toFixed(2).split('.');const intP=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return intP+','+parts[1];})(),csvEsc(S.currency),d.included?'●':''].join(';')).join('\n');const dateStr=new Date().toLocaleDateString(S.lang==='en'?'en-US':'de-DE').replace(/[/.]/g,'-');shareOrDownload(BOM+meta+hdr+rows,'Getrankeliste_'+nm+'_'+dateStr+'.csv','text/csv;charset=utf-8');showToast('✅ Getränkeliste '+T('toast.exported'));}
 
 /* ═══ EXPORT CSV LOG ═════════════════════════════════════════ */
 // FIX V33 F1: App-Zeitzone für Datumsfilter (konsistent mit renderLog)
@@ -5235,7 +5235,7 @@ function exportLogCSV(){
   });
   const _csvContent=BOM+tzInfo+hdr+rows.join('\n');
   const _csvName='Protokoll_'+nm+'_'+appFmtDateShort(new Date().toISOString()).replace(/\./g,'-')+'.csv';
-  shareOrDownload(_csvContent,_csvName,'text/csv;charset=utf-8;');
+  shareOrDownload(_csvContent,_csvName,'text/csv;charset=utf-8');
   showToast('✅ Protokoll '+T('toast.exported'));
 }
 
@@ -7784,8 +7784,9 @@ function renderStats(){
       </div>
       ${legendHtml}
       ${lk.length>maxLegend?`<div style="font-size:10px;color:var(--tx2);text-align:center;margin-top:6px">+${lk.length-maxLegend} ${L?'more ports':'weitere Häfen'}</div>`:''}
-      <div style="display:flex;justify-content:flex-end;margin-top:10px">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px;flex-wrap:wrap">
         <button onclick="exportVoyagePDF()" style="padding:8px 16px;background:var(--ac);color:var(--ac-fg);border:none;border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:11px;font-weight:bold;touch-action:manipulation;display:flex;align-items:center;gap:6px">📄 ${L?'Voyage PDF Report':'PDF-Reisebericht'}</button>
+        <button onclick="exportVoyageWord()" style="padding:8px 16px;background:transparent;color:var(--tx0);border:1px solid var(--ac-07);border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:11px;font-weight:bold;touch-action:manipulation;display:flex;align-items:center;gap:6px">📝 ${L?'Word Report':'Word-Bericht'}</button>
       </div>
     </div>`;
   }
@@ -7838,12 +7839,16 @@ function renderStats(){
   html+=renderVoyageCalendar(fl);
 
   /* ── V48 FEATURE 15: PDF-Export-Button (immer sichtbar wenn Daten vorhanden) ── */
-  html+=`<div style="margin:14px 0 4px;text-align:center">
+  html+=`<div style="margin:14px 0 4px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center">
     <button onclick="exportVoyagePDF()" style="padding:12px 24px;background:linear-gradient(135deg,var(--ac),var(--ac-deep));color:var(--ac-fg);border:none;border-radius:12px;cursor:pointer;font-family:Georgia,serif;font-size:13px;font-weight:bold;touch-action:manipulation;box-shadow:var(--shadow-gold);display:inline-flex;align-items:center;gap:8px">
       <span style="font-size:18px">📄</span>
       <span>${L?'Download Voyage PDF Report':'PDF-Reisebericht herunterladen'}</span>
     </button>
-    <div style="font-size:10px;color:var(--tx2);margin-top:6px;line-height:1.5">${L?'Port timeline · Category breakdown · All entries':'Hafen-Timeline · Kategorien · Alle Einträge'}</div>
+    <button onclick="exportVoyageWord()" style="padding:12px 24px;background:linear-gradient(135deg,#1a3a5c,#0d2030);color:var(--tx0);border:1px solid var(--ac-07);border-radius:12px;cursor:pointer;font-family:Georgia,serif;font-size:13px;font-weight:bold;touch-action:manipulation;display:inline-flex;align-items:center;gap:8px">
+      <span style="font-size:18px">📝</span>
+      <span>${L?'Download Voyage Word Report':'Word-Reisebericht herunterladen'}</span>
+    </button>
+    <div style="font-size:10px;color:var(--tx2);margin-top:2px;line-height:1.5">${L?'Port timeline · Category breakdown · All entries':'Hafen-Timeline · Kategorien · Alle Einträge'}</div>
   </div>`;
 
   pane.innerHTML=html;
@@ -7866,7 +7871,14 @@ function exportVoyagePDF(){
     const script=document.createElement('script');
     script.src='./jspdf.umd.min.js';
     script.onload=function(){cb(window.jspdf.jsPDF);};
-    script.onerror=function(){showToast((L?'⚠️ PDF library (jspdf.umd.min.js) not found. Please place it in the same folder as the app.':'⚠️ PDF-Bibliothek (jspdf.umd.min.js) nicht gefunden. Bitte die Datei in denselben Ordner wie die App legen.'),'error',8000);};
+    script.onerror=function(){
+      // Lokale Datei nicht gefunden – CDN-Fallback versuchen
+      const cdnScript=document.createElement('script');
+      cdnScript.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      cdnScript.onload=function(){cb(window.jspdf.jsPDF);};
+      cdnScript.onerror=function(){showToast((L?'⚠️ PDF library could not be loaded. Please check your internet connection.':'⚠️ PDF-Bibliothek konnte nicht geladen werden. Bitte Internetverbindung prüfen.'),'error',8000);};
+      document.head.appendChild(cdnScript);
+    };
     document.head.appendChild(script);
   }
 
@@ -8078,7 +8090,7 @@ function exportVoyagePDF(){
       const fname=(S.appTitle1||'Ship-Sips').replace(/[^a-z0-9]/gi,'_')+'_Reisebericht_'+new Date().toISOString().slice(0,10)+'.pdf';
       const pdfBlob=doc.output('blob');
       if(navigator.share&&navigator.canShare&&navigator.canShare({files:[new File([pdfBlob],fname,{type:'application/pdf'})]})){
-        navigator.share({files:[new File([pdfBlob],fname,{type:'application/pdf'})],title:fname}).catch(()=>_pdfDownloadFallback(doc,fname));
+        navigator.share({files:[new File([pdfBlob],fname,{type:'application/pdf'})]}).catch(()=>_pdfDownloadFallback(doc,fname));
       }else{
         _pdfDownloadFallback(doc,fname);
       }
@@ -8096,6 +8108,98 @@ function _pdfDownloadFallback(doc,fname){
     document.body.appendChild(a);a.click();document.body.removeChild(a);
     setTimeout(()=>URL.revokeObjectURL(url),1000);
   }catch(e){doc.save(fname);}
+}
+/* ════════════════════════════════════════════════════════════════ */
+
+/* ── Word-Reisebericht (.doc) ─────────────────────────────────────
+   Erzeugt einen Reisebericht als Word-kompatible HTML-Datei (.doc).
+   Word öffnet diese Dateien nativ – keine externe Bibliothek nötig.
+   ──────────────────────────────────────────────────────────────── */
+function exportVoyageWord(){
+  const L=S.lang==='en';
+  showToast(L?'⏳ Preparing Word doc…':'⏳ Word-Dokument wird erstellt…','info',2000);
+  try{
+    const cur=S.currency||'€';
+    const nm=appNameClean();
+    const title=(S.appTitle1||'Ship-Sips')+' – '+(S.appTitle2||'Reisebericht');
+    const dateStr=new Date().toLocaleDateString(L?'en-US':'de-DE');
+
+    // Statistik berechnen
+    const allLog=S.log.filter(e=>!e._marker);
+    const total=allLog.reduce((s,e)=>s+(parseFloat(e.price)||0),0);
+    const inclLog=allLog.filter(e=>{const d=S.drinks.find(x=>x.id===e.drinkId);return d&&d.included;});
+    const exclLog=allLog.filter(e=>{const d=S.drinks.find(x=>x.id===e.drinkId);return !d||!d.included;});
+    const exclTotal=exclLog.reduce((s,e)=>s+(parseFloat(e.price)||0),0);
+    const days=[...new Set(allLog.map(e=>e.time.slice(0,10)))].length||1;
+
+    function esc(t){return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+    let html="<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>";
+    html+="<head><meta charset='utf-8'><title>"+esc(title)+"</title>";
+    html+="<style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#1a1a2e;margin:2cm;}";
+    html+="h1{font-size:18pt;color:#06101E;border-bottom:2px solid #B58E3C;padding-bottom:6pt;margin-bottom:6pt;}";
+    html+="h2{font-size:13pt;color:#06101E;margin-top:14pt;margin-bottom:4pt;}";
+    html+="table{border-collapse:collapse;width:100%;margin-bottom:14pt;}";
+    html+="th{background:#06101E;color:#B58E3C;padding:5pt 8pt;text-align:left;font-size:10pt;}";
+    html+="td{padding:4pt 8pt;font-size:10pt;border-bottom:1px solid #dde;}";
+    html+="tr:nth-child(even) td{background:#f5f6fa;}";
+    html+=".stat-box{background:#f5f6fa;border:1px solid #dde;padding:8pt 12pt;margin-bottom:10pt;}";
+    html+=".stat-lbl{color:#555;font-size:9pt;}";
+    html+=".stat-val{font-size:14pt;font-weight:bold;color:#06101E;}";
+    html+=".incl{color:#2ecc71;font-weight:bold;} .extra{color:#e67e22;font-weight:bold;}";
+    html+="</style></head><body>";
+
+    html+="<h1>"+esc(title)+"</h1>";
+    html+="<p style='color:#555;font-size:9pt;margin-top:0'>"+(L?'Created on: ':'Erstellt am: ')+esc(dateStr)+"</p>";
+
+    // Zusammenfassung
+    html+="<h2>"+(L?'📊 Summary':'📊 Zusammenfassung')+"</h2>";
+    html+="<table><tr>";
+    html+="<td class='stat-box'><div class='stat-lbl'>"+(L?'Total entries':'Einträge gesamt')+"</div><div class='stat-val'>"+allLog.length+"</div></td>";
+    html+="<td class='stat-box'><div class='stat-lbl'>"+(L?'Days':'Tage')+"</div><div class='stat-val'>"+days+"</div></td>";
+    html+="<td class='stat-box'><div class='stat-lbl'>"+(L?'Total value':'Gesamtwert')+"</div><div class='stat-val'>"+total.toFixed(2)+' '+esc(cur)+"</div></td>";
+    html+="<td class='stat-box'><div class='stat-lbl'>"+(L?'Extra costs':'Aufpreis gesamt')+"</div><div class='stat-val'>"+exclTotal.toFixed(2)+' '+esc(cur)+"</div></td>";
+    html+="</tr></table>";
+
+    // Protokoll-Tabelle
+    html+="<h2>"+(L?'🥂 Drink Log':'🥂 Getränke-Protokoll')+"</h2>";
+    html+="<table><tr><th>"+(L?'Date':'Datum')+"</th><th>"+(L?'Time':'Uhrzeit')+"</th><th>"+(L?'Drink':'Getränk')+"</th><th>"+(L?'Price':'Preis')+"</th><th>"+(L?'Included':'Inklusiv')+"</th><th>"+(L?'Location':'Ort')+"</th><th>"+(L?'Note':'Hinweis')+"</th></tr>";
+
+    const sorted=[...allLog].sort((a,b)=>new Date(a.time)-new Date(b.time));
+    sorted.forEach(e=>{
+      const off=typeof e.tz==='number'?e.tz:0;
+      const d=new Date(new Date(e.time).getTime()+off*60000);
+      const dateS=String(d.getUTCDate()).padStart(2,'0')+'.'+(String(d.getUTCMonth()+1).padStart(2,'0'))+'.'+d.getUTCFullYear();
+      const timeS=String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0');
+      const drObj=S.drinks.find(x=>x.id===e.drinkId);
+      const isIncl=drObj&&drObj.included;
+      const inclCell=isIncl?"<span class='incl'>●</span>":"<span class='extra'>+</span>";
+      html+="<tr><td>"+esc(dateS)+"</td><td>"+esc(timeS)+"</td><td>"+esc(e.name)+"</td>";
+      html+="<td style='text-align:right'>"+parseFloat(e.price||0).toFixed(2)+' '+esc(cur)+"</td>";
+      html+="<td style='text-align:center'>"+inclCell+"</td>";
+      html+="<td>"+esc(e.location||'')+"</td><td>"+esc(e.note||'')+"</td></tr>";
+    });
+    html+="</table>";
+
+    // Getränkekarte
+    html+="<h2>"+(L?'🍹 Drink Menu':'🍹 Getränkekarte')+"</h2>";
+    html+="<table><tr><th>"+(L?'Category':'Kategorie')+"</th><th>"+(L?'Name':'Name')+"</th><th>"+(L?'Price':'Preis')+"</th><th>"+(L?'Included':'Inklusiv')+"</th></tr>";
+    S.drinks.forEach(d=>{
+      html+="<tr><td>"+esc(d.cat)+"</td><td>"+esc(d.name)+"</td>";
+      html+="<td style='text-align:right'>"+parseFloat(d.price||0).toFixed(2)+' '+esc(cur)+"</td>";
+      html+="<td style='text-align:center'>"+(d.included?"<span class='incl'>●</span>":"<span class='extra'>+</span>")+"</td></tr>";
+    });
+    html+="</table>";
+
+    html+="</body></html>";
+
+    const fname=(S.appTitle1||'Ship-Sips').replace(/[^a-z0-9]/gi,'_')+'_Reisebericht_'+new Date().toISOString().slice(0,10)+'.doc';
+    shareOrDownload(html,fname,'application/msword');
+    showToast('📝 '+(L?'Word report ready!':'Word-Reisebericht fertig!'),'info',3500);
+  }catch(err){
+    console.error('[Word]',err);
+    showToast((L?'⚠️ Word export error: ':'⚠️ Word-Export-Fehler: ')+err.message,'error',6000);
+  }
 }
 /* ════════════════════════════════════════════════════════════════ */
 
@@ -8313,7 +8417,7 @@ function renderVerwaltung(){
       <span class="bep-arr" style="font-size:10px">▼</span>
     </button>
     <div id="bkpExtraPanel" style="display:none">
-      <div class="adm-secondary-row" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="adm-secondary-row" style="grid-template-columns:1fr 1fr 1fr 1fr">
         <button class="adm-btn-sm" onclick="exportProtocol()" style="flex-direction:column;gap:3px;padding:10px 6px;align-items:center">
           <span style="font-size:18px">📤</span>
           <span style="font-size:10px;font-weight:bold;color:var(--tx0)">${L?'Share log':'Protokoll'}</span>
@@ -8327,6 +8431,11 @@ function renderVerwaltung(){
         <button class="adm-btn-sm" onclick="exportVoyagePDF()" style="flex-direction:column;gap:3px;padding:10px 6px;align-items:center">
           <span style="font-size:18px">📄</span>
           <span style="font-size:10px;font-weight:bold;color:var(--tx0)">PDF</span>
+          <span style="font-size:9px;color:var(--tx2)">${L?'Voyage Report':'Reisebericht'}</span>
+        </button>
+        <button class="adm-btn-sm" onclick="exportVoyageWord()" style="flex-direction:column;gap:3px;padding:10px 6px;align-items:center">
+          <span style="font-size:18px">📝</span>
+          <span style="font-size:10px;font-weight:bold;color:var(--tx0)">Word</span>
           <span style="font-size:9px;color:var(--tx2)">${L?'Voyage Report':'Reisebericht'}</span>
         </button>
       </div>
@@ -10289,7 +10398,7 @@ async function exportProtocol(){
   const file=new File([blob],fname,{type:'application/json'});
   try{
     if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
-      await navigator.share({files:[file],title:L?'Share log':'Protokoll teilen'});
+      await navigator.share({files:[file]});
     }else{
       dl(payload,fname,'application/json');
     }
@@ -10335,8 +10444,6 @@ async function shareBackup(){
   try{db.setCfg('lastBackupDate',S.lastBackupDate).catch(()=>{});localStorage.setItem('a4_lastbkp',S.lastBackupDate);}catch(e){}
   try{
     await navigator.share({
-      title:(S.appTitle1||'Ship-Sips')+' – Backup '+dateStr,
-      text:(L?'Backup from ':'Backup vom ')+dateStr,
       files:[file]
     });
     renderVerwaltung&&renderVerwaltung();
@@ -10409,7 +10516,7 @@ async function shareAppAsHTML(){
   const file=new File([blob],filename,{type:'text/html'});
   if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
     try{
-      await navigator.share({title:filename,files:[file]});
+      await navigator.share({files:[file]});
       showToast('📤 '+(L?'App shared ✅':'App geteilt ✅'),'info',4000);
     }catch(e){
       if(e.name!=='AbortError'){
