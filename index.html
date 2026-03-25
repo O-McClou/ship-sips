@@ -7911,220 +7911,169 @@ function exportVoyagePDF(){
       // ── SEITE 1: TITELSEITE ─────────────────────────────────
       // Header-Banner
       doc.setFillColor(...NAVY);
-      doc.rect(0,0,PW,46,'F');
+      doc.rect(0,0,PW,42,'F');
       // Goldlinie
-      doc.setDrawColor(...GOLD);doc.setLineWidth(0.8);doc.line(0,46,PW,46);
+      doc.setDrawColor(...GOLD);doc.setLineWidth(0.8);doc.line(0,42,PW,42);
       // Titel
       setFont('bold',22,...GOLD);
-      doc.text(S.appTitle1||'Ship-Sips',PW/2,16,{align:'center'});
+      doc.text(S.appTitle1||'Ship-Sips',PW/2,18,{align:'center'});
       setFont('normal',11,...TX1);
-      doc.text(S.appTitle2||'Meine Reise',PW/2,24,{align:'center'});
-      // Zeitraum + Erstelldatum im Header berechnen (Vorschau – echte Daten kommen unten)
-      const _hdrDate=new Date().toLocaleDateString(L?'en-US':'de-DE',{day:'2-digit',month:'long',year:'numeric'});
-      setFont('normal',8,...TX2);
-      doc.text((L?'Voyage Report · Created: ':'Reisebericht · Erstellt: ')+_hdrDate,PW/2,31,{align:'center'});
+      doc.text(S.appTitle2||'Meine Reise',PW/2,26,{align:'center'});
+      setFont('normal',9,...TX2);
+      doc.text((L?'Voyage Report':'Reisebericht')+' · V48',PW/2,33,{align:'center'});
 
       yPos=52;
 
-      // ── DATEN (identisch zur RTF) ──────────────────────────────
-      const allLog=S.log.filter(e=>!e._marker&&(e.price||0)>=0);
-      const totalAmt=allLog.reduce((s,e)=>s+(parseFloat(e.price)||0),0);
-      const timestamps=allLog.map(e=>new Date(e.time).getTime()).filter(Boolean);
-      const firstDate=timestamps.length?new Date(Math.min(...timestamps)):null;
-      const lastDate=timestamps.length?new Date(Math.max(...timestamps)):null;
-      const allDays=[...new Set(allLog.map(e=>entryLogicalDayStr(e)))];
-      const totalDays=allDays.length||1;
-      const avgDay=totalAmt/totalDays;
-      const tzWechsel=(S.tzChangeLog||[]).length;
-      const fmtC=v=>parseFloat(v||0).toFixed(2).replace('.',',')+' '+(S.currency||'€');
+      // Gesamtübersicht
+      const allLog=S.log.filter(e=>!e._marker&&(e.price||0)>0);
+      const totalAmt=allLog.reduce((s,e)=>s+(e.price||0),0);
+      const dates=allLog.map(e=>new Date(e.time).getTime()).filter(Boolean);
+      const firstDate=dates.length?fmtDate(new Date(Math.min(...dates)).toISOString()):'-';
+      const lastDate=dates.length?fmtDate(new Date(Math.max(...dates)).toISOString()):'-';
+      const totalDays=[...new Set(allLog.map(e=>entryLogicalDayStr(e)))].length;
+      const totalUsers=[...new Set(allLog.map(e=>e.userId).filter(Boolean))];
 
-      // Zeitraum nachträglich in Header eintragen
-      if(firstDate&&lastDate){
-        const periodStr=(L?'Period: ':'Zeitraum: ')+fmtDate(firstDate.toISOString())+' – '+fmtDate(lastDate.toISOString());
-        doc.setPage(1);
-        setFont('normal',7.5,...TX2);
-        doc.text(periodStr,PW/2,37,{align:'center'});
-      }
+      // Übersichtsbox
+      doc.setFillColor(...BG);doc.rect(ML,yPos,CW,52,'F');
+      doc.setDrawColor(...GOLD);doc.setLineWidth(0.3);doc.rect(ML,yPos,CW,52,'S');
+      doc.setFillColor(...GOLD);doc.rect(ML,yPos,3,52,'F');
 
-      // ── ABSCHNITT-HEADER ────────────────────────────────────────
-      function secHeader(title){
-        checkPage(16);
-        doc.setFillColor(...NAVY);doc.rect(ML,yPos,CW,9,'F');
-        setFont('bold',10,255,255,255);doc.text(title,ML+4,yPos+6.3);
-        yPos+=13;
-      }
+      setFont('bold',10,...NAVY);doc.text(L?'Trip Summary':'Reise-Übersicht',ML+6,yPos+8);
+      doc.setDrawColor(...GOLD);doc.setLineWidth(0.2);doc.line(ML+6,yPos+10,ML+CW-6,yPos+10);
 
-      // ── TABELLEN-HILFSFUNKTIONEN ─────────────────────────────────
-      function tblHeader(cols){
-        // cols: [{label, x, w, align}]
-        checkPage(10);
-        doc.setFillColor(...NAVY);doc.rect(ML,yPos,CW,7,'F');
-        cols.forEach(c=>{
-          setFont('bold',7.5,...GOLD);
-          doc.text(c.label,c.x+(c.align==='right'?c.w:0),yPos+5,{align:c.align||'left'});
-        });
-        yPos+=9;
-      }
-      function tblRow(cols,even){
-        checkPage(7);
-        if(even){doc.setFillColor(...BG);doc.rect(ML,yPos-4,CW,6.5,'F');}
-        cols.forEach(c=>{
-          setFont(c.bold?'bold':'normal',c.size||8,...(c.gray?TX2:(c.bold?NAVY:TX1)));
-          doc.text(String(c.label||''),c.x+(c.align==='right'?c.w:0),yPos,{align:c.align||'left'});
-        });
-        // Trennlinie
-        doc.setDrawColor(210,220,230);doc.setLineWidth(0.12);doc.line(ML,yPos+2,PW-MR,yPos+2);
-        yPos+=6.5;
-      }
-
-      // ── 1. ÜBERSICHT: 5 Stat-Boxen ─────────────────────────────
-      secHeader(L?'Overview':'Übersicht');
-      const boxW=CW/5;
-      const boxes=[
-        [L?'ENTRIES':'EINTRÄGE',String(allLog.length)],
-        [L?'TOTAL':'GESAMT',fmtC(totalAmt)],
-        [L?'TRAVEL DAYS':'REISETAGE',String(totalDays)],
-        [L?'AVG / DAY':'Ø PRO TAG',fmtC(avgDay)],
-        [L?'TZ CHANGES':'TZ-WECHSEL',String(tzWechsel)],
+      const rows=[
+        [L?'Period':'Zeitraum', firstDate+' – '+lastDate],
+        [L?'Total Spending':'Gesamtausgaben', fmtCurrency(totalAmt)],
+        [L?'Entries':'Einträge', String(allLog.length)],
+        [L?'Days with entries':'Tage mit Einträgen', String(totalDays)],
+        [L?'Daily average':'Tagesdurchschnitt', fmtCurrency(totalDays?totalAmt/totalDays:0)],
+        [L?'Travellers':'Reisende', String(totalUsers.length||1)],
       ];
-      boxes.forEach((b,i)=>{
-        const bx=ML+i*boxW;
-        doc.setFillColor(...BG);doc.rect(bx,yPos,boxW-1,22,'F');
-        doc.setFillColor(...GOLD);doc.rect(bx,yPos,boxW-1,1.5,'F');
-        setFont('normal',6.5,...TX2);doc.text(b[0],bx+3,yPos+7);
-        setFont('bold',i===1?11:12,...NAVY);
-        const val=b[1];
-        // Langer Wert → kleinere Schrift
-        const fs=val.length>10?9:i===1?11:12;
-        doc.setFontSize(fs);
-        doc.text(val,bx+3,yPos+17);
+      rows.forEach((r,i)=>{
+        const ry=yPos+16+i*5.8;
+        setFont('normal',9,...TX1);doc.text(r[0]+':',ML+6,ry);
+        setFont('bold',9,...NAVY);doc.text(r[1],ML+CW-6,ry,{align:'right'});
       });
-      yPos+=28;
+      yPos+=60;
 
-      // ── 2. PRO PERSON ───────────────────────────────────────────
-      const usersWithData=(S.users||[]).filter(u=>allLog.some(e=>e.userId===u.id));
-      if(usersWithData.length>0){
-        secHeader(L?'Per Person':'Pro Person');
-        const pc=[
-          {label:L?'Name':'Name',      x:ML+2,     w:52, align:'left'},
-          {label:L?'Entries':'Einträge',x:ML+54,    w:22, align:'right'},
-          {label:L?'Total':'Gesamt',    x:ML+76,    w:40, align:'right'},
-          {label:L?'Share':'Anteil',    x:ML+116,   w:22, align:'right'},
-          {label:L?'Budget':'Budget',   x:ML+138,   w:40, align:'right'},
-        ];
-        tblHeader(pc);
-        usersWithData.forEach((u,i)=>{
-          const uLog=allLog.filter(e=>e.userId===u.id);
-          const uTot=uLog.reduce((s,e)=>s+(parseFloat(e.price)||0),0);
-          const uPct=totalAmt>0?(uTot/totalAmt*100).toFixed(1)+'%':'–';
-          const bud=S.userBudgets&&S.userBudgets[u.id]?fmtC(S.userBudgets[u.id]):(L?'no limit':'kein Limit');
-          tblRow([
-            {label:u.name,    x:ML+2,  w:52,  bold:true},
-            {label:uLog.length,x:ML+54,w:22,  align:'right',gray:true},
-            {label:fmtC(uTot),x:ML+76, w:40,  align:'right',bold:true},
-            {label:uPct,      x:ML+116,w:22,  align:'right',gray:true},
-            {label:bud,       x:ML+138,w:40,  align:'right',gray:true},
-          ],i%2===1);
+      // Nutzer-Budgets
+      if(S.users&&S.users.length>1){
+        checkPage(40);
+        setFont('bold',10,...NAVY);doc.text(L?'Spending per Traveller':'Ausgaben pro Reisenden',ML,yPos);
+        yPos+=5;line(yPos,...GOLD,0.3);yPos+=4;
+        S.users.forEach(u=>{
+          const uTotal=allLog.filter(e=>e.userId===u.id).reduce((s,e)=>s+(e.price||0),0);
+          if(uTotal===0)return;
+          checkPage(8);
+          setFont('normal',9,...TX1);doc.text('● '+u.name,ML,yPos);
+          setFont('bold',9,...NAVY);doc.text(fmtCurrency(uTotal),PW-MR,yPos,{align:'right'});
+          yPos+=6;
         });
         yPos+=4;
       }
 
-      // ── 3. TOP 10 GETRÄNKE ──────────────────────────────────────
-      const drinkCount={};
+      // ── SEITE 2+: HAFEN-TIMELINE ────────────────────────────
+      // Häfen chronologisch ermitteln
+      const portFirst={};
       allLog.forEach(e=>{
-        if(!drinkCount[e.name])drinkCount[e.name]={count:0,total:0};
-        drinkCount[e.name].count++;drinkCount[e.name].total+=(parseFloat(e.price)||0);
+        if(e.location&&e.location.trim()){
+          const loc=e.location.trim();
+          if(!portFirst[loc]||new Date(e.time)<new Date(portFirst[loc].time))
+            portFirst[loc]={time:e.time,tz:entryTz(e)};
+        }
       });
-      const top10=Object.entries(drinkCount).sort((a,b)=>b[1].count-a[1].count).slice(0,10);
-      if(top10.length){
-        secHeader(L?'Top 10 Drinks':'Top 10 Getränke');
-        const tc=[
-          {label:'#',              x:ML+2,  w:8,  align:'right'},
-          {label:L?'Drink':'Getränk',x:ML+12,w:68, align:'left'},
-          {label:L?'Count':'Anzahl',x:ML+80, w:22, align:'right'},
-          {label:L?'Total':'Gesamt',x:ML+102,w:38, align:'right'},
-          {label:L?'Share':'Anteil',x:ML+140,w:18, align:'right'},
-          {label:L?'Freq':'Häufigk.',x:ML+158,w:20,align:'right'},
-        ];
-        tblHeader(tc);
-        top10.forEach(([name,st],i)=>{
-          const pct=totalAmt>0?(st.total/totalAmt*100).toFixed(1)+'%':'–';
-          const freq=totalDays>0?(st.count/totalDays).toFixed(1)+'/d':'–';
-          tblRow([
-            {label:String(i+1),    x:ML+2,  w:8,  align:'right',gray:true},
-            {label:name,           x:ML+12, w:68},
-            {label:st.count+'×',   x:ML+80, w:22, align:'right'},
-            {label:fmtC(st.total), x:ML+102,w:38, align:'right',bold:true},
-            {label:pct,            x:ML+140,w:18, align:'right',gray:true},
-            {label:freq,           x:ML+158,w:20, align:'right',gray:true},
-          ],i%2===1);
+      const portChron=Object.keys(portFirst).sort((a,b)=>new Date(portFirst[a].time)-new Date(portFirst[b].time));
+
+      if(portChron.length){
+        // Hafen-Ausgaben aufbauen
+        const portStats={};
+        allLog.forEach(e=>{
+          const loc=(e.location||'').trim();
+          if(!loc)return;
+          if(!portStats[loc])portStats[loc]={count:0,total:0,byUser:{},byCat:{}};
+          portStats[loc].count++;
+          portStats[loc].total+=(e.price||0);
+          const uid=e.userId||'?';
+          portStats[loc].byUser[uid]=(portStats[loc].byUser[uid]||0)+(e.price||0);
+          const d=S.drinks.find(x=>x.id===e.drinkId);
+          const cat=d?d.cat:(L?'Other':'Sonstiges');
+          portStats[loc].byCat[cat]=(portStats[loc].byCat[cat]||0)+(e.price||0);
         });
-        yPos+=4;
+
+        checkPage(20);
+        // Abschnittsheader
+        doc.setFillColor(...NAVY);doc.rect(ML,yPos,CW,9,'F');
+        setFont('bold',10,255,255,255);
+        doc.text((L?'⚓ Port Timeline (Chronological)':'⚓ Hafen-Timeline (Chronologisch)'),ML+3,yPos+6.3);
+        yPos+=13;
+
+        portChron.forEach((loc,idx)=>{
+          const ps=portStats[loc];
+          if(!ps)return;
+          checkPage(28);
+
+          // Hafen-Header
+          const fy=portFirst[loc];
+          const dateStr=fmtDate(fy.time);
+          doc.setFillColor(BG[0],BG[1],BG[2]);doc.rect(ML,yPos,CW,8,'F');
+          doc.setFillColor(...GOLD);doc.rect(ML,yPos,2.5,8,'F');
+          setFont('bold',9,...NAVY);
+          doc.text(`${idx+1}. ${loc}`,ML+5,yPos+5.3);
+          setFont('normal',8,...TX1);
+          doc.text(dateStr,PW-MR,yPos+5.3,{align:'right'});
+          yPos+=10;
+
+          // Ausgaben-Zeile
+          setFont('normal',8,...TX1);doc.text(L?'Spending:':'Ausgaben:',ML+5,yPos);
+          setFont('bold',9,...NAVY);doc.text(fmtCurrency(ps.total),ML+30,yPos);
+          setFont('normal',8,...TX2);doc.text('  '+fmtNum(ps.count)+'×',ML+30+doc.getTextWidth(fmtCurrency(ps.total)),yPos);
+          yPos+=5;
+
+          // Top-Kategorie
+          const topCat=Object.entries(ps.byCat).sort((a,b)=>b[1]-a[1]).slice(0,3);
+          if(topCat.length){
+            setFont('normal',7.5,...TX2);
+            doc.text((L?'Top: ':'Top: ')+topCat.map(([c,v])=>`${c} ${fmtCurrency(v)}`).join(' · '),ML+5,yPos);
+            yPos+=5;
+          }
+
+          // Nutzer-Aufteilung (wenn mehrere)
+          const usrs=Object.entries(ps.byUser).filter(([,v])=>v>0);
+          if(usrs.length>1){
+            const uLine=usrs.map(([uid,v])=>{const u=S.users.find(x=>x.id===uid);return (u?u.name:uid)+': '+fmtCurrency(v);}).join('  ');
+            setFont('normal',7,...TX2);
+            const wrapped=doc.splitTextToSize(uLine,CW-8);
+            doc.text(wrapped,ML+5,yPos);
+            yPos+=wrapped.length*4;
+          }
+
+          // Dünne Trennlinie
+          doc.setDrawColor(180,190,200);doc.setLineWidth(0.15);doc.line(ML+4,yPos+1,PW-MR-4,yPos+1);
+          yPos+=5;
+        });
       }
 
-      // ── 4. NACH KATEGORIE ───────────────────────────────────────
+      // ── KATEGORIE-AUSWERTUNG ────────────────────────────────
       const catMap={};
-      allLog.forEach(e=>{
-        const d=S.drinks.find(x=>x.id===e.drinkId);
-        const cat=d?d.cat:(L?'Other':'Sonstiges');
-        if(!catMap[cat])catMap[cat]={count:0,total:0};
-        catMap[cat].count++;catMap[cat].total+=(parseFloat(e.price)||0);
-      });
+      allLog.forEach(e=>{const d=S.drinks.find(x=>x.id===e.drinkId);const cat=d?d.cat:(L?'Other':'Sonstiges');if(!catMap[cat])catMap[cat]={count:0,total:0};catMap[cat].count++;catMap[cat].total+=(e.price||0);});
       const sortedCats=Object.entries(catMap).sort((a,b)=>b[1].total-a[1].total);
       if(sortedCats.length){
-        secHeader(L?'By Category':'Nach Kategorie');
-        const cc=[
-          {label:L?'Category':'Kategorie',x:ML+2,  w:90, align:'left'},
-          {label:L?'Count':'Anzahl',       x:ML+92, w:26, align:'right'},
-          {label:L?'Total':'Gesamt',       x:ML+118,w:38, align:'right'},
-          {label:L?'Share':'Anteil',       x:ML+156,w:22, align:'right'},
-        ];
-        tblHeader(cc);
-        sortedCats.forEach(([cat,st],i)=>{
-          const pct=totalAmt>0?(st.total/totalAmt*100).toFixed(1)+'%':'–';
-          tblRow([
-            {label:cat,            x:ML+2,  w:90},
-            {label:st.count+'×',   x:ML+92, w:26, align:'right',gray:true},
-            {label:fmtC(st.total), x:ML+118,w:38, align:'right',bold:true},
-            {label:pct,            x:ML+156,w:22, align:'right',gray:true},
-          ],i%2===1);
+        checkPage(30);
+        doc.setFillColor(...NAVY);doc.rect(ML,yPos,CW,9,'F');
+        setFont('bold',10,255,255,255);
+        doc.text(L?'Spending by Category':'Ausgaben nach Kategorie',ML+3,yPos+6.3);
+        yPos+=13;
+        sortedCats.forEach(([cat,st])=>{
+          checkPage(8);
+          const pct=totalAmt>0?(st.total/totalAmt*100).toFixed(1):'0.0';
+          setFont('normal',9,...TX1);doc.text(cat,ML+3,yPos);
+          setFont('bold',9,...NAVY);doc.text(fmtCurrency(st.total),PW-MR,yPos,{align:'right'});
+          setFont('normal',8,...TX2);doc.text('('+pct+'%  '+fmtNum(st.count)+'×)',PW-MR-30,yPos);
           // Mini-Balken
-          const barW=Math.max(0.5,(st.total/totalAmt)*40);
-          doc.setFillColor(...GOLD);doc.rect(ML+2,yPos-4.5,barW,1.2,'F');
+          const barW=Math.max(1,(st.total/totalAmt)*50);
+          doc.setFillColor(...GOLD);doc.rect(ML+3,yPos+1.5,barW,1.8,'F');
+          yPos+=6.5;
         });
-        yPos+=4;
-      }
-
-      // ── 5. TAGESÜBERSICHT ───────────────────────────────────────
-      if(allDays.length){
-        secHeader(L?'Daily Overview':'Tagesübersicht');
-        const dc=[
-          {label:L?'Date':'Datum',          x:ML+2,  w:50, align:'left'},
-          {label:L?'Entries':'Einträge',     x:ML+52, w:22, align:'right'},
-          {label:L?'Total':'Gesamt',         x:ML+74, w:40, align:'right'},
-          {label:L?'vs Avg':'vs Ø',          x:ML+114,w:40, align:'right'},
-          {label:L?'Day Goal':'Tagesziel',   x:ML+154,w:24, align:'right'},
-        ];
-        tblHeader(dc);
-        const sortedDays=allDays.slice().sort();
-        const dayGoal=S.dailyGoal||0;
-        sortedDays.forEach((dayStr,i)=>{
-          const dayLog=allLog.filter(e=>entryLogicalDayStr(e)===dayStr);
-          const dayTot=dayLog.reduce((s,e)=>s+(parseFloat(e.price)||0),0);
-          const diff=dayTot-avgDay;
-          const diffStr=(diff>=0?'+':'')+fmtC(diff);
-          const dp=dayStr.split('-');
-          const dn=new Date(parseInt(dp[0]),parseInt(dp[1])-1,parseInt(dp[2]));
-          const dayLabel=dn.toLocaleDateString(L?'en-US':'de-DE',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});
-          tblRow([
-            {label:dayLabel,       x:ML+2,  w:50},
-            {label:String(dayLog.length),x:ML+52,w:22,align:'right',gray:true},
-            {label:fmtC(dayTot),   x:ML+74, w:40, align:'right',bold:true},
-            {label:diffStr,        x:ML+114,w:40, align:'right',gray:true},
-            {label:dayGoal>0?fmtC(dayGoal):'–',x:ML+154,w:24,align:'right',gray:true},
-          ],i%2===1);
-        });
-        yPos+=4;
       }
 
       // ── FOOTER auf jeder Seite ───────────────────────────────
@@ -8399,7 +8348,8 @@ function toggleVwSec(k){
 }
 
 function renderVerwaltung(){
-  if(!S.vwOpen)S.vwOpen={bkp:true,settings:false,tracking:false,users:false,tz:false,design:false,drinks:false,route:false,dbstatus:false,sync:false,appupdate:false};
+  if(!S.vwOpen)S.vwOpen={bkp:true,settings:false,tracking:false,users:false,tz:false,design:false,drinks:false,route:false,dbstatus:false,sync:false,appupdate:false,exports:false};
+  if(S.vwOpen.exports===undefined)S.vwOpen.exports=false;
   S.catIndex=allCats();
   const vw=document.getElementById('vwpane');
   const L=S.lang==='en';
@@ -8495,18 +8445,9 @@ function renderVerwaltung(){
   ════════════════════════════════════════════════════ */
   vw.innerHTML=`
 
-  <!-- ══════════════════════════════════════════
-       SYNC-SCHNELLZUGRIFF (ganz oben, immer sichtbar)
-  ══════════════════════════════════════════ -->
+  <!-- SYNC-SCHNELLZUGRIFF -->
   ${S.syncEnabled ? `
-  <button onclick="createSyncPackage()" style="
-    display:flex;align-items:center;gap:12px;
-    width:100%;padding:13px 16px;margin-bottom:10px;
-    background:linear-gradient(135deg,var(--bg2),var(--bg3));
-    border:1px solid var(--ac-27);border-radius:12px;
-    color:var(--tx0);font-family:Georgia,serif;text-align:left;
-    cursor:pointer;touch-action:manipulation;
-    box-shadow:0 2px 10px rgba(0,0,0,.25)">
+  <button onclick="createSyncPackage()" style="display:flex;align-items:center;gap:12px;width:100%;padding:13px 16px;margin-bottom:10px;background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--ac-27);border-radius:12px;color:var(--tx0);font-family:Georgia,serif;text-align:left;cursor:pointer;touch-action:manipulation;box-shadow:0 2px 10px rgba(0,0,0,.25)">
     <span style="font-size:22px;flex-shrink:0">📦</span>
     <span style="flex:1">
       <span style="display:block;font-size:13px;font-weight:bold;color:var(--ac)">${T('manage.sync.send')}</span>
@@ -8515,27 +8456,28 @@ function renderVerwaltung(){
     <span style="font-size:18px;color:var(--ac-60)">›</span>
   </button>` : ''}
 
-  <!-- ══════════════════════════════════════════
-       HERO: BACKUP & SICHERUNG
-       (Immer sichtbar – wichtigster Bereich)
-  ══════════════════════════════════════════ -->
+  <!-- ══ 1. BACKUP & SICHERUNG (immer sichtbar) ══ -->
   <div class="adm-hero" id="vw-backup">
 
-    <!-- Kopfzeile mit letztem Backup-Status -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:20px">💾</span>
-        <div>
-          <div style="font-size:11px;font-weight:bold;color:var(--ac);letter-spacing:1px;text-transform:uppercase">${L?'Backup &amp; Sync':'Backup &amp; Sync'}</div>
-          <div style="font-size:10px;color:var(--tx2);margin-top:1px">${bkpStatusHtml.replace(/<div[^>]*>|<\/div>/g,'').replace(/<strong>/g,'').replace(/<\/strong>/g,'').trim()}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:9px;flex:1;min-width:0">
+        <span style="font-size:22px;flex-shrink:0">💾</span>
+        <div style="min-width:0">
+          <div style="font-size:11px;font-weight:bold;color:var(--ac);letter-spacing:1px;text-transform:uppercase">${L?'Backup &amp; Data':'Backup &amp; Daten'}</div>
+          <div style="font-size:10px;color:${S.lastBackupDate&&(Date.now()-new Date(S.lastBackupDate).getTime())<259200000?'var(--col-ok)':'#e0a055'};margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            ${S.lastBackupDate?(()=>{const d=new Date(S.lastBackupDate),diff=Math.floor((Date.now()-d.getTime())/3600000);const ds=diff<1?(L?'just now':'gerade eben'):diff<24?(L?diff+'h ago':'vor '+diff+'h'):(L?Math.floor(diff/24)+'d ago':'vor '+Math.floor(diff/24)+' Tag(en)');return(diff<72?'✅ ':'⚠️ ')+(L?'Last backup: ':'Letztes Backup: ')+d.toLocaleDateString(L?'en-US':'de-DE')+' ('+ds+')';})():'⚠️ '+T('manage.bkp.never')}
+          </div>
         </div>
       </div>
-      ${storageHtml.replace(/.*<div.*?<\/div>.*?<\/div>/s,'')}
+      <div style="flex-shrink:0;text-align:right">
+        <div style="font-size:9px;font-weight:bold" id="admStorageStatus" style="color:var(--col-ok)">● IndexedDB</div>
+        <div style="font-size:8px;color:var(--tx2);margin-top:1px" id="admStorageDetail">…</div>
+        <div style="height:3px;background:var(--ac-13);border-radius:2px;margin-top:3px;width:60px;overflow:hidden"><div id="admStorageFill" style="height:100%;width:0%;background:var(--col-ok);border-radius:2px;transition:width .4s"></div></div>
+      </div>
     </div>
 
-    <!-- ── ROW 1: Sofort-Sicherung ──────────── -->
-    <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px">${L?'Quick save – this device':'Schnellsicherung – dieses Gerät'}</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
+    <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px">${L?'On this device':'Auf diesem Gerät'}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
       <button class="adm-btn-primary" onclick="saveBackupInternal()">
         <span class="adm-bico">💾</span>
         <span>${L?'Save now':'Jetzt sichern'}</span>
@@ -8544,13 +8486,12 @@ function renderVerwaltung(){
       <button class="adm-btn-primary" onclick="importLatestInternal()" style="background:linear-gradient(135deg,#162840,#0a1e30);box-shadow:0 2px 10px rgba(15,40,70,.4);color:var(--tx0)">
         <span class="adm-bico">⚡</span>
         <span>${L?'Load last':'Letztes laden'}</span>
-        <span style="font-size:9px;font-weight:normal;opacity:.75">${L?'Restore internal backup':'Int. Backup wiederherstellen'}</span>
+        <span style="font-size:9px;font-weight:normal;opacity:.75">${L?'Restore internal':'Intern wiederherstellen'}</span>
       </button>
     </div>
 
-    <!-- ── ROW 2: Extern / Datei ──────────── -->
-    <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin:10px 0 5px">${L?'External – share file':'Extern – Datei teilen'}</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
+    <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px">${L?'Share with other devices':'Mit anderen Geräten teilen'}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
       <button class="adm-btn-primary" onclick="shareBackup()" style="background:linear-gradient(135deg,#0d2030,#071525);color:var(--tx0)">
         <span class="adm-bico">📤</span>
         <span>${L?'Export':'Exportieren'}</span>
@@ -8564,63 +8505,90 @@ function renderVerwaltung(){
       </label>
     </div>
 
-    <!-- ── SYNC-TOGGLE ──────────── -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin:12px 0 0;padding:9px 11px;background:var(--bg3);border:1px solid var(--ac-13);border-radius:9px">
-      <div>
-        <div style="font-size:11px;font-weight:bold;color:var(--tx0)">📦 ${L?'Device sync':'Geräte-Sync'}</div>
-        <div style="font-size:10px;color:var(--tx2);margin-top:1px">${S.syncEnabled ? (L?'Active – send/receive entries via AirDrop':'Aktiv – Einträge per AirDrop senden/empfangen') : (L?'Inactive – exchange entries with other devices':'Inaktiv – Einträge mit anderen Geräten austauschen')}</div>
-      </div>
-      <button class="sbtn${S.syncEnabled?' on':''}" onclick="S.syncEnabled=!S.syncEnabled;saveStateDebounced();renderVerwaltung();" style="flex-shrink:0;margin-left:10px;min-width:44px">${S.syncEnabled?(L?'On':'An'):(L?'Off':'Aus')}</button>
-    </div>
-
-    <!-- ── MEHR-EXPORTS (aufklappbar) ──────────── -->
-    <button onclick="
-      const p=document.getElementById('bkpExtraPanel');
-      const open=p.style.display!=='none';
-      p.style.display=open?'none':'block';
-      this.querySelector('.bep-arr').textContent=open?'▼':'▲';"
-      style="width:100%;text-align:left;padding:7px 10px;
-      background:transparent;border:1px solid var(--ac-13);
-      border-radius:8px;color:var(--tx2);font-size:10px;
-      cursor:pointer;font-family:Georgia,serif;
-      touch-action:manipulation;margin:10px 0 4px;
-      display:flex;align-items:center;justify-content:space-between">
-      <span>${L?'More exports (CSV · PDF · Word)':'Mehr Exporte (CSV · PDF · Word)'}</span>
-      <span class="bep-arr" style="font-size:10px">▼</span>
-    </button>
-    <div id="bkpExtraPanel" style="display:none">
-      <div class="adm-secondary-row" style="grid-template-columns:1fr 1fr 1fr 1fr">
-        <button class="adm-btn-sm" onclick="exportProtocol()" style="flex-direction:column;gap:3px;padding:10px 6px;align-items:center">
-          <span style="font-size:18px">📤</span>
-          <span style="font-size:10px;font-weight:bold;color:var(--tx0)">${L?'Share log':'Protokoll'}</span>
-          <span style="font-size:9px;color:var(--tx2)">Smart Merge</span>
-        </button>
-        <button class="adm-btn-sm" onclick="exportLogCSV()" style="flex-direction:column;gap:3px;padding:10px 6px;align-items:center">
-          <span style="font-size:18px">📊</span>
-          <span style="font-size:10px;font-weight:bold;color:var(--tx0)">CSV</span>
-          <span style="font-size:9px;color:var(--tx2)">Excel · Numbers</span>
-        </button>
-        <button class="adm-btn-sm" onclick="exportVoyagePDF()" style="flex-direction:column;gap:3px;padding:10px 6px;align-items:center">
-          <span style="font-size:18px">📄</span>
-          <span style="font-size:10px;font-weight:bold;color:var(--tx0)">PDF</span>
-          <span style="font-size:9px;color:var(--tx2)">${L?'Voyage Report':'Reisebericht'}</span>
-        </button>
-        <button class="adm-btn-sm" onclick="exportVoyageWord()" style="flex-direction:column;gap:3px;padding:10px 6px;align-items:center">
-          <span style="font-size:18px">📝</span>
-          <span style="font-size:10px;font-weight:bold;color:var(--tx0)">Word</span>
-          <span style="font-size:9px;color:var(--tx2)">${L?'Voyage Report (.rtf)':'Reisebericht (.rtf)'}</span> ──────────── -->
-    <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin:14px 0 6px">${L?'Saved on this device':'Auf diesem Gerät gespeichert'}</div>
-    <div id="internalBackupsList"><div style="font-size:11px;color:var(--tx2);padding:8px 0">${L?'Loading…':'Lade…'}</div></div>
+    <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin:2px 0 6px">${L?'Saved on this device':'Auf diesem Gerät gespeichert'}</div>
+    <div id="internalBackupsList"><div style="font-size:11px;color:var(--tx2);padding:6px 0">${L?'Loading…':'Lade…'}</div></div>
     <div id="internalBackupsSummary"></div>
 
   </div>
 
 
-  <div class="vw-group-label">👤 Personen &amp; Budget</div>
+  <!-- ══ 2. EXPORTE & SYNC ══ -->
+  <div class="adm-card">
+    <div class="adm-card-hdr" onclick="toggleVwSec('exports')">
+      <span class="adm-card-hdr-ico">📤</span>
+      <div class="adm-card-hdr-body">
+        <div class="adm-card-hdr-title">${L?'Exports &amp; Sync':'Exporte &amp; Sync'}</div>
+        <div class="adm-card-hdr-sub">${L?'Reports · CSV · HTML · Device sync':'Berichte · CSV · HTML · Geräte-Sync'}</div>
+      </div>
+      <span class="adm-card-hdr-arr${S.vwOpen.exports?' open':''}">&#9658;</span>
+    </div>
+    <div class="adm-card-body${S.vwOpen.exports?' open':''}">
+      <div style="padding-top:12px">
 
-  <!-- ══════════════════════════════════════════
-       5. NUTZER-PROFILE
-  ══════════════════════════════════════════ -->
+        <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:7px">${L?'Voyage Reports':'Reiseberichte'}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+          <button onclick="exportVoyagePDF()" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:14px 8px;background:linear-gradient(135deg,var(--ac),var(--ac-deep));color:var(--ac-fg);border:none;border-radius:12px;cursor:pointer;font-family:Georgia,serif;touch-action:manipulation;box-shadow:var(--shadow-gold)">
+            <span style="font-size:22px">📄</span>
+            <span style="font-size:11px;font-weight:bold">PDF</span>
+            <span style="font-size:9px;opacity:.85">${L?'Voyage Report':'Reisebericht'}</span>
+          </button>
+          <button onclick="exportVoyageWord()" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:14px 8px;background:var(--bg2);color:var(--tx0);border:1px solid var(--ac-27);border-radius:12px;cursor:pointer;font-family:Georgia,serif;touch-action:manipulation">
+            <span style="font-size:22px">📝</span>
+            <span style="font-size:11px;font-weight:bold">Word</span>
+            <span style="font-size:9px;color:var(--tx2)">.rtf · ${L?'Voyage Report':'Reisebericht'}</span>
+          </button>
+        </div>
+
+        <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:7px">${L?'Log Export':'Protokoll-Export'}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+          <button class="adm-btn-sm" onclick="exportProtocol()" style="flex-direction:column;gap:4px;padding:12px 6px;align-items:center">
+            <span style="font-size:20px">📤</span>
+            <span style="font-size:10px;font-weight:bold;color:var(--tx0)">${L?'Share log':'Protokoll teilen'}</span>
+            <span style="font-size:9px;color:var(--tx2)">Smart Merge</span>
+          </button>
+          <button class="adm-btn-sm" onclick="exportLogCSV()" style="flex-direction:column;gap:4px;padding:12px 6px;align-items:center">
+            <span style="font-size:20px">📊</span>
+            <span style="font-size:10px;font-weight:bold;color:var(--tx0)">CSV</span>
+            <span style="font-size:9px;color:var(--tx2)">Excel · Numbers</span>
+          </button>
+        </div>
+
+        <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:7px">${L?'App Export':'App-Export'}</div>
+        <div style="background:#081a10;border:1px solid #2a6a3a44;border-radius:10px;padding:11px;margin-bottom:14px">
+          <div style="font-size:10px;color:var(--tx2);line-height:1.55;margin-bottom:9px">
+            ${L?'Full 1:1 copy of the app as HTML – all settings, route, drinks and log included. Open in Safari to continue where you left off.':'Vollständige 1:1-Kopie der App als HTML – mit Einstellungen, Route, Getränken und Protokoll. In Safari öffnen und weitermachen.'}
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px">
+            <button onclick="shareAppAsHTML()" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 6px;background:transparent;border:1px solid #2a7a4a66;border-radius:9px;color:#5ec98a;font-family:Georgia,serif;font-size:11px;font-weight:bold;cursor:pointer;touch-action:manipulation">
+              <span style="font-size:16px">📡</span> ${L?'Share':'Teilen'}
+            </button>
+            <button onclick="exportAppAsHTML()" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 6px;background:transparent;border:1px solid #2a7a4a66;border-radius:9px;color:#5ec98a;font-family:Georgia,serif;font-size:11px;font-weight:bold;cursor:pointer;touch-action:manipulation">
+              <span style="font-size:16px">💾</span> ${L?'Save':'Speichern'}
+            </button>
+          </div>
+          <div style="font-size:9px;color:var(--tx2);line-height:1.5;padding:6px 8px;background:#0a1f10;border-radius:7px;border-left:2px solid #2a7a4a55">
+            💡 ${L?'In the share menu tap <strong style="color:#5ec98a">Save to Files</strong>.':'Im Teilen-Menü <strong style="color:#5ec98a">In Dateien sichern</strong> wählen.'}
+          </div>
+        </div>
+
+        <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:7px">${L?'Device Sync':'Geräte-Synchronisation'}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg2);border:1px solid var(--ac-13);border-radius:10px">
+          <div style="min-width:0;flex:1">
+            <div style="font-size:12px;font-weight:bold;color:var(--tx0)">📦 ${L?'Device sync':'Geräte-Sync'}</div>
+            <div style="font-size:10px;color:var(--tx2);margin-top:2px;line-height:1.4">${S.syncEnabled?(L?'Active – share entries via AirDrop':'Aktiv – Einträge per AirDrop teilen'):(L?'Off – exchange entries without internet':'Aus – Einträge ohne Internet tauschen')}</div>
+          </div>
+          <button class="sbtn${S.syncEnabled?' on':''}" onclick="S.syncEnabled=!S.syncEnabled;saveStateDebounced();renderVerwaltung();" style="flex-shrink:0;margin-left:12px;min-width:48px">${S.syncEnabled?(L?'On':'An'):(L?'Off':'Aus')}</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══ GRUPPE: PERSONEN & BUDGET ══ -->
+  <div class="vw-group-label">👤 ${L?'People &amp; Budget':'Personen &amp; Budget'}</div>
+
+  <!-- 3. NUTZER-PROFILE -->
   <div class="adm-card" id="vw-users">
     <div class="adm-card-hdr" onclick="toggleVwSec('users')">
       <span class="adm-card-hdr-ico">👥</span>
@@ -8632,48 +8600,33 @@ function renderVerwaltung(){
     </div>
     <div class="adm-card-body${S.vwOpen.users?' open':''}">
       <div style="padding-top:10px">
-
-        <!-- Nutzer-Übersicht -->
         <div style="font-size:10px;color:var(--tx2);line-height:1.6;margin-bottom:10px">
-          ${L?'Up to 4 fixed persons + additional users. The active user is assigned all new entries.':'Bis zu 4 feste Personen + weitere Nutzer. Der aktive Nutzer erhält alle neuen Einträge.'}
+          ${L?'Up to 4 fixed persons + additional users. The active user receives all new entries.':'Bis zu 4 feste Personen + weitere Nutzer. Der aktive Nutzer erhält alle neuen Einträge.'}
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
-          ${(S.users||[]).map(u=>`<div style="display:flex;align-items:center;gap:6px;padding:7px 11px;background:${(u.color||'#666')}18;border:1px solid ${(u.color||'#666')}33;border-radius:10px">
-            <span style="width:9px;height:9px;border-radius:50%;background:${u.color||'#aaa'};display:inline-block;flex-shrink:0"></span>
-            <span style="font-size:12px;color:var(--tx0)">${esc(u.name||'?')}</span>
-            ${u.id===S.activeUserId?`<span style="font-size:9px;background:var(--ac);color:var(--bg);padding:1px 6px;border-radius:4px;font-weight:bold">${L?'active':'aktiv'}</span>`:''}
-          </div>`).join('')}
+          ${(S.users||[]).map(u=>`<div style="display:flex;align-items:center;gap:6px;padding:7px 11px;background:${(u.color||'#666')}18;border:1px solid ${(u.color||'#666')}33;border-radius:10px"><span style="width:9px;height:9px;border-radius:50%;background:${u.color||'#aaa'};display:inline-block;flex-shrink:0"></span><span style="font-size:12px;color:var(--tx0)">${esc(u.name||'?')}</span>${u.id===S.activeUserId?`<span style="font-size:9px;background:var(--ac);color:var(--bg);padding:1px 6px;border-radius:4px;font-weight:bold">${L?'active':'aktiv'}</span>`:''}</div>`).join('')}
         </div>
         <button class="adm-btn-sm" onclick="openUserManagement()" style="width:100%;justify-content:center;padding:12px;gap:7px">
           <span>👥</span>
           <span style="font-size:12px;font-weight:bold">${L?'Manage users (names, colours, budgets)':'Nutzer verwalten (Namen, Farben, Budgets)'}</span>
           <span style="margin-left:auto;color:var(--ac)">›</span>
         </button>
-
       </div>
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       2. TAGESLIMIT & WÄHRUNG
-       (Budgetkontrolle)
-  ══════════════════════════════════════════ -->
+  <!-- 4. TAGESLIMIT & WÄHRUNG -->
   <div class="adm-card">
     <div class="adm-card-hdr" onclick="toggleVwSec('tracking')">
       <span class="adm-card-hdr-ico">🎯</span>
       <div class="adm-card-hdr-body">
         <div class="adm-card-hdr-title">${L?'Daily Limit &amp; Currency':'Tageslimit &amp; Währung'}</div>
-        <div class="adm-card-hdr-sub">
-          ${S.dailyGoal>0?(L?'Limit: ':'Limit: ')+S.dailyGoal+' '+S.currency:(L?'No limit set':'Kein Limit gesetzt')}
-          &nbsp;·&nbsp;${S.currency}${(S.serviceCharge||0)>0?'&nbsp;·&nbsp;🧾 '+S.serviceCharge+'%':''}
-        </div>
+        <div class="adm-card-hdr-sub">${S.dailyGoal>0?(L?'Limit: ':'Limit: ')+S.dailyGoal+' '+S.currency:(L?'No limit':'Kein Limit')}&nbsp;·&nbsp;${S.currency}${(S.serviceCharge||0)>0?'&nbsp;·&nbsp;🧾 '+S.serviceCharge+'%':''}</div>
       </div>
       <span class="adm-card-hdr-arr${S.vwOpen.tracking?' open':''}">&#9658;</span>
     </div>
     <div class="adm-card-body${S.vwOpen.tracking?' open':''}">
       <div style="padding-top:4px">
-
-        <!-- Tageslimit -->
         <div class="adm-row" style="flex-direction:column;align-items:flex-start;gap:7px">
           <span class="adm-row-label" style="font-size:12px;font-weight:bold;color:var(--tx0)">${T('settings.goal')}</span>
           <div style="font-size:10px;color:var(--tx2);margin-top:-4px">${L?'Daily spending limit per person. 0 = off.':'Maximales Tagesbudget pro Person. 0 = deaktiviert.'}</div>
@@ -8683,8 +8636,6 @@ function renderVerwaltung(){
             <button class="goal-ok" onclick="saveGoal()">OK</button>
           </div>
         </div>
-
-        <!-- Währung -->
         <div class="adm-row" style="flex-direction:column;align-items:flex-start;gap:7px;padding-bottom:4px">
           <span class="adm-row-label" style="font-size:12px;font-weight:bold;color:var(--tx0)">${T('settings.currency')}</span>
           <div style="font-size:10px;color:var(--tx2);margin-top:-4px">${T('settings.currency.hint')}</div>
@@ -8697,35 +8648,28 @@ function renderVerwaltung(){
           </div>
           <input id="currCustom" type="text" maxlength="6" placeholder="z.B. HKD" value="${!CURRENCIES.find(c=>c.sym===S.currency)?esc(S.currency):''}" class="adm-input" style="display:${!CURRENCIES.find(c=>c.sym===S.currency)?'block':'none'};width:100%">
         </div>
-
-        <!-- Service Charge / Trinkgeld -->
         <div class="adm-row" style="flex-direction:column;align-items:flex-start;gap:7px;padding-top:12px;border-top:1px solid var(--ac-07)">
           <div style="display:flex;align-items:center;gap:8px;width:100%">
             <span style="font-size:15px">🧾</span>
-            <span class="adm-row-label" style="font-size:12px;font-weight:bold;color:var(--tx0)">${L?'Service Charge (automatic tip)':'Service Charge (Trinkgeld-Automatik)'}</span>
+            <span class="adm-row-label" style="font-size:12px;font-weight:bold;color:var(--tx0)">${L?'Service Charge':'Service Charge'}</span>
             ${(S.serviceCharge||0)>0?`<span style="margin-left:auto;font-size:11px;font-weight:bold;background:var(--ac-20);color:var(--ac);border:1px solid var(--ac-40);border-radius:6px;padding:2px 8px">${S.serviceCharge}%</span>`:''}
           </div>
-          <div style="font-size:10px;color:var(--tx2);line-height:1.55">
-            ${L?'Automatically adds X% on top of each drink price when tapping <strong>+</strong>. Standard rates: 18% (NCL, Royal Caribbean) or 20% (Celebrity). <strong>0 = disabled.</strong>':'Schlägt beim Antippen von <strong>+</strong> automatisch X% auf den Listenpreis auf. Übliche Sätze: 18% (NCL, Royal Caribbean) oder 20% (Celebrity). <strong>0 = deaktiviert.</strong>'}
-          </div>
+          <div style="font-size:10px;color:var(--tx2);line-height:1.55">${L?'Adds X% on each drink when tapping <strong>+</strong>. Common: 18% (NCL, Royal Caribbean), 20% (Celebrity). <strong>0 = off.</strong>':'Schlägt beim <strong>+</strong>-Tippen X% auf den Preis auf. Üblich: 18% (NCL, Royal Caribbean), 20% (Celebrity). <strong>0 = deaktiviert.</strong>'}</div>
           <div class="goal-row" style="width:100%">
             <input id="svcInp" type="number" min="0" max="50" step="0.5" placeholder="0" value="${S.serviceCharge||''}" class="adm-input" style="flex:1;max-width:100px">
             <span style="font-size:13px;color:var(--ac);margin:0 4px">%</span>
             <button class="goal-ok" onclick="saveServiceCharge()">OK</button>
           </div>
-          ${(S.serviceCharge||0)>0?`<div style="font-size:10px;padding:6px 9px;background:var(--ac-07);border-radius:7px;border-left:3px solid var(--ac-27);color:var(--tx1);line-height:1.5">✓ ${L?'Active: every + tap adds <strong>'+S.serviceCharge+'%</strong> to the list price.':'Aktiv: jeder +-Tipp schlägt <strong>'+S.serviceCharge+'%</strong> auf den Listenpreis auf.'}</div>`:''}
+          ${(S.serviceCharge||0)>0?`<div style="font-size:10px;padding:6px 9px;background:var(--ac-07);border-radius:7px;border-left:3px solid var(--ac-27);color:var(--tx1);line-height:1.5">✓ ${L?'Active: every + tap adds <strong>'+S.serviceCharge+'%</strong>.':'Aktiv: jeder + Tipp schlägt <strong>'+S.serviceCharge+'%</strong> auf.'}</div>`:''}
         </div>
-
       </div>
     </div>
   </div>
 
 
-  <div class="vw-group-label">🍹 Getränkeliste</div>
+  <!-- ══ GRUPPE: GETRÄNKELISTE ══ -->
+  <div class="vw-group-label">🍹 ${L?'Drinks List':'Getränkeliste'}</div>
 
-  <!-- ══════════════════════════════════════════
-       6. GETRÄNKE & KATEGORIEN
-  ══════════════════════════════════════════ -->
   <div class="adm-card" id="vw-drinks">
     <div class="adm-card-hdr" onclick="toggleVwSec('drinks')">
       <span class="adm-card-hdr-ico">🍹</span>
@@ -8737,9 +8681,7 @@ function renderVerwaltung(){
     </div>
     <div class="adm-card-body${S.vwOpen.drinks?' open':''}">
       <div style="padding-top:10px">
-
-        <!-- CSV-Bereich -->
-        <div style="font-size:10px;font-weight:bold;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">${L?'Import / Export via CSV':'Import / Export via CSV'}</div>
+        <div style="font-size:10px;font-weight:bold;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">Import / Export via CSV</div>
         <div class="vw-hint" style="margin-bottom:10px">${T('manage.drinks.hint')}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px">
           <button class="adm-btn-sm" onclick="exportDrinksCSV()" style="padding:11px 8px;flex-direction:column;gap:3px;align-items:center">
@@ -8754,86 +8696,73 @@ function renderVerwaltung(){
             <input type="file" accept=".csv,text/csv" id="csvFileInput" onchange="onDrinkCSVFile(this)" style="display:none">
           </label>
         </div>
-
-        <!-- Kategorien & Getränke verwalten -->
         <div class="adm-divider"></div>
         <div style="font-size:10px;font-weight:bold;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px">${T('manage.cats.title')}</div>
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;padding:7px 10px;background:${AI_COLOR}18;border:1px solid ${AI_COLOR}44;border-radius:8px;font-size:10px;color:var(--tx1)"><span class="incl-dot filled" style="background:${AI_COLOR};width:10px;height:10px;flex-shrink:0"></span><span>${L?'<strong style="color:'+AI_COLOR+'">Green dot</strong> behind the price = All Inclusive (AI). Tap the dot to toggle the status.':'<strong style="color:'+AI_COLOR+'">Grüner Punkt</strong> hinter dem Preis = All Inclusive (AI). Punkt antippen zum Umschalten.'}</span></div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;padding:7px 10px;background:${AI_COLOR}18;border:1px solid ${AI_COLOR}44;border-radius:8px;font-size:10px;color:var(--tx1)">
+          <span class="incl-dot filled" style="background:${AI_COLOR};width:10px;height:10px;flex-shrink:0"></span>
+          <span>${L?'<strong style="color:'+AI_COLOR+'">Green dot</strong> = All Inclusive (AI). Tap to toggle.':'<strong style="color:'+AI_COLOR+'">Grüner Punkt</strong> = All Inclusive (AI). Antippen zum Umschalten.'}</span>
+        </div>
         <div id="drinkMgmt">${catHtml}</div>
         <button class="new-cat-btn" onclick="openNewCat()">&#65291; ${T('manage.new.cat').replace('\uff0b ','')}</button>
-
       </div>
     </div>
   </div>
 
 
-  <div class="vw-group-label">⚓ Reise &amp; Zeit</div>
+  <!-- ══ GRUPPE: REISE & NAVIGATION ══ -->
+  <div class="vw-group-label">⚓ ${L?'Voyage &amp; Navigation':'Reise &amp; Navigation'}</div>
 
-  <!-- ══════════════════════════════════════════
-       1. ZEITZONE & TAGESSTRUKTUR
-       (Wichtig für Kreuzfahrt / Reisen)
-  ══════════════════════════════════════════ -->
+  <!-- SCHIFFSZEIT & TAGESSTRUKTUR -->
   <div class="adm-card" id="vw-tz" style="border-color:${tzMismatch?'#e0a05555':'var(--ac-13)'}">
     <div class="adm-card-hdr" onclick="toggleVwSec('tz')">
       <span class="adm-card-hdr-ico">🕐</span>
       <div class="adm-card-hdr-body">
-        <div class="adm-card-hdr-title">${L?'Ship\'s time &amp; Day Structure':'Schiffszeit &amp; Tagesstruktur'}</div>
+        <div class="adm-card-hdr-title">${L?'Ship\'s Time &amp; Day Structure':'Schiffszeit &amp; Tagesstruktur'}</div>
         <div class="adm-card-hdr-sub" style="${tzMismatch?'color:#e0a055':''}">
-          <span id="vwClockDisp">${appFmtTime(new Date().toISOString())}</span>
-          &nbsp;·&nbsp;${appOffsetLabel()}&nbsp;·&nbsp;${S.tzMode==='fixed'?(L?'Fixed':'Fest'):(L?'Auto':'Auto')}${tzMismatch?'&nbsp;⚠️':''}
+          <span id="vwClockDisp">${appFmtTime(new Date().toISOString())}</span>&nbsp;·&nbsp;${appOffsetLabel()}&nbsp;·&nbsp;${S.tzMode==='fixed'?(L?'Fixed':'Fest'):(L?'Auto':'Auto')}${tzMismatch?'&nbsp;⚠️':''}
         </div>
       </div>
       <span class="adm-card-hdr-arr${S.vwOpen.tz?' open':''}">&#9658;</span>
     </div>
     <div class="adm-card-body${S.vwOpen.tz?' open':''}">
       <div style="padding-top:10px">
-
-        <!-- TZ-Warnung -->
         ${tzMismatch?`<div style="padding:8px 11px;background:#2a1800;border:1px solid #e0a05544;border-radius:8px;font-size:11px;color:#e0a055;margin-bottom:12px;line-height:1.55">&#9888;&#65039; ${T('settings.tz.mismatch')} &ndash; ${L?'Device':'Gerät'}: ${esc(appOffsetLabel(devOff))}</div>`:''}
-
-        <!-- TZ-Modus -->
-        <div style="font-size:10px;font-weight:bold;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">${L?'Ship\'s time mode':'Schiffszeit-Modus'}</div>
+        <div style="font-size:10px;font-weight:bold;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">${L?'Time mode':'Zeitmodus'}</div>
         <div class="adm-row" style="flex-direction:column;align-items:flex-start;gap:8px;padding-bottom:12px">
           <div class="adm-row-ctrl" style="width:100%;gap:6px">
             <button class="sbtn${S.tzMode==='auto'?' on':''}" onclick="setTimezone('auto',0);renderVerwaltung()" style="flex:1;justify-content:center">&#128241; ${L?'Automatic':'Automatisch'}</button>
             <button class="sbtn${S.tzMode==='fixed'?' on':''}" onclick="document.getElementById('tzFixedRow').style.display='flex';document.getElementById('tzAutoHint').style.display='none'" style="flex:1;justify-content:center">&#9202; ${L?'Manual':'Manuell'}</button>
             <button class="sbtn" onclick="openTzWiz()" style="flex:1;justify-content:center;background:var(--ac-13);border-color:var(--ac-40)">🧭 ${L?'Wizard':'Assistent'}</button>
           </div>
-          <div id="tzAutoHint" style="display:${S.tzMode==='auto'?'block':'none'};font-size:10px;color:var(--tx2);line-height:1.5">${T('settings.tz.hint.auto')}<br><span style="color:var(--tx2)">${L?'Unreliable at sea – iPhone does not know the ship\'s time.':'Auf hoher See unzuverlässig – iPhone kennt die Schiffszeit nicht.'}</span></div>
+          <div id="tzAutoHint" style="display:${S.tzMode==='auto'?'block':'none'};font-size:10px;color:var(--tx2);line-height:1.5">${T('settings.tz.hint.auto')}<br><span style="color:var(--tx2)">${L?'Unreliable at sea – iPhone doesn\'t know the ship\'s time.':'Auf hoher See unzuverlässig – iPhone kennt die Schiffszeit nicht.'}</span></div>
           <div id="tzFixedRow" style="display:${S.tzMode==='fixed'?'flex':'none'};flex-direction:column;gap:7px;width:100%">
             <div style="font-size:10px;color:var(--tx2);line-height:1.5">${T('settings.tz.hint')}</div>
             <div style="display:flex;gap:6px;align-items:center">
               <select id="tzOffSel" class="adm-input" style="flex:1;font-size:12px">${tzOffSel}</select>
               <button class="goal-ok" onclick="saveTzFixed()">OK</button>
             </div>
-            <div style="font-size:10px;color:var(--tx2)">${L?'Tip: Set to ship time at start of voyage.':'Tipp: Zu Reisebeginn einmalig auf Schiffszeit stellen.'}</div>
+            <div style="font-size:10px;color:var(--tx2)">${L?'Tip: Set to ship\'s time at voyage start.':'Tipp: Zu Reisebeginn einmalig auf Schiffszeit stellen.'}</div>
           </div>
         </div>
-
-        <!-- Tagesende -->
         <div style="font-size:10px;font-weight:bold;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;padding-top:4px;border-top:1px solid var(--ac-07)">${T('settings.dayend')}</div>
         <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
           <input id="dayEndInp" type="time" value="${dayEndLabel()}" class="adm-input" style="flex:1">
           <button class="goal-ok" onclick="saveDayEnd()">OK</button>
         </div>
         <div style="font-size:10px;color:${(S.dayEndHour||0)===0&&(S.dayEndMinute||0)===0?'var(--tx2)':'var(--ac)'};line-height:1.5">
-          ${(S.dayEndHour||0)===0&&(S.dayEndMinute||0)===0
-            ?T('settings.dayend.hint')
-            :'\u2713 '+(L?'Active':'Aktiv')+': '+dayEndLabel()+' \u2013 '+(L?'Entries before count for the previous day.':'Einträge davor zählen zum Vortag.')}
+          ${(S.dayEndHour||0)===0&&(S.dayEndMinute||0)===0?T('settings.dayend.hint'):'\u2713 '+(L?'Active':'Aktiv')+': '+dayEndLabel()+' \u2013 '+(L?'Entries before count for the previous day.':'Einträge davor zählen zum Vortag.')}
         </div>
-
       </div>
     </div>
   </div>
 
+  <!-- REISEROUTE -->
   ${(()=>{
     const routeCount=(S.voyageRoute||[]).length;
     const today=logicalTodayStr();
     const todayPort=getPortForDate(today);
     const todayGerDate=toGermanDate(today);
-    const routeSub=routeCount>0
-      ?(todayPort?`${routeCount} Tage · Heute (${esc(todayGerDate)}): ${esc(todayPort)}`:`${routeCount} Tage`)
-      :(L?'No route imported yet':'Noch keine Route importiert');
+    const routeSub=routeCount>0?(todayPort?`${routeCount} ${L?'days':'Tage'} · ${L?'Today':'Heute'} (${esc(todayGerDate)}): ${esc(todayPort)}`:`${routeCount} ${L?'days':'Tage'}`):(L?'No route imported yet':'Noch keine Route importiert');
     return `<div class="adm-card" style="border-color:var(--ac-20)">
     <div class="adm-card-hdr" onclick="toggleVwSec('route')">
       <span class="adm-card-hdr-ico">🗺️</span>
@@ -8845,12 +8774,8 @@ function renderVerwaltung(){
     </div>
     <div class="adm-card-body${S.vwOpen.route?' open':''}">
       <div style="padding-top:10px">
-        <div style="font-size:10px;color:var(--tx2);line-height:1.5;margin-bottom:10px">
-          ${L?'Import a cruise itinerary (CSV) to automatically fill port names in log entries by date. The route can be edited at any time.':'Importiere eine Kreuzfahrt-Reiseroute (CSV), um Hafennamen in Protokolleinträgen automatisch nach Datum zu befüllen. Die Route kann jederzeit geändert werden.'}
-        </div>
-
-        <!-- Aktionen -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div style="font-size:10px;color:var(--tx2);line-height:1.5;margin-bottom:10px">${L?'Import a cruise itinerary (CSV) to automatically fill port names in log entries by date.':'Importiere eine Kreuzfahrt-Reiseroute (CSV), um Hafennamen in Protokolleinträgen automatisch nach Datum zu befüllen.'}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
           <button class="adm-btn-sm" onclick="openRouteEditor()" style="flex-direction:column;gap:3px;padding:10px 6px;align-items:center">
             <span style="font-size:18px">✏️</span>
             <span style="font-size:10px;font-weight:bold;color:var(--tx0)">${L?'Edit route':'Route bearbeiten'}</span>
@@ -8875,32 +8800,17 @@ function renderVerwaltung(){
             <span style="font-size:9px;color:var(--tx2)">${L?'Update port names':'Hafennamen aktualisieren'}</span>
           </button>
         </div>
-        ${routeCount>0?`<button onclick="clearRoute()" style="display:flex;align-items:center;gap:5px;width:100%;padding:8px 10px;background:transparent;border:1px solid #e0555533;border-radius:8px;cursor:pointer;color:#e05555;font-size:11px;font-family:Georgia,serif;margin-bottom:6px;touch-action:manipulation;justify-content:center">🗑 ${L?'Delete entire route':'Gesamte Route löschen'}</button>`:``}
-
-        ${routeCount>0?`
-        <!-- Route-Vorschau (erste 5 und letzte) -->
-        <div style="font-size:10px;color:var(--ac);font-weight:bold;letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px">${L?'Route preview':'Route-Vorschau'}</div>
+        ${routeCount>0?`<button onclick="clearRoute()" style="display:flex;align-items:center;gap:5px;width:100%;padding:8px 10px;background:transparent;border:1px solid #e0555533;border-radius:8px;cursor:pointer;color:#e05555;font-size:11px;font-family:Georgia,serif;margin-bottom:8px;touch-action:manipulation;justify-content:center">🗑 ${L?'Delete entire route':'Gesamte Route löschen'}</button>`:''}
+        ${routeCount>0?`<div style="font-size:10px;color:var(--ac);font-weight:bold;letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px">${L?'Route preview':'Route-Vorschau'}</div>
         <div style="max-height:160px;overflow-y:auto;border:1px solid var(--ac-13);border-radius:7px;-webkit-overflow-scrolling:touch">
           <table style="width:100%;border-collapse:collapse;font-size:11px">
             <tr style="background:var(--bg)"><th style="padding:4px 7px;text-align:left;color:var(--tx2);font-size:9px;font-weight:bold;border-bottom:1px solid var(--ac-13)">${L?'Date':'Datum'}</th><th style="padding:4px 7px;text-align:left;color:var(--tx2);font-size:9px;font-weight:bold;border-bottom:1px solid var(--ac-13)">${L?'Port/Sea day':'Hafen/Seetag'}</th><th style="padding:4px 7px;text-align:left;color:var(--tx2);font-size:9px;font-weight:bold;border-bottom:1px solid var(--ac-13)">TZ</th></tr>
-            ${(S.voyageRoute||[]).map(r=>{
-              const isToday=r.date===today;
-              return `<tr style="${isToday?'background:var(--ac-09);':''}"><td style="padding:4px 7px;color:${isToday?'var(--ac)':'var(--tx2)'};border-bottom:1px solid var(--ac-07);white-space:nowrap">${esc(toGermanDate(r.date))}${isToday?'&nbsp;⭐':''}</td><td style="padding:4px 7px;color:${r.port&&r.port.toLowerCase()!=='seetag'?'var(--tx0)':'var(--tx2)'};border-bottom:1px solid var(--ac-07)">${esc(r.port||'—')}</td><td style="padding:4px 7px;color:var(--tx2);border-bottom:1px solid var(--ac-07);white-space:nowrap">${esc(r.timezone||'')}</td></tr>`;
-            }).join('')}
+            ${(S.voyageRoute||[]).map(r=>{const isToday=r.date===today;return `<tr style="${isToday?'background:var(--ac-09);':''}"><td style="padding:4px 7px;color:${isToday?'var(--ac)':'var(--tx2)'};border-bottom:1px solid var(--ac-07);white-space:nowrap">${esc(toGermanDate(r.date))}${isToday?'&nbsp;⭐':''}</td><td style="padding:4px 7px;color:${r.port&&r.port.toLowerCase()!=='seetag'?'var(--tx0)':'var(--tx2)'};border-bottom:1px solid var(--ac-07)">${esc(r.port||'—')}</td><td style="padding:4px 7px;color:var(--tx2);border-bottom:1px solid var(--ac-07);white-space:nowrap">${esc(r.timezone||'')}</td></tr>`;}).join('')}
           </table>
-        </div>`:
-        `<div style="font-size:11px;color:var(--tx2);text-align:center;padding:16px 0;line-height:1.6">
-          📭 ${L?'No route loaded yet.<br>Import a CSV or edit the route manually.':'Noch keine Route geladen.<br>CSV importieren oder Route manuell bearbeiten.'}
-        </div>`}
-
-        <!-- CSV-Format-Hinweis -->
+        </div>`:`<div style="font-size:11px;color:var(--tx2);text-align:center;padding:16px 0;line-height:1.6">📭 ${L?'No route loaded yet.<br>Import a CSV or edit the route manually.':'Noch keine Route geladen.<br>CSV importieren oder Route manuell bearbeiten.'}</div>`}
         <div style="margin-top:8px;padding:8px 10px;background:var(--bg);border-radius:6px;border-left:3px solid var(--ac-27)">
           <div style="font-size:9px;color:var(--ac);font-weight:bold;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">CSV-Format</div>
-          <code style="font-size:9px;color:var(--tx2);line-height:1.7;display:block">
-            Datum;Hafen/Seetag;Land;Zeitzone;Ankunft;Abfahrt<br>
-            2025-01-15;Hamburg;Deutschland;UTC+1;07:00;18:00<br>
-            2025-01-16;Seetag;;;;
-          </code>
+          <code style="font-size:9px;color:var(--tx2);line-height:1.7;display:block">Datum;Hafen/Seetag;Land;Zeitzone;Ankunft;Abfahrt<br>2025-01-15;Hamburg;Deutschland;UTC+1;07:00;18:00<br>2025-01-16;Seetag;;;;</code>
         </div>
       </div>
     </div>
@@ -8908,67 +8818,56 @@ function renderVerwaltung(){
   })()}
 
 
-  <div class="vw-group-label">🎨 App-Einstellungen</div>
+  <!-- ══ GRUPPE: DARSTELLUNG ══ -->
+  <div class="vw-group-label">🎨 ${L?'Appearance':'Darstellung'}</div>
 
-  <!-- ══════════════════════════════════════════
-       3. DARSTELLUNG
-       (Sprache, Schrift, Schaltflächen)
-  ══════════════════════════════════════════ -->
+  <!-- ANZEIGE-EINSTELLUNGEN -->
   <div class="adm-card">
     <div class="adm-card-hdr" onclick="toggleVwSec('settings')">
       <span class="adm-card-hdr-ico">⚙️</span>
       <div class="adm-card-hdr-body">
-        <div class="adm-card-hdr-title">${L?'Display Settings':'Darstellung'}</div>
-        <div class="adm-card-hdr-sub">${S.lang==='de'?'🇩🇪 DE':'🇬🇧 EN'} · ${L?'Font':'Schrift'} ${S.fontSize==='small'?'S':S.fontSize==='normal'?'M':S.fontSize==='large'?'X':'XL'} · ${(S.btnLayout||'plus-left')==='plus-left'?(L?'+ left':'+ links'):(L?'+ right':'+ rechts')}</div>
+        <div class="adm-card-hdr-title">${L?'Display Settings':'Anzeige-Einstellungen'}</div>
+        <div class="adm-card-hdr-sub">${S.lang==='de'?'🇩🇪 DE':'🇬🇧 EN'} · ${L?'Font':'Schrift'} ${S.fontSize==='small'?'S':S.fontSize==='normal'?'M':S.fontSize==='large'?'L':'XL'} · ${(S.btnLayout||'plus-left')==='plus-left'?(L?'+ left':'+ links'):(L?'+ right':'+ rechts')}</div>
       </div>
       <span class="adm-card-hdr-arr${S.vwOpen.settings?' open':''}">&#9658;</span>
     </div>
     <div class="adm-card-body${S.vwOpen.settings?' open':''}">
-
-      <!-- Sprache -->
       <div class="adm-row">
         <div>
           <div class="adm-row-label" style="font-size:12px;font-weight:bold;color:var(--tx0)">${T('settings.lang')}</div>
-          <div style="font-size:10px;color:var(--tx2);margin-top:2px">${L?'App language for all texts and labels.':'Sprache für alle Texte und Beschriftungen.'}</div>
+          <div style="font-size:10px;color:var(--tx2);margin-top:2px">${L?'App language for all texts.':'Sprache für alle Texte.'}</div>
         </div>
         <div class="adm-row-ctrl">
-          <button class="sbtn${S.lang==='de'?' on':''}" id="btnDE" onclick="setLang('de')">&#127465;&#127466; DE</button>
-          <button class="sbtn${S.lang==='en'?' on':''}" id="btnEN" onclick="setLang('en')">&#127468;&#127463; EN</button>
+          <button class="sbtn${S.lang==='de'?' on':''}" onclick="setLang('de')">&#127465;&#127466; DE</button>
+          <button class="sbtn${S.lang==='en'?' on':''}" onclick="setLang('en')">&#127468;&#127463; EN</button>
         </div>
       </div>
-
-      <!-- Schriftgröße -->
       <div class="adm-row">
         <div>
           <div class="adm-row-label" style="font-size:12px;font-weight:bold;color:var(--tx0)">${T('settings.fontsize')}</div>
-          <div style="font-size:10px;color:var(--tx2);margin-top:2px">${L?'Text size for all buttons and lists.':'Textgröße für Buttons und Listen.'}</div>
+          <div style="font-size:10px;color:var(--tx2);margin-top:2px">${L?'Text size for buttons and lists.':'Textgröße für Buttons und Listen.'}</div>
         </div>
         <div class="adm-row-ctrl">
-          <button class="sbtn${S.fontSize==='small'?' on':''}" id="fzS" onclick="setFontSize('small')" style="font-size:10px">${T('fz.small')}</button>
-          <button class="sbtn${S.fontSize==='normal'?' on':''}" id="fzN" onclick="setFontSize('normal')" style="font-size:13px">${T('fz.normal')}</button>
-          <button class="sbtn${S.fontSize==='large'?' on':''}" id="fzL" onclick="setFontSize('large')" style="font-size:16px">${T('fz.large')}</button>
-          <button class="sbtn${S.fontSize==='xlarge'?' on':''}" id="fzXL" onclick="setFontSize('xlarge')" style="font-size:19px">${T('fz.xlarge')}</button>
+          <button class="sbtn${S.fontSize==='small'?' on':''}" onclick="setFontSize('small')" style="font-size:10px">${T('fz.small')}</button>
+          <button class="sbtn${S.fontSize==='normal'?' on':''}" onclick="setFontSize('normal')" style="font-size:13px">${T('fz.normal')}</button>
+          <button class="sbtn${S.fontSize==='large'?' on':''}" onclick="setFontSize('large')" style="font-size:16px">${T('fz.large')}</button>
+          <button class="sbtn${S.fontSize==='xlarge'?' on':''}" onclick="setFontSize('xlarge')" style="font-size:19px">${T('fz.xlarge')}</button>
         </div>
       </div>
-
-      <!-- Button-Seite -->
       <div class="adm-row" style="padding-bottom:0;border-bottom:none">
         <div>
           <div class="adm-row-label" style="font-size:12px;font-weight:bold;color:var(--tx0)">${T('settings.btnlayout')}</div>
-          <div style="font-size:10px;color:var(--tx2);margin-top:2px">${L?'Side of the + button on each drink row.':'Position des +-Buttons in jeder Getränkezeile.'}</div>
+          <div style="font-size:10px;color:var(--tx2);margin-top:2px">${L?'Position of + button on each drink row.':'Position des + Buttons in jeder Getränkezeile.'}</div>
         </div>
         <div class="adm-row-ctrl">
           <button class="sbtn${(S.btnLayout||'plus-left')==='plus-left'?' on':''}" onclick="setBtnLayout('plus-left')">${T('settings.btnlayout.plus_left')} &#8722;</button>
           <button class="sbtn${S.btnLayout==='plus-right'?' on':''}" onclick="setBtnLayout('plus-right')">&#8722; ${T('settings.btnlayout.plus_right')}</button>
         </div>
       </div>
-
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       4. DESIGN & FARBEN
-  ══════════════════════════════════════════ -->
+  <!-- DESIGN & FARBEN -->
   <div class="adm-card" id="vw-design">
     <div class="adm-card-hdr" onclick="toggleVwSec('design')">
       <span class="adm-card-hdr-ico">🎨</span>
@@ -8980,8 +8879,6 @@ function renderVerwaltung(){
     </div>
     <div class="adm-card-body${S.vwOpen.design?' open':''}">
       <div style="margin-top:10px">
-
-        <!-- Design-Konzepte -->
         <div style="font-size:9px;letter-spacing:2.5px;color:var(--tx2);text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--ac-07)">${T('settings.theme.concepts')}</div>
         <div style="font-size:10px;color:var(--tx1);margin-bottom:10px;line-height:1.6;padding:8px 10px;background:var(--ac-07);border-radius:8px;border-left:3px solid var(--ac-27)">
           ${T('settings.theme.concepts.hint')} · <strong style="color:var(--ac)">${T('settings.theme.concepts.favorites')}</strong>
@@ -8992,10 +8889,8 @@ function renderVerwaltung(){
             const favs=S.conceptFavorites||['kapitaensbuch','atelier','sonnendeck'];
             const isFav=favs.includes(id);
             const favIdx=favs.indexOf(id);
-            const canCopy=true;
             const conceptIcons={kapitaensbuch:'⚓',atelier:'🎩',sonnendeck:'☀️',original:'✦',nautical_noir:'🎩',mare_sereno:'🌊',capitaine:'⚓',pergament:'📜',tiefsee:'🌑',champagner:'🥂',aida:'💋',nicko:'🛶',mein_schiff:'🚢'};
             const icon=conceptIcons[id]||'✦';
-            // Brand-logo HTML für Kreuzfahrt-Themes
             const brandLogoHtml=id==='aida'?`<span style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:36px;line-height:1"><span style="font-size:13px;font-weight:900;font-family:Arial Black,Impact,sans-serif;letter-spacing:-0.5px"><span style="color:#3399CC">A</span><span style="color:#CC3300">I</span><span style="color:#FFCC00">D</span><span style="color:#339900">A</span></span><span style="font-size:6px;color:#E0302088;font-weight:600;letter-spacing:0.5px">CRUISES</span></span>`:id==='nicko'?`<span style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:36px;line-height:1.2"><span style="font-size:11px;font-weight:900;font-family:Arial,sans-serif;color:#00499A;letter-spacing:-0.5px">nicko</span><span style="font-size:6.5px;font-weight:700;font-family:Arial,sans-serif;color:#C8102E;letter-spacing:0.5px">cruises</span></span>`:id==='mein_schiff'?`<span style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:36px;line-height:1.2"><span style="font-size:7px;font-family:Arial,sans-serif;font-weight:500;color:#E2001A;letter-spacing:0.5px">mein</span><span style="font-size:11px;font-weight:700;font-family:Arial,sans-serif;color:#EEE8F5">Schiff</span></span>`:`<span style="font-size:20px;line-height:1">${icon}</span>`;
             return `<div style="display:flex;align-items:stretch;gap:6px">
               <button onclick="setTheme('${id}')" style="display:flex;align-items:center;gap:11px;padding:12px 12px;background:${v.bg1};border:2px solid ${cur?v.ac:(v.ac27||v.ac+'45')};border-radius:12px;cursor:pointer;font-family:Georgia,serif;text-align:left;flex:1;min-width:0;transition:border-color .2s;touch-action:manipulation">
@@ -9009,77 +8904,48 @@ function renderVerwaltung(){
                   <span style="width:14px;height:14px;border-radius:50%;background:${v.bg2};border:1px solid ${v.ac27||v.ac};display:inline-block"></span>
                 </span>
               </button>
-              ${canCopy?`<button onclick="copyConceptAsCustom('${id}')" title="${L?'Use as basis for custom concept':'Als Basis für eigenes Konzept'}" style="flex-shrink:0;width:36px;min-height:44px;background:${v.bg1};border:2px solid ${v.ac27||v.ac+'45'};border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;font-size:15px;color:${v.ac}">📋</button>`:''}
-              <button onclick="toggleConceptFavorite('${id}')" title="${isFav?(L?'Remove from quick-switch':'Aus Schnellwechsel entfernen'):(L?'Add to quick-switch':'Zum Schnellwechsel hinzufügen')}" style="flex-shrink:0;width:44px;min-height:44px;background:${isFav?v.ac:v.bg1};border:2px solid ${isFav?v.ac:(v.ac27||v.ac+'45')};border-radius:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;touch-action:manipulation;transition:all .2s">
-                <span style="font-size:${isFav?'18':'16'}px;line-height:1;color:${isFav?v.acFg:v.ac}">${isFav?'★':'☆'}</span>
-                ${isFav?`<span style="font-size:8px;font-weight:bold;color:${v.acFg};letter-spacing:0;line-height:1">${favIdx+1}</span>`:''}
+              <button onclick="toggleConceptFavorite('${id}')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 8px;background:${isFav?v.ac+'22':v.bg1};border:2px solid ${isFav?v.ac:(v.ac27||v.ac+'45')};border-radius:12px;cursor:pointer;touch-action:manipulation;flex-shrink:0;min-width:44px">
+                <span style="font-size:${isFav?'18':'15'}px;color:${isFav?v.ac:'var(--tx2)'}">${isFav?'★':'☆'}</span>
+                <span style="font-size:8px;color:${isFav?v.ac:'var(--tx2)'};white-space:nowrap">${isFav?`${favIdx+1}`:'Fav'}</span>
               </button>
             </div>`;
           }).join('')}
         </div>
 
-        <!-- Eigene Farbkonzepte – neu gestaltet -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--ac-07)">
-          <div style="font-size:9px;letter-spacing:2.5px;color:var(--tx2);text-transform:uppercase">${L?'Custom Design Concepts':'Eigene Farbkonzepte'}</div>
-          ${(S.customThemes||[]).length>0?`<div style="font-size:9px;color:var(--ac);font-weight:bold">${(S.customThemes||[]).length} ${L?'concept(s)':'Konzept(e)'}</div>`:''}
-        </div>
-
-        ${(S.customThemes||[]).length===0?`
-          <div style="text-align:center;padding:20px 10px;background:var(--ac-07);border-radius:12px;border:1px dashed var(--ac-27);margin-bottom:12px">
-            <div style="font-size:24px;margin-bottom:8px">🎨</div>
-            <div style="font-size:12px;font-weight:bold;color:var(--tx1);margin-bottom:4px">${L?'No custom concepts yet':'Noch keine eigenen Konzepte'}</div>
-            <div style="font-size:10px;color:var(--tx2);line-height:1.5">${L?'Create your own colour concept or copy a built-in one as a starting point.':'Erstelle ein eigenes Farbkonzept oder kopiere ein eingebautes als Ausgangspunkt.'}</div>
-          </div>
-        `:`
-        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+        ${(S.customThemes||[]).length>0?`
+        <div style="font-size:9px;letter-spacing:2.5px;color:var(--tx2);text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--ac-07)">${T('settings.theme.colors')}</div>
+        <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:12px">
           ${(S.customThemes||[]).map(ct=>{
             const v=ct.vars,cur=(S.theme||'kapitaensbuch')===ct.id;
-            const favs=S.conceptFavorites||['kapitaensbuch','atelier','sonnendeck'];
+            const favs=S.conceptFavorites||[];
             const isFav=favs.includes(ct.id);
             const favIdx=favs.indexOf(ct.id);
-            return `<div style="background:${v.bg1};border:2px solid ${cur?v.ac:(v.ac27||v.ac+'45')};border-radius:14px;overflow:hidden;transition:border-color .2s">
-              <!-- Obere Zeile: Konzept auswählen -->
-              <button onclick="setTheme('${ct.id}')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;width:100%;background:transparent;border:none;cursor:pointer;font-family:Georgia,serif;text-align:left;touch-action:manipulation">
-                <span style="font-size:22px;flex-shrink:0;line-height:1;width:32px;text-align:center">${ct.icon&&(ct.icon.startsWith('custom:')||ct.icon.startsWith('builtin:'))?renderIconHtml(ct.icon,24):esc(ct.icon)}</span>
-                <span style="flex:1;min-width:0">
-                  <span style="display:block;font-size:13px;font-weight:bold;color:${v.tx0};line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(ct.name)}${cur?` <span style="color:${v.ac};font-size:12px">✓ ${L?'active':'aktiv'}</span>`:''}</span>
-                  <span style="display:flex;align-items:center;gap:6px;margin-top:4px">
-                    <span style="width:16px;height:16px;border-radius:50%;background:${v.ac};display:inline-block;flex-shrink:0;${cur?'box-shadow:0 0 6px '+v.ac+'99':''}"></span>
-                    <span style="width:16px;height:16px;border-radius:50%;background:${v.bg2};border:1.5px solid ${v.ac27||v.ac+'45'};display:inline-block;flex-shrink:0"></span>
-                    <span style="font-size:9px;color:${v.tx2||v.tx1};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${(v.ac||'').toUpperCase()} · ${L?'Custom':'Eigenes'}</span>
-                  </span>
+            return `<div style="background:${v.bg1};border:2px solid ${cur?v.ac:(v.ac27||v.ac+'45')};border-radius:12px;overflow:hidden">
+              <button onclick="setTheme('${ct.id}')" style="display:flex;align-items:center;gap:11px;padding:12px 12px;background:transparent;border:none;cursor:pointer;font-family:Georgia,serif;text-align:left;width:100%;touch-action:manipulation">
+                <span style="font-size:20px;line-height:1;flex-shrink:0">${ct.icon||'✦'}</span>
+                <span style="flex:1;min-width:0;overflow:hidden">
+                  <span style="display:block;font-size:13px;font-weight:bold;color:${v.tx0};line-height:1.2;margin-bottom:3px">${esc(ct.name||ct.id)}${cur?' <span style="color:'+v.ac+';font-size:11px">\u2713</span>':''}</span>
+                  <span style="display:block;font-size:9px;color:${v.tx2||v.tx1}">${L?'Custom concept':'Eigenes Konzept'}</span>
+                </span>
+                <span style="display:flex;gap:3px;flex-shrink:0">
+                  <span style="width:14px;height:14px;border-radius:50%;background:${v.ac};display:inline-block"></span>
+                  <span style="width:14px;height:14px;border-radius:50%;background:${v.bg2};border:1px solid ${v.ac27||v.ac};display:inline-block"></span>
                 </span>
                 <span style="font-size:11px;color:${v.ac};flex-shrink:0;opacity:0.7">${L?'tap to use':'antippen'}</span>
               </button>
-              <!-- Untere Zeile: Aktions-Buttons -->
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;border-top:1px solid ${v.ac27||v.ac+'45'}">
-                <button onclick="openCustomThemeEditor('${ct.id}')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 4px;background:transparent;border:none;border-right:1px solid ${v.ac27||v.ac+'45'};cursor:pointer;touch-action:manipulation">
-                  <span style="font-size:16px">✏️</span>
-                  <span style="font-size:9px;color:${v.tx2};white-space:nowrap">${L?'Edit':'Bearbeiten'}</span>
-                </button>
-                <button onclick="exportCustomTheme('${ct.id}')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 4px;background:transparent;border:none;border-right:1px solid ${v.ac27||v.ac+'45'};cursor:pointer;touch-action:manipulation">
-                  <span style="font-size:16px">📤</span>
-                  <span style="font-size:9px;color:${v.tx2};white-space:nowrap">${L?'Export':'Exportieren'}</span>
-                </button>
-                <button onclick="deleteCustomTheme('${ct.id}')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 4px;background:transparent;border:none;border-right:1px solid ${v.ac27||v.ac+'45'};cursor:pointer;touch-action:manipulation">
-                  <span style="font-size:16px">🗑</span>
-                  <span style="font-size:9px;color:#e05555;white-space:nowrap">${L?'Delete':'Löschen'}</span>
-                </button>
-                <button onclick="toggleConceptFavorite('${ct.id}')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 4px;background:${isFav?v.ac+'22':'transparent'};border:none;cursor:pointer;touch-action:manipulation">
-                  <span style="font-size:${isFav?'18':'16'}px;line-height:1;color:${isFav?v.ac:'var(--tx2)'}">${isFav?'★':'☆'}</span>
-                  <span style="font-size:9px;color:${isFav?v.ac:'var(--tx2)'};white-space:nowrap">${isFav?`${L?'Fav.':'Fav.'} ${favIdx+1}`:(L?'Favourite':'Favorit')}</span>
-                </button>
+                <button onclick="openCustomThemeEditor('${ct.id}')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 4px;background:transparent;border:none;border-right:1px solid ${v.ac27||v.ac+'45'};cursor:pointer;touch-action:manipulation"><span style="font-size:16px">✏️</span><span style="font-size:9px;color:${v.tx2};white-space:nowrap">${L?'Edit':'Bearbeiten'}</span></button>
+                <button onclick="exportCustomTheme('${ct.id}')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 4px;background:transparent;border:none;border-right:1px solid ${v.ac27||v.ac+'45'};cursor:pointer;touch-action:manipulation"><span style="font-size:16px">📤</span><span style="font-size:9px;color:${v.tx2};white-space:nowrap">${L?'Export':'Export'}</span></button>
+                <button onclick="deleteCustomTheme('${ct.id}')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 4px;background:transparent;border:none;border-right:1px solid ${v.ac27||v.ac+'45'};cursor:pointer;touch-action:manipulation"><span style="font-size:16px">🗑</span><span style="font-size:9px;color:#e05555;white-space:nowrap">${L?'Delete':'Löschen'}</span></button>
+                <button onclick="toggleConceptFavorite('${ct.id}')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 4px;background:${isFav?v.ac+'22':'transparent'};border:none;cursor:pointer;touch-action:manipulation"><span style="font-size:${isFav?'18':'16'}px;line-height:1;color:${isFav?v.ac:'var(--tx2)'}">${isFav?'★':'☆'}</span><span style="font-size:9px;color:${isFav?v.ac:'var(--tx2)'};white-space:nowrap">${isFav?`${L?'Fav':'Fav'} ${favIdx+1}`:(L?'Favourite':'Favorit')}</span></button>
               </div>
             </div>`;
           }).join('')}
-        </div>
-        `}
+        </div>`:''}
 
-        <!-- Aktions-Leiste: Neu / Importieren / Alle exportieren -->
         <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:6px">
           <button onclick="openCustomThemeEditor(null)" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;background:var(--ac-13);border:2px dashed var(--ac-27);border-radius:12px;cursor:pointer;color:var(--ac);font-size:13px;font-weight:bold;font-family:Georgia,serif;touch-action:manipulation">
-            <span style="font-size:18px">＋</span>
-            <span>${L?'New custom concept':'Neues Farbkonzept erstellen'}</span>
+            <span style="font-size:18px">＋</span><span>${L?'New custom concept':'Neues Farbkonzept erstellen'}</span>
           </button>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
             <button onclick="importCustomTheme()" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:12px 8px;background:var(--bg2);border:1px solid var(--ac-27);border-radius:12px;cursor:pointer;touch-action:manipulation">
@@ -9094,105 +8960,67 @@ function renderVerwaltung(){
             </button>
           </div>
         </div>
-
       </div>
     </div>
   </div>
 
 
+  <!-- ══ GRUPPE: SYSTEM ══ -->
   <div class="vw-group-label">📊 System</div>
 
-  <!-- ══════════════════════════════════════════
-       SPEICHER & DATEN (V46)
-       Positiv und informativ – kein Warncharakter
-  ══════════════════════════════════════════ -->
+  <!-- SPEICHER & DATEN -->
   <div class="adm-card" style="border-color:var(--ac-13)">
     <div class="adm-card-hdr" onclick="toggleVwSec('dbstatus')">
       <span class="adm-card-hdr-ico">📊</span>
       <div class="adm-card-hdr-body">
         <div class="adm-card-hdr-title">${L?'Storage &amp; Data':'Speicher &amp; Daten'}</div>
-        <div class="adm-card-hdr-sub" id="admDataSub">${S.log.length} ${L?'active entries':'aktive Einträge'}</div>
+        <div class="adm-card-hdr-sub" id="admDataSub">${S.log.length} ${L?'entries':'Einträge'} · ${S.drinks.length} ${L?'drinks':'Getränke'}</div>
       </div>
-      <span class="adm-card-hdr-arr${S.vwOpen&&S.vwOpen.dbstatus?' open':''}">►</span>
+      <span class="adm-card-hdr-arr${S.vwOpen&&S.vwOpen.dbstatus?' open':''}">&#9658;</span>
     </div>
     <div class="adm-card-body${S.vwOpen&&S.vwOpen.dbstatus?' open':''}">
       <div style="padding-top:10px">
-        <!-- 2 Stat-Kacheln -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
           <div style="background:var(--bg2);border:1px solid var(--ac-13);border-radius:10px;padding:10px 8px;text-align:center">
-            <div style="font-size:20px;font-weight:bold;color:var(--ac);line-height:1.1">${fmtNum(S.log.length)}</div>
-            <div style="font-size:9px;color:var(--tx2);letter-spacing:.5px;margin-top:3px;text-transform:uppercase">${L?'Active entries':'Aktive Eintr.'}</div>
+            <div style="font-size:22px;font-weight:bold;color:var(--ac);line-height:1.1">${fmtNum(S.log.length)}</div>
+            <div style="font-size:9px;color:var(--tx2);letter-spacing:.5px;margin-top:3px;text-transform:uppercase">${L?'Entries':'Einträge'}</div>
           </div>
           <div style="background:var(--bg2);border:1px solid var(--ac-13);border-radius:10px;padding:10px 8px;text-align:center">
-            <div style="font-size:20px;font-weight:bold;color:var(--col-ok);line-height:1.1">${(S.log.length*0.5/1024).toFixed(1)}</div>
+            <div style="font-size:22px;font-weight:bold;color:var(--tx1);line-height:1.1">${S.drinks.length}</div>
+            <div style="font-size:9px;color:var(--tx2);letter-spacing:.5px;margin-top:3px;text-transform:uppercase">${L?'Drinks':'Getränke'}</div>
+          </div>
+          <div style="background:var(--bg2);border:1px solid var(--ac-13);border-radius:10px;padding:10px 8px;text-align:center">
+            <div style="font-size:22px;font-weight:bold;color:var(--col-ok);line-height:1.1">${(S.log.length*0.5/1024).toFixed(1)}</div>
             <div style="font-size:9px;color:var(--tx2);letter-spacing:.5px;margin-top:3px;text-transform:uppercase">MB</div>
           </div>
         </div>
-        <!-- V46: IndexedDB hat kein festes Limit – positiver Status statt Balken -->
         <div style="margin-bottom:10px;padding:8px 10px;background:var(--col-ok-bg);border:1px solid var(--col-ok);border-radius:8px;font-size:10px;color:var(--col-ok);line-height:1.6">
-          🗄️ <strong>IndexedDB</strong> – ${L?'No storage limit. iOS rarely deletes this data (only under extreme storage pressure).':'Kein Speicherlimit. iOS löscht diese Daten nur in extremen Ausnahmefällen.'}
+          🗄️ <strong>IndexedDB</strong> – ${L?'No storage limit. iOS only deletes this data under extreme storage pressure.':'Kein Speicherlimit. iOS löscht diese Daten nur in extremen Ausnahmefällen.'}
         </div>
-        <!-- Kontext-Info -->
-        <div style="font-size:10px;color:var(--tx2);line-height:1.6;border-top:1px solid var(--ac-07);padding-top:8px">
-          <div>📝 ${L?'Drinks in list':'Getränke in der Liste'}: <strong style="color:var(--tx1)">${S.drinks.length}</strong></div>
-          ${S.log.length>0?`<div>🕐 ${L?'First entry':'Erster Eintrag'}: <strong style="color:var(--tx1)">${new Date(Math.min(...S.log.map(e=>new Date(e.time).getTime()))).toLocaleDateString('de-DE')}</strong></div>`:''}
-          ${S.log.length>0?`<div>🕐 ${L?'Latest entry':'Letzter Eintrag'}: <strong style="color:var(--tx1)">${new Date(Math.max(...S.log.map(e=>new Date(e.time).getTime()))).toLocaleDateString('de-DE')}</strong></div>`:''}
+        <div style="font-size:10px;color:var(--tx2);line-height:1.7;border-top:1px solid var(--ac-07);padding-top:8px">
+          ${S.log.length>0?`<div>🕐 ${L?'First entry':'Erster Eintrag'}: <strong style="color:var(--tx1)">${new Date(Math.min(...S.log.map(e=>new Date(e.time).getTime()))).toLocaleDateString(L?'en-US':'de-DE')}</strong></div>`:''}
+          ${S.log.length>0?`<div>🕐 ${L?'Latest entry':'Letzter Eintrag'}: <strong style="color:var(--tx1)">${new Date(Math.max(...S.log.map(e=>new Date(e.time).getTime()))).toLocaleDateString(L?'en-US':'de-DE')}</strong></div>`:''}
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       APP-EXPORT: HTML-Kopie der App
-  ══════════════════════════════════════════ -->
-  <div class="adm-danger" style="border:1px solid #1a6a3a55;background:#081a10;margin-bottom:10px">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-      <span style="font-size:18px">📲</span>
-      <div class="adm-danger-title" style="margin-bottom:0;color:#5ec98a">${L?'EXPORT APP AS HTML':'APP ALS HTML EXPORTIEREN'}</div>
-    </div>
-    <div style="font-size:11px;color:var(--tx2);line-height:1.7;margin-bottom:12px;padding:9px 11px;background:#0a1f10;border-radius:8px;border-left:3px solid #2a7a4a55">
-      ${L
-        ?'Creates a complete <strong>1:1 copy of the app</strong> as an HTML file – with all settings, design, route, drinks, log and all entries. Open the file in Safari to continue exactly where you left off. Perfect for archiving or transferring to another device.'
-        :'Erstellt eine vollständige <strong>1:1-Kopie der App</strong> als HTML-Datei – mit allen Einstellungen, Design, Route, Getränken, Protokoll und allen Einträgen. Datei in Safari öffnen und direkt weitermachen. Ideal zur Archivierung oder Übertragung auf ein anderes Gerät.'}
-    </div>
-    <div style="display:flex;gap:8px">
-      <button onclick="shareAppAsHTML()" style="flex:1;padding:13px;background:transparent;border:2px solid #2a7a4a88;border-radius:10px;color:#5ec98a;font-family:Georgia,serif;font-size:13px;font-weight:bold;cursor:pointer;letter-spacing:.3px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:7px">
-        <span style="font-size:17px">📡</span> ${L?'Share app (HTML)':'App teilen (HTML)'}
-      </button>
-      <button onclick="exportAppAsHTML()" style="flex:1;padding:13px;background:transparent;border:2px solid #2a7a4a88;border-radius:10px;color:#5ec98a;font-family:Georgia,serif;font-size:13px;font-weight:bold;cursor:pointer;letter-spacing:.3px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:7px">
-        <span style="font-size:17px">💾</span> ${L?'Save app (HTML)':'App speichern (HTML)'}
-      </button>
-    </div>
-    <div style="margin-top:8px;padding:8px 10px;background:var(--bg3);border-radius:7px;border-left:3px solid var(--ac-20);font-size:11px;color:var(--tx2);line-height:1.6">
-      ${L
-        ?'💡 <strong>Tip:</strong> In the share menu, choose <strong>"Save to Files"</strong> to store the file in the iOS Files app. Reopen later via Files app → Share → Open in Safari.'
-        :'💡 <strong>Tipp:</strong> Wähle im Teilen-Menü <strong>In Dateien sichern</strong>, um die Datei in der iOS Dateien-App zu speichern. Öffne sie später über Dateien-App → Teilen → In Safari öffnen.'}
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════════════
-       APP-UPDATE (manueller Check)
-  ══════════════════════════════════════════ -->
-  <div class="adm-card" style="border-color:var(--ac-13);margin-top:10px">
+  <!-- APP-UPDATE -->
+  <div class="adm-card" style="border-color:var(--ac-13)">
     <div class="adm-card-hdr" onclick="toggleVwSec('appupdate')">
       <span class="adm-card-hdr-ico">🔄</span>
       <div class="adm-card-hdr-body">
-        <div class="adm-card-hdr-title">${L?'App update':'App-Update'}</div>
+        <div class="adm-card-hdr-title">${L?'App Update':'App-Update'}</div>
         <div class="adm-card-hdr-sub" id="appUpdateSub">${L?'Current version: ':'Aktuelle Version: '}${typeof APP_VERSION!=='undefined'?APP_VERSION:'–'}</div>
       </div>
-      <span class="adm-card-hdr-arr${S.vwOpen&&S.vwOpen.appupdate?' open':''}">►</span>
+      <span class="adm-card-hdr-arr${S.vwOpen&&S.vwOpen.appupdate?' open':''}">&#9658;</span>
     </div>
     <div class="adm-card-body${S.vwOpen&&S.vwOpen.appupdate?' open':''}">
       <div style="padding-top:10px">
-        <div id="appUpdateInfo" style="font-size:11px;color:var(--tx2);margin-bottom:10px;line-height:1.6">
-          ${L?'Updates are downloaded automatically in the background when the app is online. You will see a gold banner at the bottom when a new version is ready.':'Updates werden automatisch im Hintergrund geladen, wenn die App online ist. Sobald eine neue Version bereit ist, erscheint ein goldenes Banner unten.'}
+        <div style="font-size:11px;color:var(--tx2);margin-bottom:10px;line-height:1.6">
+          ${L?'Updates are downloaded automatically in the background when online. A gold banner appears at the bottom when a new version is ready.':'Updates werden automatisch im Hintergrund geladen. Ein goldenes Banner erscheint unten, wenn eine neue Version bereit ist.'}
         </div>
-        <button onclick="checkForAppUpdate()" style="
-          display:flex;align-items:center;justify-content:center;gap:8px;
-          width:100%;padding:11px;
-          background:var(--bg2);border:1px solid var(--ac-27);border-radius:10px;
-          color:var(--ac);font-family:Georgia,serif;font-size:12px;font-weight:bold;
-          cursor:pointer;touch-action:manipulation">
+        <button onclick="checkForAppUpdate()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;background:var(--bg2);border:1px solid var(--ac-27);border-radius:10px;color:var(--ac);font-family:Georgia,serif;font-size:12px;font-weight:bold;cursor:pointer;touch-action:manipulation">
           🔍 ${L?'Check for updates now':'Jetzt nach Updates suchen'}
         </button>
         <div id="appUpdateResult" style="margin-top:8px;font-size:11px;color:var(--tx2);text-align:center;min-height:18px"></div>
@@ -9200,56 +9028,34 @@ function renderVerwaltung(){
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       DANGER ZONE: RESET-OPTIONEN
-  ══════════════════════════════════════════ -->
-  <!-- V45: Erweitert-Bereich (zugeklappt) -->
+  <!-- RESET / GEFAHRENBEREICH -->
   <div style="margin-top:10px">
-    <button onclick="(function(){var b=document.getElementById('vwAdvBody');var a=document.getElementById('vwAdvArr');if(!b)return;var open=b.style.display!=='none';b.style.display=open?'none':'';a.textContent=open?'▶':'▼';})()" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:var(--bg2);border:1px solid var(--ac-20);border-radius:12px;padding:12px 14px;cursor:pointer;touch-action:manipulation;font-family:Georgia,serif">
-      <span style="font-size:13px;font-weight:bold;color:var(--tx0)">⚠️ ${L?'Reset options – use with caution':'Zurücksetzen – nur im Notfall'}</span>
+    <button onclick="(function(){var b=document.getElementById('vwAdvBody');var a=document.getElementById('vwAdvArr');if(!b)return;var open=b.style.display!=='none';b.style.display=open?'none':'';a.textContent=open?'▶':'▼';})()" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:var(--bg2);border:1px solid #c0392b33;border-radius:12px;padding:12px 14px;cursor:pointer;touch-action:manipulation;font-family:Georgia,serif">
+      <span style="font-size:13px;font-weight:bold;color:#e07070">⚠️ ${L?'Reset options – use with caution':'Zurücksetzen – nur im Notfall'}</span>
       <span id="vwAdvArr" style="color:var(--tx2);font-size:12px">▶</span>
     </button>
     <div id="vwAdvBody" style="display:none;padding-top:8px">
-  <div id="vw-reset">
-
-    <!-- OPTION A: Alles zurücksetzen -->
-    <div class="adm-danger" style="border:2px solid #c0392b55;margin-bottom:10px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <span style="font-size:18px">🚨</span>
-        <div class="adm-danger-title" style="margin-bottom:0">${L?'FULL RESET (RESTART)':'VOLLSTÄNDIGER RESET'}</div>
+      <div id="vw-reset">
+        <div class="adm-danger" style="border:2px solid #c0392b55;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:18px">🚨</span><div class="adm-danger-title" style="margin-bottom:0">${L?'FULL RESET (RESTART)':'VOLLSTÄNDIGER RESET'}</div></div>
+          <div style="font-size:11px;color:var(--tx2);line-height:1.7;margin-bottom:12px;padding:9px 11px;background:#2a0808;border-radius:8px;border-left:3px solid #c0392b55">${L?'Deletes <strong>all data</strong>: log, drinks, settings, user profiles, voyage route. A backup is created automatically. The app restarts.<br><strong>⚠️ Absolutely irreversible!</strong>':'Löscht <strong>alle Daten</strong>: Protokoll, Getränkeliste, Einstellungen, Nutzerprofile, Reiseroute. Backup wird automatisch erstellt.<br><strong>⚠️ Endgültig nicht rückgängig machbar!</strong>'}</div>
+          <button onclick="openResetAll()" style="width:100%;padding:13px;background:transparent;border:2px solid #c0392b88;border-radius:10px;color:#e05555;font-family:Georgia,serif;font-size:14px;font-weight:bold;cursor:pointer;letter-spacing:.5px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:8px">
+            <span style="font-size:18px">⚠️</span> ${L?'⚠️ RESET EVERYTHING':'⚠️ ALLES ZURÜCKSETZEN'}
+          </button>
+        </div>
+        <div class="adm-danger" style="border:2px solid #c07a2055;margin-bottom:10px;background:#1a1008">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:18px">🔧</span><div class="adm-danger-title" style="margin-bottom:0;color:#e0a055">${L?'PARTIAL RESET':'AUSWAHL ZURÜCKSETZEN'}</div></div>
+          <div style="font-size:11px;color:var(--tx2);line-height:1.7;margin-bottom:12px;padding:9px 11px;background:#1a1200;border-radius:8px;border-left:3px solid #c07a2055">${L?'Choose exactly which areas to reset. The app stays open.':'Wähle gezielt, welche Bereiche zurückgesetzt werden. Die App bleibt geöffnet.'}</div>
+          <button onclick="openResetPartial()" style="width:100%;padding:13px;background:transparent;border:2px solid #c07a2088;border-radius:10px;color:#e0a055;font-family:Georgia,serif;font-size:14px;font-weight:bold;cursor:pointer;letter-spacing:.5px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:8px">
+            <span style="font-size:18px">🔧</span> ${L?'Select &amp; Reset':'Auswahl zurücksetzen'}
+          </button>
+        </div>
       </div>
-      <div style="font-size:11px;color:var(--tx2);line-height:1.7;margin-bottom:12px;padding:9px 11px;background:#2a0808;border-radius:8px;border-left:3px solid #c0392b55">
-        ${L
-          ?'Deletes <strong>all data</strong>: log, drinks list, settings, user profiles, voyage route. A backup is created automatically. The app restarts and shows the first-run setup.<br><strong>⚠️ Absolutely irreversible!</strong>'
-          :'Löscht <strong>alle Daten</strong>: Protokoll, Getränkeliste, Einstellungen, Nutzerprofile, Reiseroute. Backup wird automatisch erstellt. Die App startet neu mit der Ersteinrichtung.<br><strong>⚠️ Endgültig nicht rückgängig machbar!</strong>'}
-      </div>
-      <button onclick="openResetAll()" style="width:100%;padding:13px;background:transparent;border:2px solid #c0392b88;border-radius:10px;color:#e05555;font-family:Georgia,serif;font-size:14px;font-weight:bold;cursor:pointer;letter-spacing:.5px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:8px">
-        <span style="font-size:18px">⚠️</span> ${L?'⚠️ RESET EVERYTHING – Restart':'⚠️ ALLES ZURÜCKSETZEN – Neustart'}
-      </button>
     </div>
-
-    <!-- OPTION B: Teilweise zurücksetzen -->
-    <div class="adm-danger" style="border:2px solid #c07a2055;margin-bottom:10px;background:#1a1008">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <span style="font-size:18px">🔧</span>
-        <div class="adm-danger-title" style="margin-bottom:0;color:#e0a055">${L?'PARTIAL RESET':'AUSWAHL ZURÜCKSETZEN'}</div>
-      </div>
-      <div style="font-size:11px;color:var(--tx2);line-height:1.7;margin-bottom:12px;padding:9px 11px;background:#1a1200;border-radius:8px;border-left:3px solid #c07a2055">
-        ${L
-          ?'Choose exactly which areas to reset. The app stays open. If the log is included, a backup is created automatically.'
-          :'Wähle gezielt, welche Bereiche zurückgesetzt werden. Die App bleibt geöffnet. Bei Protokoll-Auswahl wird automatisch ein Backup erstellt.'}
-      </div>
-      <button onclick="openResetPartial()" style="width:100%;padding:13px;background:transparent;border:2px solid #c07a2088;border-radius:10px;color:#e0a055;font-family:Georgia,serif;font-size:14px;font-weight:bold;cursor:pointer;letter-spacing:.5px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:8px">
-        <span style="font-size:18px">🔧</span> ${L?'🔧 Select & Reset':'🔧 Auswahl zurücksetzen'}
-      </button>
-    </div>
-
-  </div><!-- end vw-reset -->
-
-  </div><!-- end vwAdvBody -->
-  </div><!-- end Erweitert wrapper -->
+  </div>
 
   <div style="height:20px"></div>`;
+
 
   const dm=document.getElementById('drinkMgmt');
   if(dm)dm.addEventListener('click',drinkMgmtClick);
@@ -9523,7 +9329,7 @@ function renderHelp(){
       <div class="hlp-row"><span class="hlp-badge gold">🍹 ${h('GETRÄNKE','DRINKS')}</span><span>${h('Hauptbildschirm: Getränke erfassen, Favoriten, häufig bestellt, Kategoriefilter, Suche (🔍-Symbol antippen), aktiven Hafen setzen, Tages-Zusammenfassung, Tagesziel-Fortschrittsbalken, Status-Banner. Hinter jedem Preis: <strong style="color:#1EC87A">⬤ grüner Kreis</strong> = All Inclusive, <strong>○ Umriss-Kreis</strong> = nicht inklusive. Filter-Tab <strong style="color:#1EC87A">AI</strong> zeigt nur inklusive Getränke.','Main screen: record drinks, favourites, most ordered, category filter, search (tap 🔍 icon), active port, daily summary, goal progress bar, status banners. Behind each price: <strong style="color:#1EC87A">⬤ green circle</strong> = All Inclusive, <strong>○ outline circle</strong> = not included. Filter tab <strong style="color:#1EC87A">AI</strong> shows only included drinks.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">📋 ${h('PROTOKOLL','LOG')}</span><span>${h('Alle Einträge chronologisch: Swipe-Bearbeitung, Mehrfachauswahl, Suche, Nutzer-/Kategorie-/Datum-/Preisfilter, Notiz je Eintrag, manuell Eintrag hinzufügen, CSV-Export.','All entries chronologically: swipe editing, multi-select, search, user/category/date/price filter, note per entry, add manual entry, CSV export.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">📊 ${h('STATISTIK','STATISTICS')}</span><span>${h('Zeitraum- und Nutzer-Filter, Übersicht-KPIs, Trendkurve, Top-Tage, Nach Nutzer (inkl. Budget), <strong>⬤ Inklusive vs. Nicht inklusive</strong>, Top-Getränke, Hafen-Statistik, Wochentag-Muster, Tageszeiten-Heatmap, Tagesvergleich, Nach Kategorie, <strong>Ausgaben pro Reise-Segment</strong>, Reise-Kalender, Schiffszeit-Verlauf.','Period and user filter, overview KPIs, trend chart, top days, by user (incl. budget), <strong>⬤ Included vs. Not Included</strong>, top drinks, port statistics, weekday pattern, time-of-day heatmap, daily comparison, by category, <strong>expenses by voyage segment</strong>, voyage calendar, ship\'s time journey.')}</span></div>
-      <div class="hlp-row"><span class="hlp-badge blue">⚙️ ${h('VERWALTUNG','MANAGEMENT')}</span><span>${h('Der Tab ist in <strong>5 Gruppen</strong> gegliedert – alle als aufklappbare Abschnitte:<br>👤 <strong>Personen &amp; Budget</strong> – Nutzer-Profile (Namen, Farben, Budgets), Tageslimit &amp; Währung, Service Charge<br>🍹 <strong>Getränkeliste</strong> – Getränke &amp; Kategorien verwalten, CSV-Import/Export<br>⚓ <strong>Reise &amp; Zeit</strong> – Schiffszeit &amp; Tagesstruktur, Reiseroute (CSV importieren/exportieren, manuell bearbeiten)<br>🎨 <strong>App-Einstellungen</strong> – Sprache, Schriftgröße, Schaltflächen-Seite; Design &amp; Farbkonzepte<br>📊 <strong>System</strong> – Speicher &amp; Daten, App-Update, Mehr Exporte (CSV · PDF · HTML)<br><br>Immer sichtbar (ohne Aufklappen): 💾 <strong>Backup &amp; Daten</strong> ganz oben – Backup speichern, teilen, laden, Sync. Bei jedem Getränk: <strong style=\"color:#1EC87A\">Kreis-Symbol</strong> (⬤/○) antippen → All-Inclusive-Status ändern.','The tab is divided into <strong>5 groups</strong> – all as collapsible sections:<br>👤 <strong>People &amp; Budget</strong> – user profiles (names, colours, budgets), daily limit &amp; currency, service charge<br>🍹 <strong>Drinks list</strong> – manage drinks &amp; categories, CSV import/export<br>⚓ <strong>Voyage &amp; Time</strong> – ship\'s time &amp; day structure, voyage route (import/export CSV, edit manually)<br>🎨 <strong>App Settings</strong> – language, font size, button side; design &amp; colour concepts<br>📊 <strong>System</strong> – storage &amp; data, app update, more exports (CSV · PDF · HTML)<br><br>Always visible (no tap needed): 💾 <strong>Backup &amp; Data</strong> at the top – save, share, restore backup, sync. Per drink: tap the <strong style=\"color:#1EC87A\">circle symbol</strong> (⬤/○) → toggle All-Inclusive status.')}</span></div>
+      <div class="hlp-row"><span class="hlp-badge blue">⚙️ ${h('VERWALTUNG','MANAGEMENT')}</span><span>${h('Der Tab ist in <strong>6 Bereiche</strong> gegliedert:<br>💾 <strong>Backup &amp; Daten</strong> (immer sichtbar) – Sichern, Laden, Exportieren, Importieren<br>📤 <strong>Exporte &amp; Sync</strong> – PDF, Word, CSV, App-HTML, Geräte-Sync<br>👤 <strong>Personen &amp; Budget</strong> – Nutzer-Profile (Namen, Farben, Budgets), Tageslimit &amp; Währung, Service Charge<br>🍹 <strong>Getränkeliste</strong> – Getränke &amp; Kategorien verwalten, CSV-Import/Export<br>⚓ <strong>Reise &amp; Zeit</strong> – Schiffszeit &amp; Tagesstruktur, Reiseroute (CSV importieren/exportieren, manuell bearbeiten)<br>🎨 <strong>App-Einstellungen</strong> – Sprache, Schriftgröße, Schaltflächen-Seite; Design &amp; Farbkonzepte<br>📊 <strong>System</strong> – Speicher &amp; Daten, App-Update, Mehr Exporte (CSV · PDF · HTML)<br><br>Immer sichtbar (ohne Aufklappen): 💾 <strong>Backup &amp; Daten</strong> ganz oben – Backup speichern, teilen, laden, Sync. Bei jedem Getränk: <strong style=\"color:#1EC87A\">Kreis-Symbol</strong> (⬤/○) antippen → All-Inclusive-Status ändern.','The tab is divided into <strong>5 groups</strong> – all as collapsible sections:<br>👤 <strong>People &amp; Budget</strong> – user profiles (names, colours, budgets), daily limit &amp; currency, service charge<br>🍹 <strong>Drinks list</strong> – manage drinks &amp; categories, CSV import/export<br>⚓ <strong>Voyage &amp; Time</strong> – ship\'s time &amp; day structure, voyage route (import/export CSV, edit manually)<br>🎨 <strong>App Settings</strong> – language, font size, button side; design &amp; colour concepts<br>📊 <strong>System</strong> – storage &amp; data, app update, more exports (CSV · PDF · HTML)<br><br>Always visible (no tap needed): 💾 <strong>Backup &amp; Data</strong> at the top – save, share, restore backup, sync. Per drink: tap the <strong style=\"color:#1EC87A\">circle symbol</strong> (⬤/○) → toggle All-Inclusive status.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge blue">❓ ${h('HILFE','HELP')}</span><span>${h('Diese Bedienungsanleitung. Suchfeld oben im Hilfe-Tab – sofort alle passenden Abschnitte aufklappen und hervorheben. Bei leerem Feld: alle Abschnitte wieder einklappen. Der <strong>💾 BKP</strong>-Button daneben erstellt sofort ein Backup.','This user guide. Search field at the top of the Help tab – instantly expands and highlights all matching sections. Empty field: collapses all sections again. The <strong>💾 BKP</strong> button next to it creates an instant backup.')}</span></div>
       <div class="hlp-row"><span class="hlp-badge gold">💾 BKP</span><span>${h('Schnell-Backup-Button in der Tab-Leiste: speichert sofort die vollständige JSON-Sicherungsdatei (Download). Für direktes Teilen: Tab <strong>VERWALTUNG</strong> → <strong>📡 Backup teilen</strong>.','Quick backup button in the tab bar: instantly saves the complete JSON backup file (download). For direct sharing: tab <strong>MANAGEMENT</strong> → <strong>📡 Share backup</strong>.')}</span></div>
     </div>
@@ -9801,7 +9607,7 @@ function renderHelp(){
   <summary><span class="hlp-acc-icon">⚙️</span><span>${h('Tab VERWALTUNG','Tab MANAGEMENT')}</span></summary>
   <div class="hlp-acc-body">
 
-    <div class="hlp-info">ℹ️ ${h('Der <strong>Einstellungen</strong>-Tab ist in <strong>5 Gruppen</strong> gegliedert: 👤 Personen &amp; Budget · 🍹 Getränkeliste · ⚓ Reise &amp; Zeit · 🎨 App-Einstellungen · 📊 System. Jede Gruppe enthält aufklappbare Abschnitte. Der <strong>Backup &amp; Daten</strong>-Bereich ist immer sichtbar (kein Aufklappen nötig).','The <strong>Settings</strong> tab is structured in <strong>5 groups</strong>: 👤 People &amp; Budget · 🍹 Drinks list · ⚓ Voyage &amp; Time · 🎨 App Settings · 📊 System. Each group contains collapsible sections. The <strong>Backup &amp; Data</strong> area is always visible (no tap needed).')}</div>
+    <div class="hlp-info">ℹ️ ${h('Der <strong>Einstellungen</strong>-Tab ist in <strong>6 Bereiche</strong> gegliedert:<br><strong>1. 💾 Backup &amp; Daten</strong> – immer sichtbar. Sofort sichern, Letztes laden, Exportieren, Importieren, gespeicherte Backups.<br><strong>2. 📤 Exporte &amp; Sync</strong> – aufklappbar. PDF- &amp; Word-Reisebericht, Protokoll-CSV, App-Export (HTML), Geräte-Sync.<br><strong>3. 👤 Personen &amp; Budget</strong> – Nutzer-Profile, Tageslimit &amp; Währung, Service Charge.<br><strong>4. 🍹 Getränkeliste</strong> – Getränke &amp; Kategorien verwalten, CSV-Import/Export.<br><strong>5. ⚓ Reise &amp; Navigation</strong> – Schiffszeit &amp; Tagesstruktur, Reiseroute.<br><strong>6. 🎨 Darstellung</strong> – Anzeige-Einstellungen, Design &amp; Farbkonzepte.<br><strong>7. 📊 System</strong> – Speicher &amp; Daten, App-Update, Reset (zugeklappt, ganz unten).','The <strong>Settings</strong> tab is structured in <strong>6 areas</strong>:<br><strong>1. 💾 Backup &amp; Data</strong> – always visible. Save now, Load last, Export, Import, saved backups.<br><strong>2. 📤 Exports &amp; Sync</strong> – collapsible. PDF &amp; Word voyage reports, log CSV, app export (HTML), device sync.<br><strong>3. 👤 People &amp; Budget</strong> – user profiles, daily limit &amp; currency, service charge.<br><strong>4. 🍹 Drinks List</strong> – manage drinks &amp; categories, CSV import/export.<br><strong>5. ⚓ Voyage &amp; Navigation</strong> – ship\'s time &amp; day structure, voyage route.<br><strong>6. 🎨 Appearance</strong> – display settings, design &amp; colour concepts.<br><strong>7. 📊 System</strong> – storage &amp; data, app update, reset (collapsed, at the bottom).')}</div>
 
     <div class="hlp-card" style="margin-top:10px">
       <div class="hlp-card-title">💾 ${h('Backup &amp; Daten (immer sichtbar)','Backup &amp; Data (always visible)')}</div>
