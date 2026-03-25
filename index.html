@@ -7911,169 +7911,220 @@ function exportVoyagePDF(){
       // ── SEITE 1: TITELSEITE ─────────────────────────────────
       // Header-Banner
       doc.setFillColor(...NAVY);
-      doc.rect(0,0,PW,42,'F');
+      doc.rect(0,0,PW,46,'F');
       // Goldlinie
-      doc.setDrawColor(...GOLD);doc.setLineWidth(0.8);doc.line(0,42,PW,42);
+      doc.setDrawColor(...GOLD);doc.setLineWidth(0.8);doc.line(0,46,PW,46);
       // Titel
       setFont('bold',22,...GOLD);
-      doc.text(S.appTitle1||'Ship-Sips',PW/2,18,{align:'center'});
+      doc.text(S.appTitle1||'Ship-Sips',PW/2,16,{align:'center'});
       setFont('normal',11,...TX1);
-      doc.text(S.appTitle2||'Meine Reise',PW/2,26,{align:'center'});
-      setFont('normal',9,...TX2);
-      doc.text((L?'Voyage Report':'Reisebericht')+' · V48',PW/2,33,{align:'center'});
+      doc.text(S.appTitle2||'Meine Reise',PW/2,24,{align:'center'});
+      // Zeitraum + Erstelldatum im Header berechnen (Vorschau – echte Daten kommen unten)
+      const _hdrDate=new Date().toLocaleDateString(L?'en-US':'de-DE',{day:'2-digit',month:'long',year:'numeric'});
+      setFont('normal',8,...TX2);
+      doc.text((L?'Voyage Report · Created: ':'Reisebericht · Erstellt: ')+_hdrDate,PW/2,31,{align:'center'});
 
       yPos=52;
 
-      // Gesamtübersicht
-      const allLog=S.log.filter(e=>!e._marker&&(e.price||0)>0);
-      const totalAmt=allLog.reduce((s,e)=>s+(e.price||0),0);
-      const dates=allLog.map(e=>new Date(e.time).getTime()).filter(Boolean);
-      const firstDate=dates.length?fmtDate(new Date(Math.min(...dates)).toISOString()):'-';
-      const lastDate=dates.length?fmtDate(new Date(Math.max(...dates)).toISOString()):'-';
-      const totalDays=[...new Set(allLog.map(e=>entryLogicalDayStr(e)))].length;
-      const totalUsers=[...new Set(allLog.map(e=>e.userId).filter(Boolean))];
+      // ── DATEN (identisch zur RTF) ──────────────────────────────
+      const allLog=S.log.filter(e=>!e._marker&&(e.price||0)>=0);
+      const totalAmt=allLog.reduce((s,e)=>s+(parseFloat(e.price)||0),0);
+      const timestamps=allLog.map(e=>new Date(e.time).getTime()).filter(Boolean);
+      const firstDate=timestamps.length?new Date(Math.min(...timestamps)):null;
+      const lastDate=timestamps.length?new Date(Math.max(...timestamps)):null;
+      const allDays=[...new Set(allLog.map(e=>entryLogicalDayStr(e)))];
+      const totalDays=allDays.length||1;
+      const avgDay=totalAmt/totalDays;
+      const tzWechsel=(S.tzChangeLog||[]).length;
+      const fmtC=v=>parseFloat(v||0).toFixed(2).replace('.',',')+' '+(S.currency||'€');
 
-      // Übersichtsbox
-      doc.setFillColor(...BG);doc.rect(ML,yPos,CW,52,'F');
-      doc.setDrawColor(...GOLD);doc.setLineWidth(0.3);doc.rect(ML,yPos,CW,52,'S');
-      doc.setFillColor(...GOLD);doc.rect(ML,yPos,3,52,'F');
+      // Zeitraum nachträglich in Header eintragen
+      if(firstDate&&lastDate){
+        const periodStr=(L?'Period: ':'Zeitraum: ')+fmtDate(firstDate.toISOString())+' – '+fmtDate(lastDate.toISOString());
+        doc.setPage(1);
+        setFont('normal',7.5,...TX2);
+        doc.text(periodStr,PW/2,37,{align:'center'});
+      }
 
-      setFont('bold',10,...NAVY);doc.text(L?'Trip Summary':'Reise-Übersicht',ML+6,yPos+8);
-      doc.setDrawColor(...GOLD);doc.setLineWidth(0.2);doc.line(ML+6,yPos+10,ML+CW-6,yPos+10);
+      // ── ABSCHNITT-HEADER ────────────────────────────────────────
+      function secHeader(title){
+        checkPage(16);
+        doc.setFillColor(...NAVY);doc.rect(ML,yPos,CW,9,'F');
+        setFont('bold',10,255,255,255);doc.text(title,ML+4,yPos+6.3);
+        yPos+=13;
+      }
 
-      const rows=[
-        [L?'Period':'Zeitraum', firstDate+' – '+lastDate],
-        [L?'Total Spending':'Gesamtausgaben', fmtCurrency(totalAmt)],
-        [L?'Entries':'Einträge', String(allLog.length)],
-        [L?'Days with entries':'Tage mit Einträgen', String(totalDays)],
-        [L?'Daily average':'Tagesdurchschnitt', fmtCurrency(totalDays?totalAmt/totalDays:0)],
-        [L?'Travellers':'Reisende', String(totalUsers.length||1)],
+      // ── TABELLEN-HILFSFUNKTIONEN ─────────────────────────────────
+      function tblHeader(cols){
+        // cols: [{label, x, w, align}]
+        checkPage(10);
+        doc.setFillColor(...NAVY);doc.rect(ML,yPos,CW,7,'F');
+        cols.forEach(c=>{
+          setFont('bold',7.5,...GOLD);
+          doc.text(c.label,c.x+(c.align==='right'?c.w:0),yPos+5,{align:c.align||'left'});
+        });
+        yPos+=9;
+      }
+      function tblRow(cols,even){
+        checkPage(7);
+        if(even){doc.setFillColor(...BG);doc.rect(ML,yPos-4,CW,6.5,'F');}
+        cols.forEach(c=>{
+          setFont(c.bold?'bold':'normal',c.size||8,c.gray?...TX2:...(c.bold?NAVY:TX1));
+          doc.text(String(c.label||''),c.x+(c.align==='right'?c.w:0),yPos,{align:c.align||'left'});
+        });
+        // Trennlinie
+        doc.setDrawColor(210,220,230);doc.setLineWidth(0.12);doc.line(ML,yPos+2,PW-MR,yPos+2);
+        yPos+=6.5;
+      }
+
+      // ── 1. ÜBERSICHT: 5 Stat-Boxen ─────────────────────────────
+      secHeader(L?'Overview':'Übersicht');
+      const boxW=CW/5;
+      const boxes=[
+        [L?'ENTRIES':'EINTRÄGE',String(allLog.length)],
+        [L?'TOTAL':'GESAMT',fmtC(totalAmt)],
+        [L?'TRAVEL DAYS':'REISETAGE',String(totalDays)],
+        [L?'AVG / DAY':'Ø PRO TAG',fmtC(avgDay)],
+        [L?'TZ CHANGES':'TZ-WECHSEL',String(tzWechsel)],
       ];
-      rows.forEach((r,i)=>{
-        const ry=yPos+16+i*5.8;
-        setFont('normal',9,...TX1);doc.text(r[0]+':',ML+6,ry);
-        setFont('bold',9,...NAVY);doc.text(r[1],ML+CW-6,ry,{align:'right'});
+      boxes.forEach((b,i)=>{
+        const bx=ML+i*boxW;
+        doc.setFillColor(...BG);doc.rect(bx,yPos,boxW-1,22,'F');
+        doc.setFillColor(...GOLD);doc.rect(bx,yPos,boxW-1,1.5,'F');
+        setFont('normal',6.5,...TX2);doc.text(b[0],bx+3,yPos+7);
+        setFont('bold',i===1?11:12,...NAVY);
+        const val=b[1];
+        // Langer Wert → kleinere Schrift
+        const fs=val.length>10?9:i===1?11:12;
+        doc.setFontSize(fs);
+        doc.text(val,bx+3,yPos+17);
       });
-      yPos+=60;
+      yPos+=28;
 
-      // Nutzer-Budgets
-      if(S.users&&S.users.length>1){
-        checkPage(40);
-        setFont('bold',10,...NAVY);doc.text(L?'Spending per Traveller':'Ausgaben pro Reisenden',ML,yPos);
-        yPos+=5;line(yPos,...GOLD,0.3);yPos+=4;
-        S.users.forEach(u=>{
-          const uTotal=allLog.filter(e=>e.userId===u.id).reduce((s,e)=>s+(e.price||0),0);
-          if(uTotal===0)return;
-          checkPage(8);
-          setFont('normal',9,...TX1);doc.text('● '+u.name,ML,yPos);
-          setFont('bold',9,...NAVY);doc.text(fmtCurrency(uTotal),PW-MR,yPos,{align:'right'});
-          yPos+=6;
+      // ── 2. PRO PERSON ───────────────────────────────────────────
+      const usersWithData=(S.users||[]).filter(u=>allLog.some(e=>e.userId===u.id));
+      if(usersWithData.length>0){
+        secHeader(L?'Per Person':'Pro Person');
+        const pc=[
+          {label:L?'Name':'Name',      x:ML+2,     w:52, align:'left'},
+          {label:L?'Entries':'Einträge',x:ML+54,    w:22, align:'right'},
+          {label:L?'Total':'Gesamt',    x:ML+76,    w:40, align:'right'},
+          {label:L?'Share':'Anteil',    x:ML+116,   w:22, align:'right'},
+          {label:L?'Budget':'Budget',   x:ML+138,   w:40, align:'right'},
+        ];
+        tblHeader(pc);
+        usersWithData.forEach((u,i)=>{
+          const uLog=allLog.filter(e=>e.userId===u.id);
+          const uTot=uLog.reduce((s,e)=>s+(parseFloat(e.price)||0),0);
+          const uPct=totalAmt>0?(uTot/totalAmt*100).toFixed(1)+'%':'–';
+          const bud=S.userBudgets&&S.userBudgets[u.id]?fmtC(S.userBudgets[u.id]):(L?'no limit':'kein Limit');
+          tblRow([
+            {label:u.name,    x:ML+2,  w:52,  bold:true},
+            {label:uLog.length,x:ML+54,w:22,  align:'right',gray:true},
+            {label:fmtC(uTot),x:ML+76, w:40,  align:'right',bold:true},
+            {label:uPct,      x:ML+116,w:22,  align:'right',gray:true},
+            {label:bud,       x:ML+138,w:40,  align:'right',gray:true},
+          ],i%2===1);
         });
         yPos+=4;
       }
 
-      // ── SEITE 2+: HAFEN-TIMELINE ────────────────────────────
-      // Häfen chronologisch ermitteln
-      const portFirst={};
+      // ── 3. TOP 10 GETRÄNKE ──────────────────────────────────────
+      const drinkCount={};
       allLog.forEach(e=>{
-        if(e.location&&e.location.trim()){
-          const loc=e.location.trim();
-          if(!portFirst[loc]||new Date(e.time)<new Date(portFirst[loc].time))
-            portFirst[loc]={time:e.time,tz:entryTz(e)};
-        }
+        if(!drinkCount[e.name])drinkCount[e.name]={count:0,total:0};
+        drinkCount[e.name].count++;drinkCount[e.name].total+=(parseFloat(e.price)||0);
       });
-      const portChron=Object.keys(portFirst).sort((a,b)=>new Date(portFirst[a].time)-new Date(portFirst[b].time));
-
-      if(portChron.length){
-        // Hafen-Ausgaben aufbauen
-        const portStats={};
-        allLog.forEach(e=>{
-          const loc=(e.location||'').trim();
-          if(!loc)return;
-          if(!portStats[loc])portStats[loc]={count:0,total:0,byUser:{},byCat:{}};
-          portStats[loc].count++;
-          portStats[loc].total+=(e.price||0);
-          const uid=e.userId||'?';
-          portStats[loc].byUser[uid]=(portStats[loc].byUser[uid]||0)+(e.price||0);
-          const d=S.drinks.find(x=>x.id===e.drinkId);
-          const cat=d?d.cat:(L?'Other':'Sonstiges');
-          portStats[loc].byCat[cat]=(portStats[loc].byCat[cat]||0)+(e.price||0);
+      const top10=Object.entries(drinkCount).sort((a,b)=>b[1].count-a[1].count).slice(0,10);
+      if(top10.length){
+        secHeader(L?'Top 10 Drinks':'Top 10 Getränke');
+        const tc=[
+          {label:'#',              x:ML+2,  w:8,  align:'right'},
+          {label:L?'Drink':'Getränk',x:ML+12,w:68, align:'left'},
+          {label:L?'Count':'Anzahl',x:ML+80, w:22, align:'right'},
+          {label:L?'Total':'Gesamt',x:ML+102,w:38, align:'right'},
+          {label:L?'Share':'Anteil',x:ML+140,w:18, align:'right'},
+          {label:L?'Freq':'Häufigk.',x:ML+158,w:20,align:'right'},
+        ];
+        tblHeader(tc);
+        top10.forEach(([name,st],i)=>{
+          const pct=totalAmt>0?(st.total/totalAmt*100).toFixed(1)+'%':'–';
+          const freq=totalDays>0?(st.count/totalDays).toFixed(1)+'/d':'–';
+          tblRow([
+            {label:String(i+1),    x:ML+2,  w:8,  align:'right',gray:true},
+            {label:name,           x:ML+12, w:68},
+            {label:st.count+'×',   x:ML+80, w:22, align:'right'},
+            {label:fmtC(st.total), x:ML+102,w:38, align:'right',bold:true},
+            {label:pct,            x:ML+140,w:18, align:'right',gray:true},
+            {label:freq,           x:ML+158,w:20, align:'right',gray:true},
+          ],i%2===1);
         });
-
-        checkPage(20);
-        // Abschnittsheader
-        doc.setFillColor(...NAVY);doc.rect(ML,yPos,CW,9,'F');
-        setFont('bold',10,255,255,255);
-        doc.text((L?'⚓ Port Timeline (Chronological)':'⚓ Hafen-Timeline (Chronologisch)'),ML+3,yPos+6.3);
-        yPos+=13;
-
-        portChron.forEach((loc,idx)=>{
-          const ps=portStats[loc];
-          if(!ps)return;
-          checkPage(28);
-
-          // Hafen-Header
-          const fy=portFirst[loc];
-          const dateStr=fmtDate(fy.time);
-          doc.setFillColor(BG[0],BG[1],BG[2]);doc.rect(ML,yPos,CW,8,'F');
-          doc.setFillColor(...GOLD);doc.rect(ML,yPos,2.5,8,'F');
-          setFont('bold',9,...NAVY);
-          doc.text(`${idx+1}. ${loc}`,ML+5,yPos+5.3);
-          setFont('normal',8,...TX1);
-          doc.text(dateStr,PW-MR,yPos+5.3,{align:'right'});
-          yPos+=10;
-
-          // Ausgaben-Zeile
-          setFont('normal',8,...TX1);doc.text(L?'Spending:':'Ausgaben:',ML+5,yPos);
-          setFont('bold',9,...NAVY);doc.text(fmtCurrency(ps.total),ML+30,yPos);
-          setFont('normal',8,...TX2);doc.text('  '+fmtNum(ps.count)+'×',ML+30+doc.getTextWidth(fmtCurrency(ps.total)),yPos);
-          yPos+=5;
-
-          // Top-Kategorie
-          const topCat=Object.entries(ps.byCat).sort((a,b)=>b[1]-a[1]).slice(0,3);
-          if(topCat.length){
-            setFont('normal',7.5,...TX2);
-            doc.text((L?'Top: ':'Top: ')+topCat.map(([c,v])=>`${c} ${fmtCurrency(v)}`).join(' · '),ML+5,yPos);
-            yPos+=5;
-          }
-
-          // Nutzer-Aufteilung (wenn mehrere)
-          const usrs=Object.entries(ps.byUser).filter(([,v])=>v>0);
-          if(usrs.length>1){
-            const uLine=usrs.map(([uid,v])=>{const u=S.users.find(x=>x.id===uid);return (u?u.name:uid)+': '+fmtCurrency(v);}).join('  ');
-            setFont('normal',7,...TX2);
-            const wrapped=doc.splitTextToSize(uLine,CW-8);
-            doc.text(wrapped,ML+5,yPos);
-            yPos+=wrapped.length*4;
-          }
-
-          // Dünne Trennlinie
-          doc.setDrawColor(180,190,200);doc.setLineWidth(0.15);doc.line(ML+4,yPos+1,PW-MR-4,yPos+1);
-          yPos+=5;
-        });
+        yPos+=4;
       }
 
-      // ── KATEGORIE-AUSWERTUNG ────────────────────────────────
+      // ── 4. NACH KATEGORIE ───────────────────────────────────────
       const catMap={};
-      allLog.forEach(e=>{const d=S.drinks.find(x=>x.id===e.drinkId);const cat=d?d.cat:(L?'Other':'Sonstiges');if(!catMap[cat])catMap[cat]={count:0,total:0};catMap[cat].count++;catMap[cat].total+=(e.price||0);});
+      allLog.forEach(e=>{
+        const d=S.drinks.find(x=>x.id===e.drinkId);
+        const cat=d?d.cat:(L?'Other':'Sonstiges');
+        if(!catMap[cat])catMap[cat]={count:0,total:0};
+        catMap[cat].count++;catMap[cat].total+=(parseFloat(e.price)||0);
+      });
       const sortedCats=Object.entries(catMap).sort((a,b)=>b[1].total-a[1].total);
       if(sortedCats.length){
-        checkPage(30);
-        doc.setFillColor(...NAVY);doc.rect(ML,yPos,CW,9,'F');
-        setFont('bold',10,255,255,255);
-        doc.text(L?'Spending by Category':'Ausgaben nach Kategorie',ML+3,yPos+6.3);
-        yPos+=13;
-        sortedCats.forEach(([cat,st])=>{
-          checkPage(8);
-          const pct=totalAmt>0?(st.total/totalAmt*100).toFixed(1):'0.0';
-          setFont('normal',9,...TX1);doc.text(cat,ML+3,yPos);
-          setFont('bold',9,...NAVY);doc.text(fmtCurrency(st.total),PW-MR,yPos,{align:'right'});
-          setFont('normal',8,...TX2);doc.text('('+pct+'%  '+fmtNum(st.count)+'×)',PW-MR-30,yPos);
+        secHeader(L?'By Category':'Nach Kategorie');
+        const cc=[
+          {label:L?'Category':'Kategorie',x:ML+2,  w:90, align:'left'},
+          {label:L?'Count':'Anzahl',       x:ML+92, w:26, align:'right'},
+          {label:L?'Total':'Gesamt',       x:ML+118,w:38, align:'right'},
+          {label:L?'Share':'Anteil',       x:ML+156,w:22, align:'right'},
+        ];
+        tblHeader(cc);
+        sortedCats.forEach(([cat,st],i)=>{
+          const pct=totalAmt>0?(st.total/totalAmt*100).toFixed(1)+'%':'–';
+          tblRow([
+            {label:cat,            x:ML+2,  w:90},
+            {label:st.count+'×',   x:ML+92, w:26, align:'right',gray:true},
+            {label:fmtC(st.total), x:ML+118,w:38, align:'right',bold:true},
+            {label:pct,            x:ML+156,w:22, align:'right',gray:true},
+          ],i%2===1);
           // Mini-Balken
-          const barW=Math.max(1,(st.total/totalAmt)*50);
-          doc.setFillColor(...GOLD);doc.rect(ML+3,yPos+1.5,barW,1.8,'F');
-          yPos+=6.5;
+          const barW=Math.max(0.5,(st.total/totalAmt)*40);
+          doc.setFillColor(...GOLD);doc.rect(ML+2,yPos-4.5,barW,1.2,'F');
         });
+        yPos+=4;
+      }
+
+      // ── 5. TAGESÜBERSICHT ───────────────────────────────────────
+      if(allDays.length){
+        secHeader(L?'Daily Overview':'Tagesübersicht');
+        const dc=[
+          {label:L?'Date':'Datum',          x:ML+2,  w:50, align:'left'},
+          {label:L?'Entries':'Einträge',     x:ML+52, w:22, align:'right'},
+          {label:L?'Total':'Gesamt',         x:ML+74, w:40, align:'right'},
+          {label:L?'vs Avg':'vs Ø',          x:ML+114,w:40, align:'right'},
+          {label:L?'Day Goal':'Tagesziel',   x:ML+154,w:24, align:'right'},
+        ];
+        tblHeader(dc);
+        const sortedDays=allDays.slice().sort();
+        const dayGoal=S.dailyGoal||0;
+        sortedDays.forEach((dayStr,i)=>{
+          const dayLog=allLog.filter(e=>entryLogicalDayStr(e)===dayStr);
+          const dayTot=dayLog.reduce((s,e)=>s+(parseFloat(e.price)||0),0);
+          const diff=dayTot-avgDay;
+          const diffStr=(diff>=0?'+':'')+fmtC(diff);
+          const dp=dayStr.split('-');
+          const dn=new Date(parseInt(dp[0]),parseInt(dp[1])-1,parseInt(dp[2]));
+          const dayLabel=dn.toLocaleDateString(L?'en-US':'de-DE',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});
+          tblRow([
+            {label:dayLabel,       x:ML+2,  w:50},
+            {label:String(dayLog.length),x:ML+52,w:22,align:'right',gray:true},
+            {label:fmtC(dayTot),   x:ML+74, w:40, align:'right',bold:true},
+            {label:diffStr,        x:ML+114,w:40, align:'right',gray:true},
+            {label:dayGoal>0?fmtC(dayGoal):'–',x:ML+154,w:24,align:'right',gray:true},
+          ],i%2===1);
+        });
+        yPos+=4;
       }
 
       // ── FOOTER auf jeder Seite ───────────────────────────────
@@ -8534,7 +8585,7 @@ function renderVerwaltung(){
       cursor:pointer;font-family:Georgia,serif;
       touch-action:manipulation;margin:10px 0 4px;
       display:flex;align-items:center;justify-content:space-between">
-      <span>${L?'More exports (CSV · PDF · HTML)':'Mehr Exporte (CSV · PDF · HTML)'}</span>
+      <span>${L?'More exports (CSV · PDF · Word)':'Mehr Exporte (CSV · PDF · Word)'}</span>
       <span class="bep-arr" style="font-size:10px">▼</span>
     </button>
     <div id="bkpExtraPanel" style="display:none">
@@ -8557,12 +8608,7 @@ function renderVerwaltung(){
         <button class="adm-btn-sm" onclick="exportVoyageWord()" style="flex-direction:column;gap:3px;padding:10px 6px;align-items:center">
           <span style="font-size:18px">📝</span>
           <span style="font-size:10px;font-weight:bold;color:var(--tx0)">Word</span>
-          <span style="font-size:9px;color:var(--tx2)">${L?'Voyage Report':'Reisebericht'}</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- ── GESPEICHERTE BACKUPS ──────────── -->
+          <span style="font-size:9px;color:var(--tx2)">${L?'Voyage Report (.rtf)':'Reisebericht (.rtf)'}</span> ──────────── -->
     <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin:14px 0 6px">${L?'Saved on this device':'Auf diesem Gerät gespeichert'}</div>
     <div id="internalBackupsList"><div style="font-size:11px;color:var(--tx2);padding:8px 0">${L?'Loading…':'Lade…'}</div></div>
     <div id="internalBackupsSummary"></div>
