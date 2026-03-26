@@ -1564,6 +1564,7 @@ details.hlp-acc summary:active{opacity:.75}
           <button id="logMoreBtn" onclick="toggleLogMoreMenu(event)" class="log-multisel-btn" style="font-size:16px;padding:7px 11px;line-height:1;letter-spacing:0;position:relative" aria-label="Weitere Optionen">⋯<span id="logFilterBadge" style="display:none;position:absolute;top:3px;right:3px;background:var(--ac);color:#06101E;font-size:8px;font-weight:bold;border-radius:50%;width:13px;height:13px;line-height:13px;text-align:center;font-family:Georgia,serif;pointer-events:none"></span></button><!-- [PUNKT-F] -->
           <div id="logMoreMenu" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--bg2);border:1px solid var(--ac-27);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.2);min-width:200px;z-index:200;overflow:hidden">
             <button id="logAddBtn" onclick="openAddEntry();closeLogMoreMenu()" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;font-family:Georgia,serif;font-size:14px;font-weight:bold;color:var(--ac);cursor:pointer;background:var(--ac-07);border:none;border-bottom:2px solid var(--ac-27);text-align:left;touch-action:manipulation;-webkit-user-select:none;box-sizing:border-box">➕ Eintrag hinzufügen</button>
+            <button id="logRepeatBtn" onclick="repeatLastEntry();closeLogMoreMenu()" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;font-family:Georgia,serif;font-size:13px;color:var(--tx0);cursor:pointer;background:transparent;border:none;border-bottom:1px solid var(--ac-07);text-align:left;touch-action:manipulation;-webkit-user-select:none;box-sizing:border-box">↻ <span id="logRepeatBtnLbl">Letzten Eintrag wiederholen</span></button>
             <button id="logFilterToggleBtn" onclick="toggleLogFilterPanel();closeLogMoreMenu()" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;font-family:Georgia,serif;font-size:13px;color:var(--tx0);cursor:pointer;background:transparent;border:none;border-bottom:1px solid var(--ac-07);text-align:left;touch-action:manipulation;-webkit-user-select:none;box-sizing:border-box">🔍 Filter</button>
             <button onclick="toggleLogMultiSelect();closeLogMoreMenu()" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;font-family:Georgia,serif;font-size:13px;color:var(--tx0);cursor:pointer;background:transparent;border:none;border-bottom:1px solid var(--ac-07);text-align:left;touch-action:manipulation;-webkit-user-select:none;box-sizing:border-box">☑ Mehrfach auswählen</button>
             <button onclick="exportLogCSV();closeLogMoreMenu()" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;font-family:Georgia,serif;font-size:13px;color:var(--tx0);cursor:pointer;background:transparent;border:none;text-align:left;touch-action:manipulation;-webkit-user-select:none;box-sizing:border-box">📤 CSV exportieren</button>
@@ -3760,7 +3761,7 @@ const PORT_TZ_MAP={
   'Victoria (Kanada)':-480,'Nanaimo':-480,'Prince Rupert':-480,
   'Portland (Oregon)':-480,'Astoria':-480,
   // Antarktis-Häfen (informativ; keine DST)
-  'Ushuaia':-180,  // bereits oben; Hauptbasis Antarktis-Kreuzfahrten
+  // 'Ushuaia' bereits oben definiert (UTC-3); Hauptbasis Antarktis-Kreuzfahrten
   'Puerto Williams':-180,
   'King George Island':-180,
 };
@@ -4846,6 +4847,7 @@ function applyLang(){
   const t10=document.getElementById('top10title');if(t10)t10.textContent=T('top10.title');
   const lt=document.getElementById('logTitleEl');if(lt)lt.textContent=T('log.title');
   const la=document.getElementById('logAddBtn');if(la)la.textContent=T('log.add');
+  const lr=document.getElementById('logRepeatBtnLbl');if(lr)lr.textContent=S.lang==='en'?'Repeat last entry':'Letzten Eintrag wiederholen';
   const lc=document.getElementById('logCsvBtn');if(lc)lc.textContent=T('log.csv');
   const ls=document.getElementById('logSearch');if(ls)ls.placeholder=T('log.search');
   updateGoalBar();
@@ -7166,6 +7168,7 @@ function showLogCtxMenu(ev,id){
   menu.id='logCtxMenu';
   menu.innerHTML=`
     <div class="log-ctx-item" onclick="closeLogCtxMenu();openEditEntry('${esc(id)}')">✏️ ${L?'Edit entry':'Bearbeiten'}</div>
+    <div class="log-ctx-item" onclick="closeLogCtxMenu();repeatEntry('${esc(id)}')">↻ ${L?'Repeat entry':'Eintrag wiederholen'}</div>
     ${locItem}
     <div class="log-ctx-item danger" onclick="closeLogCtxMenu();askDelEntry('${esc(id)}')">🗑 ${L?'Delete entry':'Löschen'}</div>`;
   const ov=document.createElement('div');
@@ -7230,8 +7233,40 @@ function validatePriceRange(){
 // V40 T10: Virtuelles Scrollen – Tage die vollständig angezeigt werden
 var _fullExpandedDays = new Set();
 var _visibleMonths = new Set(); // Monatsbasiertes Paging: welche Monate sind geladen
+/* FIX FEHLER 8: Lazy-Loading für Tages-Blöcke via IntersectionObserver ──────
+   _logDayHtmlCache: Map dk → vorberechneter Eintrags-HTML-String
+   _logLazyObserver: aktiver IntersectionObserver; wird bei jedem renderLog() neu erzeugt.
+   Vorteil: daybody-Divs sind zunächst leere Platzhalter mit geschätzter min-height.
+   Erst wenn das Element ~300px vor dem Viewport liegt, wird der HTML eingesetzt und
+   initSwipeDelete() für die neuen Zeilen nachgezogen.
+   Rückwärtskompatibel: _si-Guard in initSwipeDelete() verhindert Doppel-Bindung. */
+var _logDayHtmlCache = new Map();
+var _logLazyObserver = null;
+function _initLogLazyLoad(){
+  if(_logLazyObserver){_logLazyObserver.disconnect();_logLazyObserver=null;}
+  const placeholders=document.querySelectorAll('#loglist .daybody[data-lazy]');
+  if(!placeholders.length)return;
+  _logLazyObserver=new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(!entry.isIntersecting)return;
+      _fillLazyDayBody(entry.target);
+      _logLazyObserver.unobserve(entry.target);
+    });
+  },{rootMargin:'300px 0px'});
+  placeholders.forEach(function(el){_logLazyObserver.observe(el);});
+}
+function _fillLazyDayBody(el){
+  const dk=el.dataset.dk;
+  if(!dk||!_logDayHtmlCache.has(dk))return;
+  el.innerHTML=_logDayHtmlCache.get(dk);
+  el.removeAttribute('data-lazy');
+  el.style.minHeight='';
+  // Swipe/Multiselect für neu gerenderte Zeilen nachziehen (initSwipeDelete hat _si-Guard)
+  if(!S.logMultiSelect)initSwipeDelete();else initMselRows();
+}
 var _logInited = false;          // true nach erstem renderLog()-Aufruf dieser Session
 function renderLog(){
+  _logDayHtmlCache.clear(); // FIX FEHLER 8: Cache vor jedem Re-Render zurücksetzen
   updateLogFilterBadge();
   updateHeader();
   renderLogCatFilter();
@@ -7351,13 +7386,16 @@ function renderLog(){
       const _nhRouteEntry=(S.voyageRoute&&S.voyageRoute.length)?S.voyageRoute.find(r=>r.date===dk):null;
       const _nhPortBtn=(_nhRouteEntry&&(_nhRouteEntry.port||'').trim())?
         `<button class="dayhdr-port-btn" onclick="event.stopPropagation();showPortInfo('${dk}')">⚓</button>`:'';
-      html+=`<div class="dayhdr" data-di="${gi}"><div class="dayhdr-left"><span class="dayhdr-arr${isO?' open':''}">▶</span><span class="dayname">${esc(entryDayKeyLabel(dk))}</span><span style="font-size:10px;color:var(--tx2);margin-left:6px">${dayTzLabel}</span></div>${_nhPortBtn}<span class="daymeta">${fmtNum(entries.length)}&thinsp;${T('log.entries')}&ensp;·&ensp;</span><span class="daytot">${eur(dt)}</span></div><div class="daybody${isO?' open':''}">`;
+      html+=`<div class="dayhdr" data-di="${gi}"><div class="dayhdr-left"><span class="dayhdr-arr${isO?' open':''}">▶</span><span class="dayname">${esc(entryDayKeyLabel(dk))}</span><span style="font-size:10px;color:var(--tx2);margin-left:6px">${dayTzLabel}</span></div>${_nhPortBtn}<span class="daymeta">${fmtNum(entries.length)}&thinsp;${T('log.entries')}&ensp;·&ensp;</span><span class="daytot">${eur(dt)}</span></div>`;
 
       // V40 T10: Virtuelles Scrollen – max. 40 Einträge pro Tag bei >500 Gesamteinträgen
       const DAY_LIMIT=40;
       const applyLimit=filteredLog.length>500&&!_fullExpandedDays.has(dk);
       const entriesToShow=applyLimit?entries.slice(0,DAY_LIMIT):entries;
 
+      // FIX FEHLER 8: Einträge in _dayBodyHtml sammeln statt direkt in html schreiben
+      // prevEntryTz/prevEntryUserId werden weiterhin lückenlos fortgeschrieben (cross-day-Marker)
+      let _dayBodyHtml='';
       entriesToShow.forEach(e=>{
         const eTz=entryTz(e);
         const eUid=e.userId||null;
@@ -7372,7 +7410,7 @@ function renderLog(){
           const sameUser=(eUid===prevEntryUserId)||(eUid===null&&prevEntryUserId===null);
           if(sameUser){
             const L=S.lang==='en';
-            html+=`<div class="tz-change-marker">🕐 ${L?'Ship\'s time changed: ':'Schiffszeit geändert: '}<strong>${appOffsetLabel(eTz)}</strong> → <strong>${appOffsetLabel(prevEntryTz)}</strong></div>`;
+            _dayBodyHtml+=`<div class="tz-change-marker">🕐 ${L?'Ship\'s time changed: ':'Schiffszeit geändert: '}<strong>${appOffsetLabel(eTz)}</strong> → <strong>${appOffsetLabel(prevEntryTz)}</strong></div>`;
           }
         }
         prevEntryTz=eTz;
@@ -7380,14 +7418,21 @@ function renderLog(){
 
         const _ld=S.drinks.find(x=>x.id===e.drinkId);
         const _lcat=_ld?`<span class="log-cat-badge" style="background:${catColor(_ld.cat)}22;color:${catColor(_ld.cat)};border:1px solid ${catColor(_ld.cat)}44">${esc(_ld.cat)}</span>`:'';
-        html+=buildLogRowHtml(e,'',_lcat);
+        _dayBodyHtml+=buildLogRowHtml(e,'',_lcat);
       });
       if(applyLimit&&entries.length>DAY_LIMIT){
         const rest=entries.length-DAY_LIMIT;
         const L=S.lang==='en';
-        html+=`<button onclick="_fullExpandedDays.add('${dk}');renderLog()" style="width:100%;padding:9px;background:var(--bg2);border:1px solid var(--ac-20);border-radius:7px;color:var(--ac);font-size:12px;cursor:pointer;font-family:Georgia,serif;margin:4px 0;touch-action:manipulation">▼ ${L?`Show ${rest} more entries`:`Weitere ${rest} Einträge anzeigen`}</button>`;
+        _dayBodyHtml+=`<button onclick="_fullExpandedDays.add('${dk}');renderLog()" style="width:100%;padding:9px;background:var(--bg2);border:1px solid var(--ac-20);border-radius:7px;color:var(--ac);font-size:12px;cursor:pointer;font-family:Georgia,serif;margin:4px 0;touch-action:manipulation">▼ ${L?`Show ${rest} more entries`:`Weitere ${rest} Einträge anzeigen`}</button>`;
       }
-      html+=`</div>`; // daybody
+      if(isO){
+        // Lazy placeholder: daybody ist initial leer; IntersectionObserver füllt ihn
+        // min-height schätzt Scrollhöhe damit der Observer korrekt feuert
+        _logDayHtmlCache.set(dk,_dayBodyHtml);
+        html+=`<div class="daybody open" data-dk="${dk}" data-lazy="1" style="min-height:${Math.max(40,Math.min(entriesToShow.length,DAY_LIMIT)*64)}px"></div>`;
+      }else{
+        html+=`<div class="daybody"></div>`;
+      }
     });
     html+=`</div>`; // monthbody
   });
@@ -7403,6 +7448,7 @@ function renderLog(){
     html+=`<div style="text-align:center;padding:18px 14px 8px"><button onclick="_visibleMonths.add('${nextMk}');S.expandedMonths.add('${nextMk}');renderLog()" style="padding:10px 28px;background:var(--bg2);border:1px solid var(--ac-27);border-radius:10px;color:var(--ac);font-family:Georgia,serif;font-size:13px;cursor:pointer;touch-action:manipulation;width:100%;max-width:320px">↓ ${esc(nextLabel)} · ${fmtNum(nextCount)} ${L?'entries':'Einträge'}</button></div>`;
   }
   el.innerHTML=html;el._mk=mkeys;el._dk=dkeys;
+  _initLogLazyLoad(); // FIX FEHLER 8: IntersectionObserver für lazy Tages-Blöcke starten
   if(!S.logMultiSelect)initSwipeDelete();
   else initMselRows();
 }
@@ -7436,6 +7482,50 @@ function openAddEntry(){S.meEditId=null;document.getElementById('meTitle').textC
   const meUserEl=document.getElementById('meUser');if(meUserEl)meUserEl.innerHTML=buildMeUserSel(S.activeUserId||S.users[0].id);
   const meUserLblEl=document.getElementById('meUserLbl');if(meUserLblEl)meUserLblEl.textContent='Nutzer';
   _ovShow('meOv','show-bottom');}
+/* FIX FEHLER 5: Letzten Eintrag / beliebigen Eintrag wiederholen ─────────
+   repeatLastEntry() → holt den jüngsten Log-Eintrag und ruft repeatEntry().
+   repeatEntry(id)   → öffnet openAddEntry()-Modal mit vorausgefüllten Werten
+                       (Name, Preis, Getränk, Nutzer, Notiz, Ort), aber Zeit = jetzt.
+   Preis: Vor Service-Charge zurückgerechnet, damit SC nicht doppelt anfällt. */
+function repeatLastEntry(){
+  if(!S.log||!S.log.length){showToast('⚠️ '+(S.lang==='en'?'No entries yet.':'Noch keine Einträge.'),'warn',2500);return;}
+  repeatEntry(S.log[0].id);
+}
+function repeatEntry(id){
+  const e=S.log.find(x=>x.id===id);if(!e)return;
+  const L=S.lang==='en';
+  S.meEditId=null;
+  document.getElementById('meTitle').textContent=L?'↻ Repeat entry':'↻ Eintrag wiederholen';
+  document.getElementById('meSelLbl').textContent=T('modal.entry.sel');
+  document.getElementById('meNameLbl').textContent=T('modal.entry.name');
+  document.getElementById('mePriceLbl').textContent=T('modal.entry.price');
+  document.getElementById('meTimeLbl').textContent=T('modal.entry.time');
+  const meNL=document.getElementById('meNoteLbl');if(meNL)meNL.textContent=T('modal.entry.note');
+  document.getElementById('meCancelBtn').textContent=T('modal.cancel');
+  document.getElementById('meSaveBtn').textContent=T('modal.save');
+  const ps=document.getElementById('mePriceSuffix');if(ps)ps.textContent=S.currency||'€';
+  document.getElementById('meSel').innerHTML=buildMeSel(e.drinkId||'');
+  document.getElementById('meName').value=e.name||'';
+  // Preis vor Service Charge zurückrechnen, damit SC nicht doppelt angewandt wird
+  const svc=S.serviceCharge||0;
+  const origPrice=svc>0?Math.round(e.price/(1+svc/100)*100)/100:e.price;
+  document.getElementById('mePrice').value=origPrice||'';
+  // Zeit = jetzt (App-Lokalzeit)
+  const meTimeEl=document.getElementById('meTime');
+  meTimeEl.max=toAppLocal(new Date(Date.now()+86400000).toISOString());
+  meTimeEl.value=toAppLocal(new Date().toISOString());
+  // Timezone = aktuelle App-Timezone
+  const meTzEl=document.getElementById('meTz');if(meTzEl)meTzEl.innerHTML=buildMeTzSel(appOffset());
+  const meTzLblEl=document.getElementById('meTzLbl');if(meTzLblEl)meTzLblEl.textContent=T('modal.entry.tz')||'Schiffszeit';
+  // Notiz, Ort und Nutzer aus Quell-Eintrag übernehmen
+  const meNoteEl=document.getElementById('meNote');if(meNoteEl)meNoteEl.value=e.note||'';
+  const meLocEl=document.getElementById('meLoc');if(meLocEl)meLocEl.value=e.location||S.currentLocation||'';
+  buildLocDatalist();
+  const meLocLblEl=document.getElementById('meLocLbl');if(meLocLblEl)meLocLblEl.textContent=(L?'⚓ Port / Location (optional)':'⚓ Hafen / Ort (optional)');
+  const meUserEl=document.getElementById('meUser');if(meUserEl)meUserEl.innerHTML=buildMeUserSel(e.userId||S.activeUserId||S.users[0].id);
+  const meUserLblEl2=document.getElementById('meUserLbl');if(meUserLblEl2)meUserLblEl2.textContent='Nutzer';
+  _ovShow('meOv','show-bottom');
+}
 function openEditEntry(id){const e=S.log.find(x=>x.id===id);if(!e)return;S.meEditId=id;document.getElementById('meTitle').textContent=T('modal.entry.edit');document.getElementById('meSelLbl').textContent=T('modal.entry.sel');document.getElementById('meNameLbl').textContent=T('modal.entry.name');document.getElementById('mePriceLbl').textContent=T('modal.entry.price');document.getElementById('meTimeLbl').textContent=T('modal.entry.time');document.getElementById('meCancelBtn').textContent=T('modal.cancel');document.getElementById('meSaveBtn').textContent=T('modal.save');const ps=document.getElementById('mePriceSuffix');if(ps)ps.textContent=S.currency||'€';document.getElementById('meSel').innerHTML=buildMeSel(e.drinkId||'');document.getElementById('meName').value=e.name||'';document.getElementById('mePrice').value=e.price||'';const _eTz=entryTz(e);
   document.getElementById('meTime').value=toLocalWithTz(e.time,_eTz);
   const meTzElEd=document.getElementById('meTz');if(meTzElEd)meTzElEd.innerHTML=buildMeTzSel(_eTz);

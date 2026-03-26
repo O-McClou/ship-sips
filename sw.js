@@ -10,7 +10,11 @@
    skipWaiting() bleibt aktiv damit der neue Cache sofort greift.
    ═══════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'ship-sips-v48-6'; /* V48.3: Cache-Name an APP_VERSION V48.3 angeglichen */
+const CACHE_NAME = 'ship-sips-v48-6';
+/* Versionskonvention: APP_VERSION (index.html) = semantische Version (z. B. V48.3)
+   CACHE_NAME-Suffix = laufende Fix-Iteration innerhalb einer Haupt-/Minor-Version
+   (v48-6 = 6. Cache-Iteration von V48.x). Beide Werte unabhängig hochzählen.
+   Aktuell: APP_VERSION V48.3 / Cache-Iteration 6 */
 
 /* Core-Assets: müssen alle verfügbar sein – addAll() ist atomar */
 const CORE_ASSETS = [
