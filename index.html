@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <script id="a4StatePreload">/* APP_STATE – wird beim HTML-Export automatisch befüllt */</script>
 <link rel="manifest" href="./manifest.json">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-visual"> <!-- FIX V49 KB-Jitter: resizes-visual verhindert Layout-Neuberechnung beim Öffnen der iOS-Tastatur -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Ship-Sips">
@@ -864,7 +864,7 @@ html .fav-section .drow.fl{background:rgba(255,255,255,0.07);border-left-color:v
 #cfmOv{z-index:600}
 .ov.show-bottom{display:flex;align-items:flex-end;justify-content:center}
 .ov.show-center{display:flex;align-items:center;justify-content:center;padding:20px}
-.modal-sheet{background:linear-gradient(180deg,var(--bg1) 0%,var(--bg) 100%);border:1px solid var(--ac-27);border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:22px 18px 0;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 -4px 30px rgba(0,0,0,.6);display:flex;flex-direction:column}
+.modal-sheet{background:linear-gradient(180deg,var(--bg1) 0%,var(--bg) 100%);border:1px solid var(--ac-27);border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:22px 18px env(keyboard-inset-height,0px);max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 -4px 30px rgba(0,0,0,.6);display:flex;flex-direction:column} /* FIX V49 KB-Jitter: padding-bottom via CSS env() statt JS */
 .modal-box{background:linear-gradient(180deg,var(--bg1) 0%,var(--bg) 100%);border:1px solid var(--ac-27);border-radius:20px;padding:22px 18px max(28px,env(safe-area-inset-bottom,28px));width:100%;max-width:480px;max-height:80vh;overflow-y:auto;box-shadow:0 -4px 30px rgba(0,0,0,.6)}
 .modal-title{font-size:16px;color:var(--ac);font-weight:bold;margin-bottom:16px;letter-spacing:0.5px}
 .mfield{margin-bottom:11px}
@@ -1167,7 +1167,7 @@ body.fz-xlarge .fav-tile-name{-webkit-line-clamp:3}
 
 /* Farbwahl-Overlay-Grid – größere Felder */
 .tile-color-picker{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;padding:14px}
-.tile-color-swatch{width:100%;aspect-ratio:1;border-radius:9px;border:2px solid transparent;cursor:pointer;transition:transform .1s,border-color .15s;touch-action:manipulation;min-height:42px}
+.tile-color-swatch{width:100%;aspect-ratio:1;border-radius:9px;border:2px solid transparent;cursor:pointer;transition:transform .1s,border-color .15s;touch-action:manipulation;min-width:44px;min-height:44px} /* FIX V49 Touch-Target: mind. 44×44 px gemäß Apple HIG */
 .tile-color-swatch:active{transform:scale(.88)}
 .tile-color-swatch.selected{border-color:#fff;box-shadow:0 0 0 2px #0008}
 .tile-color-reset{grid-column:1/-1;background:var(--bg2);border:1px dashed var(--ac-40);border-radius:8px;color:var(--tx1);font-family:Georgia,serif;font-size:12px;padding:8px;cursor:pointer;touch-action:manipulation;text-align:center}
@@ -4076,11 +4076,11 @@ function setTimezone(mode,offsetMin){
     S.tzChangeLog.push({time:new Date().toISOString(),fromOffset:oldOff,toOffset:newOff});
     if(S.tzChangeLog.length>500)S.tzChangeLog=S.tzChangeLog.slice(-500); // V34: einheitlich 500
 
-    /* FIX V48 F11: IDL-Erkennung – wenn der Offset-Sprung > 1380 min (23 h),
-       wird ein ganzer Kalendertag übersprungen (Datumsgrenze West→Ost).
-       Einen ⚓-Marker-Eintrag für den übersprungenen Tag einfügen. */
+    /* FIX V49 IDL-Schwellenwert: von 1380 auf 720 min gesenkt – entspricht nun exakt
+       dem Schwellenwert in checkDatelineCrossing (>12h). Vorher: Warn-Modal erschien
+       bei >12h, ⚓-Marker wurde aber erst bei >23h gesetzt → inkonsistentes Verhalten. */
     const diff=newOff-oldOff; // positiv = Richtung Osten
-    if(Math.abs(diff)>=1380){
+    if(Math.abs(diff)>=720){
       const L=S.lang==='en';
       // Übersprungenen Tag berechnen: aktueller App-Tag im alten Offset + 1
       const nowUtc=new Date();
@@ -5752,7 +5752,7 @@ if(dt>=S.dailyGoal){const justCrossed=(dt-d.price)<S.dailyGoal;if(justCrossed){s
   try{
     // FIX V48 B5: Singleton AudioContext – verhindert Speicherleck bei schnellem Tippen
     if(!window._tapAC){const _AC=window.AudioContext||window.webkitAudioContext;if(_AC)window._tapAC=new _AC();}
-    if(window._tapAC){const _b=window._tapAC.createBuffer(1,1,22050);const _s=window._tapAC.createBufferSource();_s.buffer=_b;_s.connect(window._tapAC.destination);_s.start(0);}
+    if(window._tapAC){const _b=window._tapAC.createBuffer(1,1,22050);const _s=window._tapAC.createBufferSource();_s.buffer=_b;_s.connect(window._tapAC.destination);_s.onended=function(){_s.disconnect();};_s.start(0);} /* FIX V49 AudioContext-Cleanup: Node nach Abspielen trennen – verhindert Memory Leak bei vielen Buchungen */
   }catch(_){}
 }
 
@@ -12183,7 +12183,9 @@ window.addEventListener('pagehide',function(){
   // Async IndexedDB-Write (best-effort, kann nicht auf Abschluss warten)
   try{saveState();}catch(e){}
 });
-// iOS keyboard: scroll Save button into view when virtual keyboard appears in modals
+// iOS keyboard: scroll focused element into view when virtual keyboard appears in modals
+// FIX V49 KB-Jitter: paddingBottom-Berechnung via JS entfernt – übernimmt jetzt CSS env(keyboard-inset-height).
+// Nur noch: Banner hochschieben + fokussiertes Element ins Bild scrollen.
 (function(){
   if(!window.visualViewport)return;
   function _onVPResize(){
@@ -12202,27 +12204,15 @@ window.addEventListener('pagehide',function(){
       }
     }
     if(!active)return;
-    // FIX V44 #4: Suche auf alle Sheet-/Box-Typen ausgeweitet (modal-box, adm-sheet,
-    // route-editor, theme-editor usw.), nicht nur .modal-sheet
-    var sheet=active.closest('.modal-sheet,.modal-box,.adm-sheet,[class*="sheet"],[class*="route-ov"],[class*="custom-theme"]');
-    if(!sheet){
-      // Fallback: nächstes scrollbares Elternelement in einem Overlay (.ov.show*)
-      var ov=active.closest('.ov');
-      if(ov&&(ov.className.includes('show')))sheet=ov.querySelector('.modal-sheet,.modal-box') || ov;
-    }
-    if(!sheet)return;
-    // Push sheet up so it stays within the visible viewport
-    sheet.style.paddingBottom=offsetFromBottom>30?(offsetFromBottom+12)+'px':'';
-    // Scroll the focused element into view within the sheet
+    // Fokussiertes Element ins Bild scrollen (sanft)
     setTimeout(function(){active.scrollIntoView({block:'center',behavior:'smooth'});},100);
   }
   function _onVPScroll(){_onVPResize();}
   window.visualViewport.addEventListener('resize',_onVPResize);
   window.visualViewport.addEventListener('scroll',_onVPScroll);
-  // Reset padding when input loses focus
+  // Reset Banner wenn Tastatur schließt
   document.addEventListener('focusout',function(){
     setTimeout(function(){
-      document.querySelectorAll('.modal-sheet,.modal-box,.adm-sheet').forEach(function(s){s.style.paddingBottom='';});
       // FIX V48 B-KB: Onboarding-Banner zurücksetzen wenn Tastatur schließt
       var banner=document.getElementById('swzBanner');
       if(banner){banner.style.transform='';banner.classList.remove('swz-kb-up');}

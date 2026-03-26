@@ -10,7 +10,7 @@
    skipWaiting() bleibt aktiv damit der neue Cache sofort greift.
    ═══════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'ship-sips-v48-6';
+const CACHE_NAME = 'ship-sips-v49-1';
 /* Versionskonvention: APP_VERSION (index.html) = semantische Version (z. B. V48.3)
    CACHE_NAME-Suffix = laufende Fix-Iteration innerhalb einer Haupt-/Minor-Version
    (v48-6 = 6. Cache-Iteration von V48.x). Beide Werte unabhängig hochzählen.
@@ -21,13 +21,12 @@ const CORE_ASSETS = [
   './index.html',
   './manifest.json',
   './icon-192.png',
-  './icon-512.png'
+  './icon-512.png',
+  './jspdf.umd.min.js'  /* FIX V49 PDF-Offline: von OPTIONAL in CORE verschoben – PDF-Export muss offline garantiert funktionieren */
 ];
 
 /* Optionale Assets: Fehler hier darf den Install NICHT abbrechen */
-const OPTIONAL_ASSETS = [
-  './jspdf.umd.min.js'  /* FIX V48 PDF-Offline: lokale jsPDF-Bibliothek cachen */
-];
+const OPTIONAL_ASSETS = [];
 
 /* ── Install: cachen + sofort übernehmen ──────────────────────── */
 self.addEventListener('install', event => {
