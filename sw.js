@@ -12,11 +12,16 @@
 
 const CACHE_NAME = 'ship-sips-v48-6'; /* V48.3: Cache-Name an APP_VERSION V48.3 angeglichen */
 
-const ASSETS = [
+/* Core-Assets: müssen alle verfügbar sein – addAll() ist atomar */
+const CORE_ASSETS = [
   './index.html',
   './manifest.json',
   './icon-192.png',
-  './icon-512.png',
+  './icon-512.png'
+];
+
+/* Optionale Assets: Fehler hier darf den Install NICHT abbrechen */
+const OPTIONAL_ASSETS = [
   './jspdf.umd.min.js'  /* FIX V48 PDF-Offline: lokale jsPDF-Bibliothek cachen */
 ];
 
@@ -24,10 +29,21 @@ const ASSETS = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(ASSETS))
+      .then(cache =>
+        /* Kern-Assets atomar cachen, dann optionale Assets einzeln (fehler-tolerant) */
+        cache.addAll(CORE_ASSETS).then(() =>
+          Promise.all(
+            OPTIONAL_ASSETS.map(url =>
+              cache.add(url).catch(err =>
+                console.warn('[SW] Optionales Asset nicht gecacht:', url, err)
+              )
+            )
+          )
+        )
+      )
       .then(() => self.skipWaiting())
       .catch(err => {
-        console.warn('[SW] Cache-Fehler beim Install:', err);
+        console.warn('[SW] Cache-Fehler beim Install (Core):', err);
         return self.skipWaiting();
       })
   );
