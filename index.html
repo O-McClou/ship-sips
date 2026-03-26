@@ -1522,7 +1522,7 @@ details.hlp-acc summary:active{opacity:.75}
     <span style="color:var(--ac);flex-shrink:0">⚓</span>
     <span id="portQuickBarLabel" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tx0)"></span>
     <button onclick="openPortQuickEdit()" title="Hafen ändern" aria-label="Hafen ändern" style="flex-shrink:0;padding:3px 9px;background:var(--ac-13);border:1px solid var(--ac-27);border-radius:7px;color:var(--ac);font-size:11px;cursor:pointer;font-family:Georgia,serif;touch-action:manipulation">✏️</button>
-    <button onclick="clearCurrentLocation();updatePortQuickBar()" title="Hafen löschen" aria-label="Hafen löschen" style="flex-shrink:0;padding:3px 8px;background:transparent;border:1px solid var(--ac-20);border-radius:7px;color:var(--tx2);font-size:11px;cursor:pointer;font-family:Georgia,serif;touch-action:manipulation">✕</button>
+    <button onclick="dismissPortQuickBar()" title="Schließen" aria-label="Schließen" style="flex-shrink:0;padding:3px 8px;background:transparent;border:1px solid var(--ac-20);border-radius:7px;color:var(--tx2);font-size:11px;cursor:pointer;font-family:Georgia,serif;touch-action:manipulation">✕</button>
   </div>
   <div id="storageBanner" style="display:none;margin:6px 14px 0;padding:10px 12px;background:#2a1000;border:1px solid #dd660055;border-radius:10px;align-items:center;gap:10px;font-size:12px;color:#dd8833">
     <span style="font-size:18px;flex-shrink:0">💾</span>
@@ -3826,6 +3826,7 @@ function onCurrentLocInputMini(val){
 }
 function setCurrentLocation(val){
   S.currentLocation=(val||'').trim().slice(0,100);
+  S._portBarDismissed=false;
   updatePortQuickBar();
   saveState();
   updateCurrentLocBar();
@@ -3855,12 +3856,17 @@ function updatePortQuickBar(){
   const bar=document.getElementById('portQuickBar');
   const lbl=document.getElementById('portQuickBarLabel');
   if(!bar||!lbl)return;
-  if(S.currentLocation){
+  if(S.currentLocation&&!S._portBarDismissed){
     bar.style.display='flex';
     lbl.textContent=(S.lang==='en'?'Current port: ':'Aktueller Hafen: ')+S.currentLocation;
   }else{
     bar.style.display='none';
   }
+}
+function dismissPortQuickBar(){
+  const bar=document.getElementById('portQuickBar');
+  if(bar)bar.style.display='none';
+  S._portBarDismissed=true;
 }
 function openPortQuickEdit(){
   const inp=document.getElementById('currentLocInput');
