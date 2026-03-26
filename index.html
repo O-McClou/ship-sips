@@ -3612,7 +3612,8 @@ const PORT_TZ_MAP={
   'Valletta':60,'Malta':60,
   'Limassol':120,'Zypern':120,
   'Alexandria':120,'Port Said':120,'Suez':120,
-  'Aqaba':180,'Eilat':120,
+  'Aqaba':180,'Eilat':120,  // IST (Winter UTC+2); Israel Sommer (IDT) = UTC+3 → 'Eilat Summer':180 nicht nötig, da PORT_TZ_MAP nur Winterwerte enthält
+  'Eilat Summer':180,  // IDT (Israel Daylight Time, Apr–Okt, UTC+3) – bei Sommerreisen diesen Hafen manuell wählen
   // FIX M-05: Weitere Kreuzfahrt-Häfen ergänzt
   'Fremantle':480,'Bali':480,'Denpasar':480,'Lombok':480,
   'Phuket':420,'Langkawi':480,'Kota Kinabalu':480,'Manila':480,
@@ -11259,8 +11260,8 @@ function openTzWiz(){
       {off:600,name:'Sydney / Melbourne / Brisbane / Guam (AEST)'},
       {off:630,name:'Adelaide / Lord-Howe-Insel (ACDT)'},
       {off:660,name:'Nouméa / Honiara / Salomonen (NCT)'},
-      {off:720,name:'Auckland / Wellington / Fiji (NZST)'},
-      {off:780,name:'Tonga / Apia / Samoa (TOT/WST+13)'},
+      {off:720,name:'Auckland / Wellington / Fiji (NZST Winter UTC+12 / NZDT Sommer UTC+13)'},
+      {off:780,name:'Tonga / Apia / Samoa (TOT/WST+13) · Auckland Sommer (NZDT)'},
     ]},
   ];
   const portSel=document.getElementById('tzWizPortSel');
@@ -12763,6 +12764,10 @@ function toggleSunMode() { cycleConcept(); } // Rückwärtskompatibilität
   window.swUpdateDismiss = function(){
     var b = document.getElementById('swUpdateBanner');
     if(b) b.classList.remove('visible');
+    /* FIX FEHLER 11: Roter Dot am ⚙️-Tab setzen, damit das wartende Update
+       nicht vergessen wird – analog zum Backup-Badge (admBadge). */
+    var dot = document.getElementById('admBadge');
+    if(dot) dot.style.display='block';
   };
 
 })();
