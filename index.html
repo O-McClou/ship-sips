@@ -341,7 +341,7 @@ body.fz-small .dprice{font-size:9px}
 body.fz-small .dcat{font-size:9px}
 body.fz-small .sinput{font-size:12px}
 body.fz-small .cbtn{font-size:9px}
-body.fz-small .bplus{width:48px;height:48px;min-width:48px;font-size:26px}
+body.fz-small .bplus{width:44px;height:44px;min-width:44px;font-size:22px}
 body.fz-small .bminus{width:40px;height:40px;min-width:40px;font-size:18px}
 body.fz-small .tab-icon{font-size:14px}
 body.fz-small .tab-label{font-size:8px}
@@ -359,12 +359,12 @@ body.fz-large #hdrUserExpanded{font-size:24px!important}
 body.fz-large .hdr-lbl{font-size:11px}
 body.fz-large .hdr-cnt{font-size:13px}
 body.fz-large .dname{font-size:16px}
-body.fz-large .dnum{font-size:24px}
+body.fz-large .dnum{font-size:18px}
 body.fz-large .dprice{font-size:13px}
 body.fz-large .dcat{font-size:12px}
 body.fz-large .sinput{font-size:17px}
 body.fz-large .cbtn{font-size:13px;padding:0 12px;min-height:33px;height:auto;box-sizing:border-box}
-body.fz-large .bplus{width:62px;height:62px;min-width:62px;font-size:34px}
+body.fz-large .bplus{width:58px;height:58px;min-width:58px;font-size:32px}
 body.fz-large .bminus{width:52px;height:52px;min-width:52px;font-size:27px}
 body.fz-large .tab-icon{font-size:16px}
 body.fz-large .tab-label{font-size:8px}
@@ -374,8 +374,6 @@ body.fz-large .dayname{font-size:14px}
 body.fz-large .logname{font-size:15px}
 body.fz-large .dsub{font-size:11px}
 body.fz-large .fav-btn{width:38px;height:38px;min-width:38px;font-size:22px}
-body.fz-large .srow{font-size:13px}
-body.fz-large .stot{font-size:15px}
 
 /* ── Font scale: XL (24px base – maximale Größe für iPhone) ── */
 body.fz-xlarge .logo{font-size:28px;letter-spacing:4px}
@@ -385,12 +383,12 @@ body.fz-xlarge #hdrUserExpanded{font-size:29px!important}
 body.fz-xlarge .hdr-lbl{font-size:12px}
 body.fz-xlarge .hdr-cnt{font-size:14px}
 body.fz-xlarge .dname{font-size:19px}
-body.fz-xlarge .dnum{font-size:26px}
+body.fz-xlarge .dnum{font-size:21px}
 body.fz-xlarge .dprice{font-size:15px}
 body.fz-xlarge .dcat{font-size:13px}
 body.fz-xlarge .sinput{font-size:21px;padding:0 14px;height:26px;box-sizing:border-box}
 body.fz-xlarge .cbtn{font-size:15px;padding:0 12px;min-height:33px;height:auto;box-sizing:border-box}
-body.fz-xlarge .bplus{width:68px;height:68px;min-width:68px;font-size:40px}
+body.fz-xlarge .bplus{width:66px;height:66px;min-width:66px;font-size:38px}
 body.fz-xlarge .bminus{width:58px;height:58px;min-width:58px;font-size:30px}
 body.fz-xlarge .tab-icon{font-size:16px}
 body.fz-xlarge .tab-label{font-size:8px}
@@ -400,8 +398,6 @@ body.fz-xlarge .dayname{font-size:16px}
 body.fz-xlarge .logname{font-size:17px}
 body.fz-xlarge .dsub{font-size:12px}
 body.fz-xlarge .fav-btn{width:42px;height:42px;min-width:42px;font-size:26px}
-body.fz-xlarge .srow{font-size:13px}
-body.fz-xlarge .stot{font-size:15px}
 body.fz-xlarge .no-results{font-size:18px}
 body.fz-xlarge .logtitle{font-size:20px}
 body.fz-xlarge .hdr-today{font-size:13px!important}
@@ -580,11 +576,12 @@ html .fav-section .drow.fl{background:rgba(255,255,255,0.07);border-left-color:v
 .drow.fl{background:var(--ac-09);border-left-color:var(--ac)}
 /* Kompakte Zeile für Favoriten + Top10 */
 #favList .drow, #top10list .drow{padding:6px 10px}
+/* bplus: keine eigene Größe – erbt von .bplus und body.fz-* .bplus → skaliert mit Schriftgröße */
 #favList .fav-btn, #top10list .fav-btn{width:28px;height:28px;min-width:28px;font-size:16px}
 .rnk{position:absolute;top:-5px;left:7px;border-radius:10px;padding:1px 6px;font-size:9px;color:var(--bg);font-weight:bold;pointer-events:none}
 .fav-btn{width:34px;height:34px;min-width:34px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx4);padding:5px;box-sizing:content-box;line-height:1;z-index:2;-webkit-user-select:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;transition:color .2s,text-shadow .2s}
 .fav-btn.on{color:var(--ac);text-shadow:0 0 10px var(--ac-40)}
-.bplus{width:56px;height:56px;min-width:56px;border-radius:50%;background:linear-gradient(135deg,var(--ac),var(--ac-deep));border:none;color:var(--ac-fg);font-size:30px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-gold);flex-shrink:0;-webkit-user-select:none;line-height:1;transition:opacity .15s,transform .1s;touch-action:manipulation}
+.bplus{width:50px;height:50px;min-width:50px;border-radius:50%;background:linear-gradient(135deg,var(--ac),var(--ac-deep));border:none;color:var(--ac-fg);font-size:26px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-gold);flex-shrink:0;-webkit-user-select:none;line-height:1;transition:opacity .15s,transform .1s;touch-action:manipulation}
 .bplus:active{opacity:.7;transform:scale(0.95)}
 .bplus.tap-flash{animation:tapPulse 0.18s ease-out;}
 @keyframes tapPulse{
@@ -5689,7 +5686,7 @@ function renderSummary(){
   const totalCnt=todayEntries.length;
   let html=`<div class="sumbox"><div class="sumtitle">☀️ ${T('summary.title')}</div>`;
   [...groups.values()].forEach(g=>{html+=`<div class="srow"><span>${g.count}${T('drink.count.unit')} ${esc(g.name)}</span><span>${eur(g.total)}</span></div>`;});
-  html+=`<div class="stot"><span style="color:${CV.tx0}">${T('stat.total')} (${totalCnt} ${T('summary.total_drinks')})</span><span style="color:${CV.ac}">${eur(totalAmt)}</span></div></div>`;
+  html+=`<div class="stot"><span style="color:${CV.tx0}">${T('stat.total')} (${totalCnt} ${T('summary.total_drinks')})</span><span style="color:${CV.ac};font-size:15px">${eur(totalAmt)}</span></div></div>`;
   document.getElementById('sumbox').innerHTML=html;
 }
 
