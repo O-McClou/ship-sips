@@ -1,33 +1,43 @@
 /* ═══════════════════════════════════════════════════════════════════
    sw.js – Service Worker für Ship-Sips PWA
    ─────────────────────────────────────────────────────────────────
-   Cache-Version ship-sips-v48:
-   FIX V48 F7: manifest.json in ASSETS ergänzt (war zuvor nicht
-   gecacht – führte im Offline-Betrieb zu fehlender Manifest-Datei).
-   FIX V48.5: iOS Share-Bug behoben (title/text entfernt), Word-Export ergänzt, jsPDF CDN-Fallback –
-   Alle navigator.share()-Aufrufe nur noch mit files:[] – kein title/text mehr.
-   Cache-Name auf v48-4 aktualisiert.
-   skipWaiting() bleibt aktiv damit der neue Cache sofort greift.
+   FIX: cache.addAll ersetzt durch Promise.allSettled + einzelne puts
+        damit ein fehlendes Asset (z.B. Icon) nicht den gesamten
+        SW-Install abbricht und Safari einfriert.
+   jspdf.umd.min.js aus ASSETS entfernt (wird lazy per CDN geladen).
    ═══════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'ship-sips-v48-6'; /* V48.3: Cache-Name an APP_VERSION V48.3 angeglichen */
+const CACHE_NAME = 'ship-sips-v48-7';
 
 const ASSETS = [
   './index.html',
   './manifest.json',
   './icon-192.png',
-  './icon-512.png',
-  './jspdf.umd.min.js'  /* FIX V48 PDF-Offline: lokale jsPDF-Bibliothek cachen */
+  './icon-512.png'
 ];
 
 /* ── Install: cachen + sofort übernehmen ──────────────────────── */
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(ASSETS))
+      .then(cache => {
+        /* FIX: Promise.allSettled statt cache.addAll
+           → einzelne 404-Fehler brechen den Install nicht mehr ab    */
+        return Promise.allSettled(
+          ASSETS.map(url =>
+            fetch(url)
+              .then(response => {
+                if (response && response.ok) {
+                  return cache.put(url, response);
+                }
+              })
+              .catch(() => { /* Asset nicht verfügbar – ignorieren */ })
+          )
+        );
+      })
       .then(() => self.skipWaiting())
       .catch(err => {
-        console.warn('[SW] Cache-Fehler beim Install:', err);
+        console.warn('[SW] Install-Fehler:', err);
         return self.skipWaiting();
       })
   );
@@ -64,7 +74,6 @@ self.addEventListener('fetch', event => {
         })
         .catch(() => null);
 
-      // [PUNKT-C] Freundliche Offline-Seite (statt plain-text Fallback)
       return cached ? cached : networkFetch.then(r => r || new Response(
         `<!DOCTYPE html>
 <html lang="de">
