@@ -227,36 +227,51 @@ html[data-theme="nicko"] .bplus{border-radius:8px;background:linear-gradient(135
 html[data-theme="nicko"] .bminus{border-radius:8px;background:linear-gradient(135deg,#C01E2A,#9E1822);box-shadow:0 3px 10px rgba(192,30,42,.30)}
 html[data-theme="nicko"] .tab.on{background:rgba(0,59,130,0.10)}
 html[data-theme="nicko"] .tab.on::after{top:auto;bottom:0;left:15%;right:15%;border-radius:3px 3px 0 0;height:3px}
-html[data-theme="nicko"] .hdr .logo{color:#FFFFFF!important}
-html[data-theme="nicko"] .hdr .logo-sub{color:rgba(255,255,255,0.80)!important}
-html[data-theme="nicko"] .hdr .hdr-amt{color:#FFFFFF!important}
-html[data-theme="nicko"] .hdr-design-btn{color:rgba(255,255,255,0.85)!important}
-html[data-theme="nicko"] #sunModeBtn{color:#FFFFFF!important}
-
-html[data-theme="nicko"] .hdr-lbl{color:rgba(255,255,255,0.65)!important}
-html[data-theme="nicko"] .hdr-cnt{color:rgba(255,255,255,0.75)!important}
-html[data-theme="nicko"] .hdr-today{color:rgba(255,255,255,0.90)!important}
-html[data-theme="nicko"] .hdr #hdrClock{color:rgba(255,255,255,0.90)!important}
-html[data-theme="nicko"] .hdr-topbar{color:rgba(255,255,255,0.80)!important}
-html[data-theme="nicko"] .hdr-topbar-collapse-btn{color:rgba(255,255,255,0.70)!important;background:transparent!important}
-html[data-theme="nicko"] .tab{color:rgba(255,255,255,0.65)!important}
-html[data-theme="nicko"] .tab.on{color:#FFFFFF!important;background:rgba(255,255,255,0.14)!important}
-html[data-theme="nicko"] .tab.on::after{background:#FFFFFF!important}
-html[data-theme="nicko"] .hdr-topbar:active{background:rgba(255,255,255,0.10)!important}
-html[data-theme="nicko"] #currentLocInput{color:#FFFFFF!important;background:rgba(255,255,255,0.12)!important;border-color:rgba(255,255,255,0.28)!important}
-html[data-theme="nicko"] #currentLocInput::placeholder{color:rgba(255,255,255,0.48)!important}
-html[data-theme="nicko"] .port-clear-btn{color:rgba(255,255,255,0.70)!important}
-html[data-theme="nicko"] .port-tz-btn{color:rgba(255,255,255,0.80)!important}
-html[data-theme="nicko"] #hdrTzWarn,html[data-theme="nicko"] #hdrTzWarnMini{color:#FFD080!important}
-html[data-theme="nicko"] .hdr-toggle{background:rgba(0,32,80,0.88)!important;border-top:1px solid rgba(255,255,255,0.12)!important}
-html[data-theme="nicko"] .hdr-expand-hint-btn{color:rgba(255,255,255,0.70)!important}
-html[data-theme="nicko"] #hdrUserDotMini{color:#FFFFFF!important}
-html[data-theme="nicko"] #currentLocInputMini{color:#FFFFFF!important;background:rgba(255,255,255,0.12)!important;border-color:rgba(255,255,255,0.28)!important}
-html[data-theme="nicko"] #currentLocInputMini::placeholder{color:rgba(255,255,255,0.48)!important}
-html[data-theme="nicko"] .port-mini-clear{color:rgba(255,255,255,0.70)!important}
-html[data-theme="nicko"] #hdrMiniTabs{background:rgba(0,28,72,0.94)!important;border-top:1px solid rgba(255,255,255,0.12)!important}
-html[data-theme="nicko"] .mini-tab{color:rgba(255,255,255,0.65)!important;background:transparent!important}
-html[data-theme="nicko"] .mini-tab.on{color:#FFFFFF!important;background:rgba(255,255,255,0.14)!important}
+/* ── nicko Header-Scope: CSS-Variablen auf den dunkelblauen Header-Bereich einschränken.
+   Alle Kindelemente (.hdr-lbl, .tab, .logo, .hdr-amt, Inputs …) erben automatisch
+   die korrekten Werte – kein einziges !important mehr nötig. ── */
+html[data-theme="nicko"] .hdr,
+html[data-theme="nicko"] .hdr-toggle,
+html[data-theme="nicko"] .hdr-topbar,
+html[data-theme="nicko"] #hdrMiniTabs {
+  --tx0: #FFFFFF;
+  --tx1: rgba(255,255,255,0.82);
+  --tx2: rgba(255,255,255,0.62);
+  --tx3: rgba(255,255,255,0.90);
+  --ac:  #FFD080;
+  --ac-warm: rgba(255,255,255,0.92);
+  --ac-05: rgba(255,255,255,0.05);
+  --ac-07: rgba(255,255,255,0.07);
+  --ac-09: rgba(255,255,255,0.09);
+  --ac-10: rgba(255,255,255,0.10);
+  --ac-13: rgba(255,255,255,0.10);
+  --ac-20: rgba(255,255,255,0.16);
+  --ac-27: rgba(255,255,255,0.22);
+  --ac-33: rgba(255,255,255,0.28);
+  --ac-40: rgba(255,255,255,0.35);
+  --ac-60: rgba(255,255,255,0.55);
+  --bg:  rgba(0,32,80,0.94);
+  --bg1: rgba(0,24,68,0.92);
+  --bg2: rgba(0,28,72,0.88);
+}
+/* Tab-Leiste: sitzt direkt an .hdr, bekommt den Scope-Override bereits.
+   Aktiver Tab und Indikator nutzen --ac (jetzt #FFD080) automatisch. */
+html[data-theme="nicko"] .tab.on{color:#FFFFFF;background:rgba(255,255,255,0.14)}
+html[data-theme="nicko"] .tab.on::after{background:#FFFFFF}
+/* hdr-toggle Kollaps-Streifen: dunkles Navy, leichte Border */
+html[data-theme="nicko"] .hdr-toggle{background:rgba(0,22,60,0.90);border-top:1px solid rgba(255,255,255,0.12)}
+/* #hdrMiniTabs bekommt eigenen Hintergrund (Specificity reicht ohne !important) */
+html[data-theme="nicko"] #hdrMiniTabs{background:rgba(0,20,58,0.96);border-top:1px solid rgba(255,255,255,0.12)}
+/* Hafen-Eingabefelder: background/border lassen sich nicht über CSS-Vars setzen
+   (Inputs ignorieren vererbte background-Vars) → 2 gezielte Regeln statt 6×!important */
+html[data-theme="nicko"] #currentLocInput,
+html[data-theme="nicko"] #currentLocInputMini {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.28);
+}
+/* Zeitzonenwarnung: Spezialfarbe bleibt explizit (kein passender CSS-Var-Slot) */
+html[data-theme="nicko"] #hdrTzWarn,
+html[data-theme="nicko"] #hdrTzWarnMini { color: #FFD080; }
 /* TUI Cruises Mein Schiff – Tiefblau & TUI-Rot, Premium & Wellness */
 /* Mein Schiff / TUI Cruises – Indigo & Warmgold · edel · Wellness · Luxus */
 html[data-theme="mein_schiff"] .bplus{border-radius:10px;background:linear-gradient(135deg,#C89848,#A87830);box-shadow:0 3px 14px rgba(196,152,72,0.35)}
@@ -834,6 +849,18 @@ html .fav-section .drow.fl{background:rgba(255,255,255,0.07);border-left-color:v
 .hlp-qkey{font-size:12px;color:var(--tx0);font-weight:bold;flex-shrink:0}
 .hlp-qval{font-size:11px;color:var(--tx1);text-align:right}
 .ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:500;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+/* Live-App-Vorschau: .ov nimmt kein Overlay-Dimming, Editor-Sheet schrumpft zum Floating-Strip */
+#customThemeEditorOv.ct-live-mode{background:transparent;pointer-events:none}
+#customThemeEditorOv.ct-live-mode .modal-sheet{pointer-events:auto}
+.ct-live-strip{
+  max-height:68px!important;
+  overflow:hidden!important;
+  border-radius:20px 20px 0 0;
+  padding:0!important;
+  border-top:2px solid var(--ac);
+  box-shadow:0 -4px 24px rgba(0,0,0,.55);
+  transition:max-height .3s ease;
+}
 #cfmOv{z-index:600}
 .ov.show-bottom{display:flex;align-items:flex-end;justify-content:center}
 .ov.show-center{display:flex;align-items:center;justify-content:center;padding:20px}
@@ -2681,7 +2708,71 @@ function syncCustomThemesToRuntime(){
 
 /* ═══════ PROFESSIONELLER THEME-EDITOR ═══════════════════════════════════ */
 
-let _ctEdit={editId:null,name:'',icon:'⚓',baseKey:'navy',acHex:'#C9A84C',advOpen:false,basicMode:true,advVars:null,customBg:null,_iconTab:'fav',_iconSearch:''};
+let _ctEdit={editId:null,name:'',icon:'⚓',baseKey:'navy',acHex:'#C9A84C',advOpen:false,basicMode:true,advVars:null,customBg:null,_iconTab:'fav',_iconSearch:'',livePreview:false,_prevVars:null};
+
+/* ── Live-Vorschau: aktuelle :root-CSS-Vars sichern ─────────────────────── */
+function _snapshotRootVars(){
+  const r=document.documentElement.style;
+  const keys=['--bg','--bg1','--bg2','--bg3','--bg4','--ac','--ac-fg',
+    '--tx0','--tx1','--tx2','--tx3','--tx4',
+    '--ac-05','--ac-07','--ac-09','--ac-10','--ac-13','--ac-20','--ac-27',
+    '--ac-33','--ac-40','--ac-60','--ac-warm','--ac-deep',
+    '--shadow-gold','--shadow-deep','--shadow-card'];
+  const snap={};
+  keys.forEach(k=>snap[k]=r.getPropertyValue(k));
+  return snap;
+}
+/* ── Live-Vorschau: gesicherte Vars wiederherstellen ─────────────────────── */
+function _restoreRootVars(snap){
+  if(!snap)return;
+  const r=document.documentElement.style;
+  Object.entries(snap).forEach(([k,v])=>r.setProperty(k,v));
+}
+/* ── Live-Vorschau an/ausschalten ─────────────────────────────────────────
+   Ein: Editor-Sheet → Floating-Strip, Overlay transparent,
+        Draft-Variablen werden sofort auf :root geschrieben.
+   Aus: Strip → voller Editor, Draft-Vars bleiben (werden erst bei Abbrechen
+        zurückgesetzt). */
+function ctLivePreviewToggle(){
+  const ov=document.getElementById('customThemeEditorOv');
+  const sheet=document.getElementById('customThemeEditorSheet');
+  if(!_ctEdit.livePreview){
+    // Aktuellen Theme-Zustand sichern für späteres Rücksetzen via Abbrechen
+    _ctEdit._prevVars=_snapshotRootVars();
+    _ctEdit._prevTheme=document.documentElement.getAttribute('data-theme');
+    // Draft-Vars live anwenden (kein Speichern)
+    const pv=generateCustomVars(_ctEdit.baseKey,_ctEdit.acHex,_ctEdit.advVars);
+    const r=document.documentElement.style;
+    r.setProperty('--bg',pv.bg);r.setProperty('--bg1',pv.bg1);r.setProperty('--bg2',pv.bg2);
+    r.setProperty('--bg3',pv.bg3);r.setProperty('--bg4',pv.bg4);
+    r.setProperty('--ac',pv.ac);r.setProperty('--ac-fg',pv.acFg);
+    r.setProperty('--tx0',pv.tx0);r.setProperty('--tx1',pv.tx1);r.setProperty('--tx2',pv.tx2);
+    r.setProperty('--tx3',pv.tx3);r.setProperty('--tx4',pv.tx4);
+    r.setProperty('--ac-05',pv.ac+'0D');r.setProperty('--ac-07',pv.ac07);r.setProperty('--ac-09',pv.ac09);
+    r.setProperty('--ac-10',pv.ac10);r.setProperty('--ac-13',pv.ac13);r.setProperty('--ac-20',pv.ac20);
+    r.setProperty('--ac-27',pv.ac27);r.setProperty('--ac-33',pv.ac33);r.setProperty('--ac-40',pv.ac40);
+    r.setProperty('--ac-60',pv.ac60);r.setProperty('--ac-warm',pv.acWarm);r.setProperty('--ac-deep',pv.acDeep);
+    // data-theme auf temporären Wert setzen, damit nicko-spezifische CSS-Overrides nicht stören
+    document.documentElement.setAttribute('data-theme','_ct_preview');
+    // UI: Overlay transparent, Sheet → Strip
+    ov.classList.add('ct-live-mode');
+    sheet.classList.add('ct-live-strip');
+    // Strip-Inhalt: nur eine Rückgängig-Zeile
+    const L=S.lang==='en';
+    sheet.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;gap:12px;height:68px;box-sizing:border-box">
+      <span style="font-size:13px;font-weight:bold;color:var(--ac);font-family:Georgia,serif">👁 ${L?'Live preview – scroll to explore':'Live-Vorschau – App erkunden'}</span>
+      <button onclick="ctLivePreviewToggle()" style="padding:8px 14px;background:var(--ac);color:var(--ac-fg);border:none;border-radius:9px;font-family:Georgia,serif;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap;touch-action:manipulation">↩ ${L?'Back to editor':'Zurück'}</button>
+    </div>`;
+    _ctEdit.livePreview=true;
+  } else {
+    // Strip → voller Editor; Draft-Vars bleiben aktiv (Nutzer sieht Ergebnis bis Abbrechen)
+    ov.classList.remove('ct-live-mode');
+    sheet.classList.remove('ct-live-strip');
+    _ctEdit.livePreview=false;
+    renderCustomThemeEditor();
+  }
+}
+/* ── closeCustomThemeEditor: Draft-Vars beim Abbrechen zurücksetzen ───────── */
 
 /* ── WCAG-Kontrast ── */
 function wcagContrast(hex1,hex2){
@@ -2770,7 +2861,20 @@ function openCustomThemeEditor(editId){
   renderCustomThemeEditor();
   _ovShow('customThemeEditorOv','show-bottom');
 }
-function closeCustomThemeEditor(){_ovHide('customThemeEditorOv');}
+function closeCustomThemeEditor(){
+  // Wenn Live-Vorschau aktiv: Draft-Vars zurücksetzen und Live-Mode beenden
+  if(_ctEdit.livePreview){
+    _ctEdit.livePreview=false;
+    if(_ctEdit._prevVars)_restoreRootVars(_ctEdit._prevVars);
+    if(_ctEdit._prevTheme)document.documentElement.setAttribute('data-theme',_ctEdit._prevTheme);
+    _ctEdit._prevVars=null;_ctEdit._prevTheme=null;
+    const ov=document.getElementById('customThemeEditorOv');
+    const sheet=document.getElementById('customThemeEditorSheet');
+    if(ov)ov.classList.remove('ct-live-mode');
+    if(sheet)sheet.classList.remove('ct-live-strip');
+  }
+  _ovHide('customThemeEditorOv');
+}
 
 /* ══ ICON-BIBLIOTHEK (Custom Import, max. 20) ════════════════════════════ */
 // [PUNKT-E] getIconLib – bleibt synchron aus localStorage
@@ -3171,12 +3275,16 @@ function renderCustomThemeEditor(){
     <!-- Titel + Schließen -->
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
       <div style="font-size:15px;font-weight:bold;color:var(--ac)">${_ctEdit.editId?(L?'✏️ Edit Concept':'✏️ Konzept bearbeiten'):(L?'✨ New Colour Concept':'✨ Neues Farbkonzept')}</div>
-      <button onclick="closeCustomThemeEditor()" style="background:transparent;border:none;color:var(--tx2);font-size:22px;cursor:pointer;padding:0 6px;line-height:1;touch-action:manipulation" aria-label="Schließen">✕</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button onclick="ctLivePreviewToggle()" title="${L?'Preview in the full app':'In der ganzen App testen'}"
+          style="padding:5px 10px;background:var(--ac-13);border:1px solid var(--ac-27);border-radius:8px;color:var(--ac);font-family:Georgia,serif;font-size:11px;font-weight:bold;cursor:pointer;touch-action:manipulation;white-space:nowrap">👁 ${L?'Full preview':'Vollvorschau'}</button>
+        <button onclick="closeCustomThemeEditor()" style="background:transparent;border:none;color:var(--tx2);font-size:22px;cursor:pointer;padding:0 6px;line-height:1;touch-action:manipulation" aria-label="Schließen">✕</button>
+      </div>
     </div>
 
     <!-- Vorschau oben -->
     <div style="position:sticky;top:0;z-index:10;background:var(--bg);padding-bottom:10px;margin-bottom:8px">
-      <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">${L?'▶ Live Preview (updates automatically)':'▶ Live-Vorschau (aktualisiert automatisch)'}</div>
+      <div style="font-size:9px;color:var(--tx2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">${L?'▶ Mini-preview (auto-updates) · tap 👁 for full-app preview':'▶ Mini-Vorschau (auto) · 👁 für Vollvorschau der ganzen App'}</div>
       ${preview}
     </div>
 
