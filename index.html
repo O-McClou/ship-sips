@@ -2119,7 +2119,7 @@ window.addEventListener('unhandledrejection', function(e) {
 /* ═══════════════════════════════════════════════════════════════
    TRANSLATIONS – Complete DE / EN
 ═══════════════════════════════════════════════════════════════ */
-const APP_VERSION = 'V48.3';
+const APP_VERSION = 'V49.1'; /* FIX V49 SYNC: Version an CACHE_NAME ship-sips-v49-1 in sw.js angeglichen */
 
 /* ═══ FARBRAD-PALETTE (36 Farben, 3 Ringe × 12 Töne) ══════════
    Ring 0 (gesättigt), Ring 1 (mittel), Ring 2 (hell/pastell)
@@ -3579,7 +3579,11 @@ function catColor(cat){
     let i=0; while(used.includes(i)&&i<PALETTE.length)i++;
     if(i>=PALETTE.length)i=Object.keys(S.ccm).length%PALETTE.length;
     S.ccm[cat]=i;
-    try{localStorage.setItem('a4_ccm',JSON.stringify(S.ccm));db.setCfg('ccm',JSON.stringify(S.ccm)).catch(()=>{});}catch(e){showToast('⚠️ Speicherfehler: Bitte Backup erstellen!','error',6000);console.error(e);}
+    /* FIX V49 CCM-WRITE: Kein direktes IDB/localStorage-Write mehr hier –
+       S.ccm wird durch den unmittelbar folgenden saveState()-Aufruf des auslösenden
+       Drink-/Log-Events persistiert. Direkte Writes außerhalb der _saveQueue
+       verursachten Race Conditions bei parallelen Speichervorgängen. */
+    saveStateDebounced();
   }
   return PALETTE[S.ccm[cat]];
 }
@@ -3643,7 +3647,10 @@ let S={
   userBudgets:{}, // V40 T12: Gesamtbudget pro Person {userId: number}
   serviceCharge:0, // Service Charge / Trinkgeld in % (0 = deaktiviert)
   currentLocation:'', // V2: Aktueller Hafen/Ort für schnelle Zuordnung
-  voyageRoute:[] // Reiseroute: [{date,port,country,timezone,arrivalTime,departureTime}]
+  voyageRoute:[], // Reiseroute: [{date,port,country,timezone,arrivalTime,departureTime}]
+  /* FIX V49 SYNC-INIT: Sync-Felder explizit initialisieren – verhindert undefined vor loadState() */
+  syncEnabled:false,
+  lastSyncDate:null
 };
 
 /* ═══ HELPERS ════════════════════════════════════════════════ */
@@ -4089,7 +4096,7 @@ function setTimezone(mode,offsetMin){
       const skippedIso=skippedD.toISOString().slice(0,10);
       const skippedLabel=skippedIso.split('-').reverse().join('.');
       const markerEntry={
-        id:'idl_'+Date.now(),
+        id:uid(), /* FIX V49 MARKER-UUID: uid() statt 'idl_'+Date.now() – konsistent mit allen anderen Einträgen, kollisionssicher */
         _marker:true,
         _idl:true,
         name:(L?'📅 Date line crossed – '+skippedLabel+' skipped':'📅 Datumsgrenze überquert – '+skippedLabel+' übersprungen'),
@@ -5219,8 +5226,9 @@ async function importLatestInternal(){
       try{
         const data=JSON.parse(latest.data);
         if(!data||(!data.log&&!data.drinks)){showToast('⚠️ '+(L?'Invalid backup data.':'Ungültige Backup-Daten.'),'error',4000);return;}
-        const vl=(data.log||[]).filter(e=>e&&e.time);
-        const vd=Array.isArray(data.drinks)?data.drinks:[];
+        /* FIX V49 VALIDATE: isVE()/isVD()-Validierung wie externer Import */
+        const vl=(data.log||[]).filter(isVE).map(sanE);
+        const vd=Array.isArray(data.drinks)?data.drinks.filter(isVD).map(sanD):[];
         _bkp=Object.assign({},data,{log:vl,drinks:vd});
         doImport('replace');
         showToast('✅ '+(L?'Internal backup restored.':'Internes Backup wiederhergestellt.'),'info',4000);
@@ -5279,8 +5287,11 @@ async function internalRestoreById(id){
     const ds=d.toLocaleDateString(L?'en-US':'de-DE')+' '+d.toLocaleTimeString(L?'en-US':'de-DE',{hour:'2-digit',minute:'2-digit'});
     showCfm(L?'Restore Backup':'Backup wiederherstellen',(L?'Restore backup from ':'Backup vom ')+ds+(L?' – replace all current data?':' laden und alle aktuellen Daten ersetzen?'),L?'Restore':'Wiederherstellen',()=>{
       const data=JSON.parse(bkp.data);
-      const vl=(data.log||[]).filter(e=>e&&e.time);
-      const vd=Array.isArray(data.drinks)?data.drinks:[];
+      /* FIX V49 VALIDATE: Vollständige isVE()/isVD()-Validierung wie beim externen Import –
+         verhindert, dass korrupte interne Backups (z.B. abgebrochener localStorage-Write)
+         den App-State infizieren. */
+      const vl=(data.log||[]).filter(isVE).map(sanE);
+      const vd=Array.isArray(data.drinks)?data.drinks.filter(isVD).map(sanD):[];
       _bkp=Object.assign({},data,{log:vl,drinks:vd});
       doImport('replace');
       showToast('✅ '+(L?'Restored.':'Wiederhergestellt.'),'info',3500);
@@ -6954,36 +6965,49 @@ function toggleLogRowSelect(id){
   }
   updateMselBar();
 }
+/* FIX V49 MSEL-RAM: Liefert alle IDs der aktuell gefilterten echten (Nicht-Marker-)Einträge aus
+   S.log (RAM). Spiegelt exakt die Filterlogik von renderLog() ohne DOM-Abhängigkeit,
+   damit auch lazy-geladene (noch nicht im DOM befindliche) Einträge selektiert werden. */
+function _getLogFilteredRealIds(){
+  return S.log.filter(e=>{
+    if(e._marker)return false;
+    const dr=S.drinks.find(x=>x.id===e.drinkId);
+    const catOk=!S.logCatFilter||(dr&&dr.cat===S.logCatFilter);
+    const userOk=S.logUserFilter==='all'||(e.userId===S.logUserFilter)||(!e.userId&&S.logUserFilter==='all');
+    const _sq=S.logSearchQ?S.logSearchQ.toLowerCase():'';
+    const srchOk=!_sq||e.name.toLowerCase().includes(_sq)||(e.location&&e.location.toLowerCase().includes(_sq))||(e.note&&e.note.toLowerCase().includes(_sq));
+    const priceOk=(S.logPriceMin===null||e.price>=S.logPriceMin)&&(S.logPriceMax===null||e.price<=S.logPriceMax);
+    const eDateStr=entryLogicalDayStr(e);
+    const dateOk=(!S.logDateFrom||eDateStr>=S.logDateFrom)&&(!S.logDateTo||eDateStr<=S.logDateTo);
+    return catOk&&userOk&&srchOk&&priceOk&&dateOk;
+  }).map(e=>e.id);
+}
 function mselSelectAll(){
-  // Toggle: if all visible entries are already selected → deselect all; otherwise → select all
-  const allWraps=[...document.querySelectorAll('.msel-wrap[data-mselid]')];
-  const allIds=allWraps.map(w=>w.dataset.mselid);
+  const L=S.lang==='en';
+  // Alle gefilterten IDs aus RAM – nicht nur DOM-sichtbare Einträge
+  const allIds=_getLogFilteredRealIds();
   const allSelected=allIds.length>0&&allIds.every(id=>S.logSelectedIds.has(id));
   if(allSelected){
-    // Deselect all
-    allWraps.forEach(w=>{
-      S.logSelectedIds.delete(w.dataset.mselid);
-      const cb=w.querySelector('.msel-cb');
-      const row=w.querySelector('.logrow');
-      if(cb){cb.classList.remove('on');cb.textContent='';}
-      if(row)row.classList.remove('msel-on');
+    // Alles abwählen
+    allIds.forEach(id=>{
+      S.logSelectedIds.delete(id);
+      const wrap=document.querySelector(`.msel-wrap[data-mselid="${CSS.escape(id)}"]`);
+      if(wrap){const cb=wrap.querySelector('.msel-cb'),row=wrap.querySelector('.logrow');if(cb){cb.classList.remove('on');cb.textContent='';}if(row)row.classList.remove('msel-on');}
     });
   } else {
-    // Select all
-    allWraps.forEach(w=>{
-      S.logSelectedIds.add(w.dataset.mselid);
-      const cb=w.querySelector('.msel-cb');
-      const row=w.querySelector('.logrow');
-      if(cb){cb.classList.add('on');cb.textContent='✓';}
-      if(row)row.classList.add('msel-on');
+    // Alle auswählen (inkl. lazy-geladener Einträge)
+    allIds.forEach(id=>{
+      S.logSelectedIds.add(id);
+      const wrap=document.querySelector(`.msel-wrap[data-mselid="${CSS.escape(id)}"]`);
+      if(wrap){const cb=wrap.querySelector('.msel-cb'),row=wrap.querySelector('.logrow');if(cb){cb.classList.add('on');cb.textContent='✓';}if(row)row.classList.add('msel-on');}
     });
   }
   updateMselBar();
-  // Update "Alle" button label
+  // "Alle"/"Keine"-Label im Button aktualisieren
   const allBtn=document.querySelector('.msel-bar-all');
   if(allBtn){
-    const nowAllSelected=[...document.querySelectorAll('.msel-wrap[data-mselid]')].every(w=>S.logSelectedIds.has(w.dataset.mselid));
-    allBtn.textContent=nowAllSelected?(S.lang==='en'?'None':'Keine'):(S.lang==='en'?'All':'Alle');
+    const nowAll=allIds.every(id=>S.logSelectedIds.has(id));
+    allBtn.textContent=nowAll?(L?'None':'Keine'):(L?'All':'Alle');
   }
 }
 function updateMselBar(){
@@ -7219,8 +7243,17 @@ function renderLogCatFilter(){
   S.log.forEach(e=>{const d=S.drinks.find(x=>x.id===e.drinkId);if(d)usedCats.add(d.cat);});
   if(usedCats.size<2){lcs.innerHTML='';return;}
   const cats=[...usedCats];
-  lcs.innerHTML=`<button class="cbtn${!S.logCatFilter?' on':''}" onclick="setLogCatFilter('')">🍹 ${S.lang==='en'?'All':'Alle'}</button>`+
-    cats.map(cat=>{const col=catColor(cat);return `<button class="cbtn${S.logCatFilter===cat?' on':''}" onclick="setLogCatFilter('${cat.replace(/'/g,"\\'")}')"><span class="cdot" style="background:${col}"></span>${esc(cat)}</button>`;}).join('');
+  /* FIX V49 XSS-SAFE: data-cat Attribut + Event-Delegation statt onClick-Interpolation.
+     Verhindert Syntaxfehler/-injection wenn Kategorienamen Apostrophe, Anführungszeichen
+     oder Backslashes enthalten (z.B. "O'Brien's Bar"). */
+  lcs.innerHTML=`<button class="cbtn${!S.logCatFilter?' on':''}" data-lcf="">🍹 ${S.lang==='en'?'All':'Alle'}</button>`+
+    cats.map(cat=>{const col=catColor(cat);return `<button class="cbtn${S.logCatFilter===cat?' on':''}" data-lcf="${esc(cat)}"><span class="cdot" style="background:${col}"></span>${esc(cat)}</button>`;}).join('');
+  // Event-Delegation: ein Handler für alle Kategorie-Buttons
+  lcs.onclick=function(ev){
+    const btn=ev.target.closest('[data-lcf]');
+    if(!btn)return;
+    setLogCatFilter(btn.dataset.lcf||'');
+  };
 }
 /* ── Nr.9: Inline-Notiz direkt im Protokoll-Eintrag ──────── */
 function openInlineNoteEdit(ev,id){
