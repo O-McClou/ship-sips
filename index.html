@@ -4165,7 +4165,7 @@ function sortLog(){S.log.sort((a,b)=>new Date(b.time)-new Date(a.time));}
 
 function isVD(d){return d&&typeof d.id==='string'&&d.id.length>0&&d.id.length<=100&&typeof d.name==='string'&&d.name.length>0&&d.name.length<=200&&typeof d.cat==='string'&&d.cat.length>0&&d.cat.length<=100&&typeof d.price==='number'&&isFinite(d.price)&&d.price>=0&&d.price<=100000;}
 function isVE(e){return e&&typeof e.name==='string'&&e.name.length>0&&e.name.length<=200&&typeof e.price==='number'&&isFinite(e.price)&&e.price>=0&&e.price<=100000&&typeof e.time==='string'&&!isNaN(Date.parse(e.time));}
-function sanD(d){return{id:String(d.id).slice(0,100),name:String(d.name).slice(0,200),cat:String(d.cat).slice(0,100),price:Math.round(parseFloat(d.price)*100)/100};}
+function sanD(d){return{id:String(d.id).slice(0,100),name:String(d.name).slice(0,200),cat:String(d.cat).slice(0,100),price:Math.round(parseFloat(d.price)*100)/100,...(d.included?{included:true}:{})};}
 function sanE(e){const r={id:e.id&&typeof e.id==='string'?e.id:uid(),drinkId:e.drinkId&&typeof e.drinkId==='string'?e.drinkId:null,name:String(e.name).slice(0,200),price:Math.round(parseFloat(e.price)*100)/100,time:e.time};if(e.note&&typeof e.note==='string'&&e.note.trim())r.note=e.note.slice(0,200);if(typeof e.tz==='number')r.tz=e.tz;if(e.userId&&typeof e.userId==='string')r.userId=e.userId;if(e.location&&typeof e.location==='string'&&e.location.trim())r.location=e.location.slice(0,100); // FIX V40 B1: location-Feld persistieren
 if(e._marker===true)r._marker=true; // FIX V40 B2: Datumsgrenzen-Marker persistieren
 return r;}
@@ -11087,10 +11087,7 @@ function doImport(mode){
     const skipped=(data.log||[]).length-addedCount;
     invCC();sortLog();rebuildCounts();saveState();
     S.stableOrder=[];S.limitShownToday=null;
-    applyFontSize();applyLang();renderDrinks(true);renderLog();renderVerwaltung();
-    updateHeader();updateLimitBanner();switchTab(1);
-    autoApplyRouteLocation();updateCurrentLocBar();renderCurrentLocationBar();
-    const skipNote=skipped>0?(' · '+skipped+' '+(L?'already present':'bereits vorhanden')):'';
+    applyTitle();applyFontSize();applyLang();renderDrinks(true);renderLog();renderVerwaltung();
     showToast('✅ '+addedCount+' '+(L?'entries added':'Einträge ergänzt')+skipNote,'info',4000);
     // V34 V4: Wenn Namensabweichungen vorhanden → User-Mapping-Dialog öffnen
     if(mismatches.length){
@@ -11108,7 +11105,7 @@ function doImport(mode){
     return; // Merge-Pfad beendet
   }
   invCC();sortLog();rebuildCounts();saveState();S.stableOrder=[];S.limitShownToday=null;
-  applyFontSize();applyLang();renderDrinks(true);renderLog();renderVerwaltung();
+  applyTitle();applyFontSize();applyLang();renderDrinks(true);renderLog();renderVerwaltung();
   updateHeader();updateLimitBanner();switchTab(1);
   autoApplyRouteLocation();updateCurrentLocBar();renderCurrentLocationBar();
   const _itL=S.lang==='en';const _itLbl=appOffsetLabel();showToast('✅ '+(_itL?'Backup imported':'Backup importiert')+' · '+(_itL?"Ship's time adopted: ":"Schiffszeit übernommen: ")+_itLbl+' ('+(S.tzMode==='fixed'?(_itL?'Manual':'Manuell'):(_itL?'Automatic':'Automatisch'))+')','info',5000);
@@ -12044,6 +12041,8 @@ async function loadStateFromDB(){
     S.favOrder=S.favOrder.filter(id=>S.favorites.has(id));
     S.favorites.forEach(id=>{if(!S.favOrder.includes(id))S.favOrder.push(id);});
     rebuildCounts();
+    // FIX V49 APPLY: DOM-Anzeige nach IDB-Laden aktualisieren (war zuvor vergessen)
+    applyTitle();applyFontSize();applyLang();applyTheme(S.theme||'original');
     // Onboarding-Flag aus IDB setzen (damit checkOnboarding() korrekt arbeitet)
     if(cfg.onboardingDone==='1')window._idbOnboardingDone=true;
   }catch(e){
@@ -12128,7 +12127,7 @@ function _initUI(){
       }
     }catch(e){}
   },300);
-  // applyTitle/applyFontSize/applyLang/applyTheme – bereits in loadStateFromDB aufgerufen
+  // applyTitle/applyFontSize/applyLang/applyTheme – werden in loadStateFromDB() aufgerufen (FIX V49)
   applyHeaderCollapse();
   initHeaderSwipe();
   renderActiveUserBar();
