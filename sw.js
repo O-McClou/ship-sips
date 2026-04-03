@@ -1,144 +1,116 @@
-/* ═══════════════════════════════════════════════════════════════════
-   sw.js – Service Worker für Ship-Sips PWA
-   ─────────────────────────────────────────────────────────────────
-   Cache-Version ship-sips-v48:
-   FIX V48 F7: manifest.json in ASSETS ergänzt (war zuvor nicht
-   gecacht – führte im Offline-Betrieb zu fehlender Manifest-Datei).
-   FIX V48.5: iOS Share-Bug behoben (title/text entfernt), Word-Export ergänzt, jsPDF CDN-Fallback –
-   Alle navigator.share()-Aufrufe nur noch mit files:[] – kein title/text mehr.
-   Cache-Name auf v48-4 aktualisiert.
-   skipWaiting() bleibt aktiv damit der neue Cache sofort greift.
-   ═══════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   John Company 2E – Spielführer
+   Service Worker v1.3
+   Strategie: Cache First mit Netzwerk-Fallback
+═══════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'ship-sips-v49-1';
-/* Versionskonvention: APP_VERSION (index.html) = semantische Version (z. B. V48.3)
-   CACHE_NAME-Suffix = laufende Fix-Iteration innerhalb einer Haupt-/Minor-Version
-   (v48-6 = 6. Cache-Iteration von V48.x). Beide Werte unabhängig hochzählen.
-   Aktuell: APP_VERSION V48.3 / Cache-Iteration 6 */
+const CACHE_NAME = 'jc2e-v2.0';
 
-/* Core-Assets: müssen alle verfügbar sein – addAll() ist atomar */
-const CORE_ASSETS = [
+// Alle Dateien, die offline verfügbar sein sollen
+const STATIC_ASSETS = [
+  './',
   './index.html',
   './manifest.json',
+  './icon.png',
   './icon-192.png',
-  './icon-512.png',
-  './jspdf.umd.min.js'  /* FIX V49 PDF-Offline: von OPTIONAL in CORE verschoben – PDF-Export muss offline garantiert funktionieren */
+  './icon-512.png'
 ];
 
-/* Optionale Assets: Fehler hier darf den Install NICHT abbrechen */
-const OPTIONAL_ASSETS = [];
-
-/* ── Install: cachen + sofort übernehmen ──────────────────────── */
+/* ── INSTALL: Cache befüllen ── */
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache =>
-        /* Kern-Assets atomar cachen, dann optionale Assets einzeln (fehler-tolerant) */
-        cache.addAll(CORE_ASSETS).then(() =>
-          Promise.all(
-            OPTIONAL_ASSETS.map(url =>
-              cache.add(url).catch(err =>
-                console.warn('[SW] Optionales Asset nicht gecacht:', url, err)
-              )
-            )
-          )
-        )
-      )
-      .then(() => self.skipWaiting())
+      .then(cache => {
+        console.log('[SW] Cache wird befüllt…');
+        return cache.addAll(STATIC_ASSETS);
+      })
+      .then(() => {
+        console.log('[SW] Installation abgeschlossen');
+        // skipWaiting() wird NICHT automatisch aufgerufen –
+        // nur explizit per SKIP_WAITING-Message aus dem Update-Banner.
+        // Verhindert den Endlos-Reload-Loop.
+      })
       .catch(err => {
-        console.warn('[SW] Cache-Fehler beim Install (Core):', err);
-        return self.skipWaiting();
+        console.warn('[SW] Cache-Fehler beim Install:', err);
       })
   );
 });
 
-/* ── Activate: alle alten Caches löschen ──────────────────────── */
+/* ── ACTIVATE: Alte Caches entfernen ── */
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => {
-          console.log('[SW] Lösche alten Cache:', k);
-          return caches.delete(k);
-        })
-      ))
-      .then(() => self.clients.claim())
+      .then(cacheNames => {
+        return Promise.all(
+          cacheNames
+            .filter(name => name !== CACHE_NAME)
+            .map(name => {
+              console.log('[SW] Alter Cache gelöscht:', name);
+              return caches.delete(name);
+            })
+        );
+      })
+      .then(() => {
+        console.log('[SW] Aktivierung abgeschlossen');
+        // Sofort alle Clients übernehmen
+        return self.clients.claim();
+      })
   );
 });
 
-/* ── Fetch: Cache-First, Netz im Hintergrund ──────────────────── */
+/* ── FETCH: Cache First, Netzwerk als Fallback ── */
 self.addEventListener('fetch', event => {
+  // Nur GET-Anfragen abfangen
   if (event.request.method !== 'GET') return;
-  if (!event.request.url.startsWith('http')) return;
+
+  // Nur Anfragen für unsere eigene Domain
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
 
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      const networkFetch = fetch(event.request)
-        .then(response => {
-          if (response && response.status === 200 && response.type === 'basic') {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-          }
-          return response;
-        })
-        .catch(() => null);
+    caches.match(event.request)
+      .then(cachedResponse => {
+        if (cachedResponse) {
+          // Cache-Hit: sofort zurückgeben
+          // Im Hintergrund aktualisieren (Stale-While-Revalidate)
+          const fetchPromise = fetch(event.request)
+            .then(networkResponse => {
+              if (networkResponse && networkResponse.status === 200) {
+                const responseClone = networkResponse.clone();
+                caches.open(CACHE_NAME)
+                  .then(cache => cache.put(event.request, responseClone));
+              }
+              return networkResponse;
+            })
+            .catch(() => {
+              // Netzwerk nicht verfügbar – kein Problem, Cache wird verwendet
+            });
+          return cachedResponse;
+        }
 
-      // [PUNKT-C] Freundliche Offline-Seite (statt plain-text Fallback)
-      return cached ? cached : networkFetch.then(r => r || new Response(
-        `<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Offline – Ship-Sips</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: #06101E;
-      color: #e8eaf0;
-      font-family: system-ui, -apple-system, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem 1.5rem;
-      text-align: center;
-    }
-    .icon { font-size: 4rem; margin-bottom: 1.5rem; }
-    h1 { font-size: 1.4rem; color: #4f9eff; margin-bottom: 1rem; }
-    p { font-size: 1rem; line-height: 1.6; max-width: 360px; margin-bottom: 0.5rem; }
-    .lang-en { color: #a0aec0; font-size: 0.9rem; margin-bottom: 2rem; }
-    button {
-      background: #4f9eff;
-      color: #06101E;
-      border: none;
-      border-radius: 0.75rem;
-      padding: 0.75rem 2rem;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: inherit;
-      margin-top: 0.5rem;
-    }
-    button:active { opacity: 0.8; }
-  </style>
-</head>
-<body>
-  <div class="icon">⚓</div>
-  <h1>Keine Verbindung</h1>
-  <p>Die App muss einmalig mit Internet geöffnet werden, damit sie offline funktioniert.</p>
-  <p class="lang-en">No connection – the app needs to be opened once with internet to work offline.</p>
-  <button onclick="location.reload()">🔄 Neu laden</button>
-</body>
-</html>`,
-        { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-      ));
-    })
+        // Cache-Miss: Netzwerk versuchen und in Cache speichern
+        return fetch(event.request)
+          .then(networkResponse => {
+            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type === 'opaque') {
+              return networkResponse;
+            }
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME)
+              .then(cache => cache.put(event.request, responseClone));
+            return networkResponse;
+          })
+          .catch(err => {
+            console.warn('[SW] Netzwerk nicht verfügbar:', err);
+            // Falls index.html angefragt wird, aus Cache nehmen
+            if (event.request.url.includes('index.html') || event.request.url.endsWith('/')) {
+              return caches.match('./index.html');
+            }
+          });
+      })
   );
 });
 
-/* ── Message-Handler ──────────────────────────────────────────── */
+/* ── MESSAGE: Update-Nachricht empfangen ── */
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
