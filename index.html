@@ -7838,6 +7838,62 @@ function renderStats(){
   const pane=document.getElementById('statpane');
   const ps=[{k:'today',l:T('period.today')},{k:'week',l:T('period.week')},{k:'month',l:T('period.month')},{k:'year',l:T('period.year')},{k:'all',l:T('period.all')},{k:'custom',l:S.lang==='en'?'Custom':'Eigener'}];
   let html=`<div class="stat-period-bar">${ps.map(p=>`<button class="stat-period-btn${S.statPeriod===p.k?' on':''}" onclick="setPeriod('${p.k}')">${p.l}</button>`).join('')}</div>`;
+
+  /* ── REISEPLAN-BLOCK (nur wenn Route vorhanden) ── */
+  if((S.voyageRoute||[]).length>0){
+    if(!S.routePlanFilter)S.routePlanFilter='all';
+    const _L=S.lang==='en';
+    const _today=logicalTodayStr();
+    const _route=S.voyageRoute||[];
+    const _filtered=S.routePlanFilter==='ports'?_route.filter(r=>r.port&&r.port.toLowerCase()!=='seetag'):_route;
+    const _totalDays=_route.length;
+    const _seaDays=_route.filter(r=>!r.port||r.port.toLowerCase()==='seetag').length;
+    const _portDays=_totalDays-_seaDays;
+    const _todayIdx=_filtered.findIndex(r=>r.date===_today);
+    html+=`<div id="rplan-block" style="margin-bottom:16px;background:var(--bg1);border:1px solid var(--ac-20);border-radius:12px;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px 8px 12px;border-bottom:1px solid var(--ac-13)">
+        <span style="font-size:13px;font-weight:bold;color:var(--ac);letter-spacing:.3px">${_L?'🗺️ Voyage Plan':'🗺️ Reiseplan'}</span>
+        <div style="display:flex;gap:0;border:1px solid var(--ac-27);border-radius:7px;overflow:hidden">
+          <button onclick="S.routePlanFilter='all';renderStats();" style="padding:4px 10px;font-size:10px;font-family:Georgia,serif;background:${S.routePlanFilter==='all'?'var(--ac)':'transparent'};color:${S.routePlanFilter==='all'?'var(--ac-fg)':'var(--tx1)'};border:none;cursor:pointer;font-weight:${S.routePlanFilter==='all'?'bold':'normal'};touch-action:manipulation">${_L?'All days':'Alle Tage'}</button>
+          <button onclick="S.routePlanFilter='ports';renderStats();" style="padding:4px 10px;font-size:10px;font-family:Georgia,serif;background:${S.routePlanFilter==='ports'?'var(--ac)':'transparent'};color:${S.routePlanFilter==='ports'?'var(--ac-fg)':'var(--tx1)'};border:none;border-left:1px solid var(--ac-27);cursor:pointer;font-weight:${S.routePlanFilter==='ports'?'bold':'normal'};touch-action:manipulation">${_L?'Ports only':'Nur Häfen'}</button>
+        </div>
+      </div>
+      <div id="rplan-list" style="max-height:420px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 0">
+        ${_filtered.map((r,i)=>{
+          const _isSea=!r.port||r.port.toLowerCase()==='seetag';
+          const _isToday=r.date===_today;
+          const _isPast=r.date<_today;
+          const _arr=r.arrivalTime||'–';
+          const _dep=r.departureTime||'–';
+          const _tzBadge=r.timezone?`<span style="display:inline-block;padding:1px 5px;background:var(--ac-13);border:1px solid var(--ac-20);border-radius:4px;font-size:9px;color:var(--tx2);margin-left:4px">${esc(r.timezone)}</span>`:'';
+          const _cardStyle=_isToday
+            ?`background:var(--ac-09);border-left:3px solid var(--ac);opacity:1`
+            :_isPast
+              ?`background:transparent;border-left:3px solid var(--ac-20);opacity:0.55`
+              :`background:transparent;border-left:3px solid var(--ac-27);opacity:1`;
+          const _row2=_isSea
+            ?`<span style="font-size:11px;color:var(--tx2)">🌊 ${_L?'Sea day':'Seetag'}</span>`
+            :`<span style="font-size:11px;color:var(--tx2)">⚓ ${_L?'Arrival':'Ankunft'}: <strong style="color:var(--tx1)">${esc(_arr)}</strong>&nbsp;&nbsp;→&nbsp;&nbsp;${_L?'Departure':'Abfahrt'}: <strong style="color:var(--tx1)">${esc(_dep)}</strong></span>`;
+          return `<div id="rplan-item-${i}" style="display:flex;flex-direction:column;gap:3px;padding:8px 12px 8px 14px;margin:2px 8px;border-radius:8px;${_cardStyle}">
+            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
+              <span style="font-size:12px;color:${_isToday?'var(--ac)':'var(--tx1)'};font-weight:${_isToday?'bold':'normal'}">${esc(toGermanDate(r.date))}</span>
+              <span style="color:var(--tx2);font-size:11px">·</span>
+              <span style="font-size:12px;color:${_isToday?'var(--ac)':(_isSea?'var(--tx2)':'var(--tx0)')};font-weight:${_isToday?'bold':'normal'}">${esc(r.port||(_L?'Sea day':'Seetag'))}</span>
+              ${_tzBadge}
+              ${_isToday?`<span style="display:inline-block;padding:1px 6px;background:var(--ac);color:var(--ac-fg);border-radius:4px;font-size:9px;font-weight:bold;margin-left:2px">● ${_L?'Today':'Heute'}</span>`:''}
+            </div>
+            <div>${_row2}</div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="padding:6px 14px 8px 14px;border-top:1px solid var(--ac-13)">
+        <span style="font-size:10px;color:var(--tx2)">${_totalDays} ${_L?'days':'Tage'} · ${_portDays} ${_L?'ports':'Häfen'} · ${_seaDays} ${_L?'sea days':'Seetage'}</span>
+      </div>
+    </div>`;
+    if(_todayIdx>=0){
+      setTimeout(()=>{const _el=document.getElementById('rplan-item-'+_todayIdx);if(_el)_el.scrollIntoView({behavior:'smooth',block:'nearest'});},100);
+    }
+  }
   if(S.statPeriod==='custom'){html+=`<div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;flex-wrap:wrap"><span style="font-size:11px;color:var(--tx1);flex-shrink:0">${S.lang==='en'?'From':'Von'}:</span><input type="date" value="${S.statCustomFrom}" onchange="S.statCustomFrom=this.value;renderStats()" style="flex:1;min-width:130px;padding:6px 8px;background:var(--bg2);border:1px solid var(--ac-27);border-radius:7px;color:var(--tx0);font-family:Georgia,serif;font-size:13px;outline:none"><span style="font-size:11px;color:var(--tx1);flex-shrink:0">${S.lang==='en'?'To':'Bis'}:</span><input type="date" value="${S.statCustomTo}" onchange="S.statCustomTo=this.value;renderStats()" style="flex:1;min-width:130px;padding:6px 8px;background:var(--bg2);border:1px solid var(--ac-27);border-radius:7px;color:var(--tx0);font-family:Georgia,serif;font-size:13px;outline:none"></div>`;}
   const flPeriod=filterLog();
   html+=renderStatUserFilter(flPeriod);
@@ -9066,8 +9122,8 @@ function renderVerwaltung(){
         ${routeCount>0?`<div style="font-size:10px;color:var(--ac);font-weight:bold;letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px">${L?'Route preview':'Route-Vorschau'}</div>
         <div style="max-height:160px;overflow-y:auto;border:1px solid var(--ac-13);border-radius:7px;-webkit-overflow-scrolling:touch">
           <table style="width:100%;border-collapse:collapse;font-size:11px">
-            <tr style="background:var(--bg)"><th style="padding:4px 7px;text-align:left;color:var(--tx2);font-size:9px;font-weight:bold;border-bottom:1px solid var(--ac-13)">${L?'Date':'Datum'}</th><th style="padding:4px 7px;text-align:left;color:var(--tx2);font-size:9px;font-weight:bold;border-bottom:1px solid var(--ac-13)">${L?'Port/Sea day':'Hafen/Seetag'}</th><th style="padding:4px 7px;text-align:left;color:var(--tx2);font-size:9px;font-weight:bold;border-bottom:1px solid var(--ac-13)">TZ</th></tr>
-            ${(S.voyageRoute||[]).map(r=>{const isToday=r.date===today;return `<tr style="${isToday?'background:var(--ac-09);':''}"><td style="padding:4px 7px;color:${isToday?'var(--ac)':'var(--tx2)'};border-bottom:1px solid var(--ac-07);white-space:nowrap">${esc(toGermanDate(r.date))}${isToday?'&nbsp;⭐':''}</td><td style="padding:4px 7px;color:${r.port&&r.port.toLowerCase()!=='seetag'?'var(--tx0)':'var(--tx2)'};border-bottom:1px solid var(--ac-07)">${esc(r.port||'—')}</td><td style="padding:4px 7px;color:var(--tx2);border-bottom:1px solid var(--ac-07);white-space:nowrap">${esc(r.timezone||'')}</td></tr>`;}).join('')}
+            <thead><tr style="background:var(--bg);position:sticky;top:0;z-index:1"><th style="padding:4px 7px;text-align:left;color:var(--tx2);font-size:9px;font-weight:bold;border-bottom:1px solid var(--ac-13)">${L?'Date':'Datum'}</th><th style="padding:4px 7px;text-align:left;color:var(--tx2);font-size:9px;font-weight:bold;border-bottom:1px solid var(--ac-13)">${L?'Port/Sea day':'Hafen/Seetag'}</th><th style="padding:4px 7px;text-align:left;color:var(--tx2);font-size:9px;font-weight:bold;border-bottom:1px solid var(--ac-13)">TZ</th><th style="padding:4px 7px;text-align:left;color:var(--tx2);font-size:9px;font-weight:bold;border-bottom:1px solid var(--ac-13)">${L?'Arrival':'Ankunft'}</th><th style="padding:4px 7px;text-align:left;color:var(--tx2);font-size:9px;font-weight:bold;border-bottom:1px solid var(--ac-13)">${L?'Departure':'Abfahrt'}</th></tr></thead>
+            <tbody>${(S.voyageRoute||[]).map(r=>{const isToday=r.date===today;const isSea=!r.port||r.port.toLowerCase()==='seetag';const seaSymbol='🌊';return `<tr style="${isToday?'background:var(--ac-09);':''}"><td style="padding:4px 7px;color:${isToday?'var(--ac)':'var(--tx2)'};border-bottom:1px solid var(--ac-07);white-space:nowrap">${esc(toGermanDate(r.date))}${isToday?'&nbsp;⭐':''}</td><td style="padding:4px 7px;color:${!isSea?'var(--tx0)':'var(--tx2)'};border-bottom:1px solid var(--ac-07)">${esc(r.port||'—')}</td><td style="padding:4px 7px;color:var(--tx2);border-bottom:1px solid var(--ac-07);white-space:nowrap">${esc(r.timezone||'')}</td><td style="padding:4px 7px;color:${isToday?'var(--ac)':'var(--tx1)'};border-bottom:1px solid var(--ac-07);white-space:nowrap">${isSea?seaSymbol:esc(r.arrivalTime||'')}</td><td style="padding:4px 7px;color:${isToday?'var(--ac)':'var(--tx1)'};border-bottom:1px solid var(--ac-07);white-space:nowrap">${isSea?seaSymbol:esc(r.departureTime||'')}</td></tr>`;}).join('')}</tbody>
           </table>
         </div>`:`<div style="font-size:11px;color:var(--tx2);text-align:center;padding:16px 0;line-height:1.6">📭 ${L?'No route loaded yet.<br>Import a CSV or edit the route manually.':'Noch keine Route geladen.<br>CSV importieren oder Route manuell bearbeiten.'}</div>`}
         <div style="margin-top:8px;padding:8px 10px;background:var(--bg);border-radius:6px;border-left:3px solid var(--ac-27)">
