@@ -7842,6 +7842,8 @@ function renderStats(){
   /* ── REISEPLAN-BLOCK (nur wenn Route vorhanden) ── */
   if((S.voyageRoute||[]).length>0){
     if(!S.routePlanFilter)S.routePlanFilter='all';
+    if(S.routePlanOpen===undefined)S.routePlanOpen=true;
+    const _open=S.routePlanOpen;
     const _L=S.lang==='en';
     const _today=logicalTodayStr();
     const _route=S.voyageRoute||[];
@@ -7851,8 +7853,11 @@ function renderStats(){
     const _portDays=_totalDays-_seaDays;
     const _todayIdx=_filtered.findIndex(r=>r.date===_today);
     html+=`<div id="rplan-block" style="margin-bottom:16px;background:var(--bg1);border:1px solid var(--ac-20);border-radius:12px;overflow:hidden">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px 8px 12px;border-bottom:1px solid var(--ac-13)">
+      <button onclick="S.routePlanOpen=!S.routePlanOpen;renderStats();" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:10px 12px;background:transparent;border:none;border-bottom:${_open?'1px solid var(--ac-13)':'none'};cursor:pointer;touch-action:manipulation;text-align:left">
         <span style="font-size:13px;font-weight:bold;color:var(--ac);letter-spacing:.3px">${_L?'🗺️ Voyage Plan':'🗺️ Reiseplan'}</span>
+        <span style="font-size:11px;color:var(--tx2)">${_open?'▲':'▼'}</span>
+      </button>
+      ${_open?`<div style="display:flex;justify-content:flex-end;padding:6px 12px 4px 12px">
         <div style="display:flex;gap:0;border:1px solid var(--ac-27);border-radius:7px;overflow:hidden">
           <button onclick="S.routePlanFilter='all';renderStats();" style="padding:4px 10px;font-size:10px;font-family:Georgia,serif;background:${S.routePlanFilter==='all'?'var(--ac)':'transparent'};color:${S.routePlanFilter==='all'?'var(--ac-fg)':'var(--tx1)'};border:none;cursor:pointer;font-weight:${S.routePlanFilter==='all'?'bold':'normal'};touch-action:manipulation">${_L?'All days':'Alle Tage'}</button>
           <button onclick="S.routePlanFilter='ports';renderStats();" style="padding:4px 10px;font-size:10px;font-family:Georgia,serif;background:${S.routePlanFilter==='ports'?'var(--ac)':'transparent'};color:${S.routePlanFilter==='ports'?'var(--ac-fg)':'var(--tx1)'};border:none;border-left:1px solid var(--ac-27);cursor:pointer;font-weight:${S.routePlanFilter==='ports'?'bold':'normal'};touch-action:manipulation">${_L?'Ports only':'Nur Häfen'}</button>
@@ -7888,9 +7893,9 @@ function renderStats(){
       </div>
       <div style="padding:6px 14px 8px 14px;border-top:1px solid var(--ac-13)">
         <span style="font-size:10px;color:var(--tx2)">${_totalDays} ${_L?'days':'Tage'} · ${_portDays} ${_L?'ports':'Häfen'} · ${_seaDays} ${_L?'sea days':'Seetage'}</span>
-      </div>
+      </div>`:''}
     </div>`;
-    if(_todayIdx>=0){
+    if(_open&&_todayIdx>=0){
       setTimeout(()=>{const _el=document.getElementById('rplan-item-'+_todayIdx);if(_el)_el.scrollIntoView({behavior:'smooth',block:'nearest'});},100);
     }
   }
