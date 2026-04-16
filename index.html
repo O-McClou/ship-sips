@@ -2007,6 +2007,19 @@ details.hlp-acc summary:active{opacity:.75}
       <div class="prev-label" id="csvPrevLabel">VORSCHAU (erste 5 Zeilen)</div>
       <div class="prev-scroll"><table class="prev-table" id="csvPrevTable"></table></div>
     </div>
+    <div id="csvDateSection" style="margin:10px 0 4px;background:var(--bg3);border-radius:10px;padding:10px 12px;display:none">
+      <div id="csvDateTitle" style="font-size:11px;color:var(--tx2);margin-bottom:8px;font-weight:bold">🗓 Ab wann gilt diese Karte?</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tx0);margin-bottom:6px;cursor:pointer">
+        <input type="radio" name="csvWhen" id="csvWhenNow" value="now" checked style="accent-color:var(--ac);width:16px;height:16px;flex-shrink:0">
+        <span id="csvWhenNowLbl">Ab sofort (nur neue Einträge)</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tx0);cursor:pointer;flex-wrap:wrap">
+        <input type="radio" name="csvWhen" id="csvWhenRetro" value="retro" style="accent-color:var(--ac);width:16px;height:16px;flex-shrink:0">
+        <span id="csvWhenRetroLbl">Rückwirkend ab:</span>
+        <input type="date" id="csvRetroDate" style="padding:4px 8px;background:var(--bg2);border:1px solid var(--ac-27);border-radius:7px;color:var(--tx0);font-size:12px;outline:none;font-family:Georgia,serif;-webkit-text-fill-color:var(--tx0);min-width:0" oninput="document.getElementById('csvWhenRetro').checked=true;csvUpdateRetroHint()">
+      </label>
+      <div id="csvRetroHint" style="font-size:10px;color:var(--tx2);margin-top:6px;line-height:1.4"></div>
+    </div>
     <div class="bkp-btns">
       <button class="bkp-btn bkp-replace" id="csvImportBtn" onclick="doCSVImport()">🔄 Liste komplett ersetzen</button>
       <button class="bkp-btn bkp-cancel" id="csvCancelBtn" onclick="closeCSV()">Abbrechen</button>
@@ -5400,9 +5413,80 @@ let _csv=null;
 function onDrinkCSVFile(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{let t=ev.target.result;if(t.charCodeAt(0)===0xFEFF)t=t.slice(1);const lines=t.split(/\r?\n/).filter(l=>l.trim()!=='');if(lines.length<2){showToast('⚠️ '+(S.lang==='en'?'No drink data found.':'Die Datei enthält keine Getränkedaten.'),'error',4000);return;}let sl=0,nt1=null,nt2=null,importedCurrency=null;if(lines[0].startsWith('#TITEL;')){const cf=csvParse(lines[0].slice(1));nt1=(cf[1]||'').trim()||null;nt2=(cf[2]!==undefined?cf[2]:'').trim();sl=1;}if(sl<lines.length&&lines[sl].startsWith('#CURRENCY;')){const cf=csvParse(lines[sl].slice(1));importedCurrency=(cf[1]||'').trim()||null;sl++;}const hf=csvParse(lines[sl]).map(f=>f.trim().toLowerCase());const iI=hf.findIndex(f=>f==='id'),iC=hf.findIndex(f=>f==='kategorie'),iN=hf.findIndex(f=>f==='name'),iP=hf.findIndex(f=>f==='preis');const iIncl=hf.findIndex(f=>f==='inklusive'||f==='included'||f==='inbegriffen');if(iC===-1||iN===-1||iP===-1){showToast('⚠️ '+(S.lang==='en'?'Invalid CSV. Expected columns: ID;Kategorie;Name;Preis':'Ungültige CSV. Erwartete Spalten: ID;Kategorie;Name;Preis'),'error',5000);return;}const drinks=[],errors=[],prev=[];for(let i=sl+1;i<lines.length;i++){const f=csvParse(lines[i]);const cat=(f[iC]||'').trim(),name=(f[iN]||'').trim(),pr=(f[iP]||'').trim();
 // FIX V33 F4: Intelligenter Preisparser: Deutsch (9,80) und Englisch (9.80) korrekt erkennen
 const price=pr.includes(',')?parseFloat(pr.replace(/\./g,'').replace(',','.')):parseFloat(pr);
-const rawId=iI!==-1?(f[iI]||'').trim():'';if(!cat||!name){errors.push('Zeile '+(i+1)+': fehlt');continue;}if(isNaN(price)||price<0){errors.push('Zeile '+(i+1)+': Preis ungültig');continue;}const dr={id:rawId||uid(),cat:cat.slice(0,100),name:name.slice(0,200),price:Math.round(price*100)/100};if(iIncl!==-1){const iv=(f[iIncl]||'').trim();if(iv==='●'||iv==='1'||iv.toLowerCase()==='ja'||iv.toLowerCase()==='yes'||iv.toLowerCase()==='true')dr.included=true;}if(!isVD(dr)){errors.push('Zeile '+(i+1)+': Validierung');continue;}drinks.push(dr);if(prev.length<5)prev.push(dr);}if(!drinks.length){showToast('⚠️ '+(S.lang==='en'?'No valid drinks found.':'Keine gültigen Getränke.')+(errors.length?' ('+fmtNum(errors.length)+' Fehler)':''),'error',5000);return;}_csv={drinks,nt1,nt2,importedCurrency};const cCount=new Set(drinks.map(d=>d.cat)).size;const inclCount=drinks.filter(d=>d.included).length;let html=`<strong>${fmtNum(drinks.length)} ${T('tab.drinks')}</strong> in <strong>${cCount} ${S.lang==='en'?'Categories':'Kategorien'}</strong>.`;if(inclCount>0)html+=` <span style="color:var(--ac)">⬤ ${fmtNum(inclCount)} ${S.lang==='en'?'included':'inklusive'}</span>`;html+='<br>';if(nt1&&(nt1!==S.appTitle1||nt2!==S.appTitle2))html+=`📛 Titel: <strong style="color:${CV.ac}">${esc(nt1)}</strong>${nt2?' · '+esc(nt2):''}<br>`;if(importedCurrency&&importedCurrency!==S.currency)html+=`💱 ${T('settings.currency')}: <strong style="color:${CV.ac}">${esc(importedCurrency)}</strong><br>`;html+=`<span class="csv-warn">⚠️ ${S.lang==='en'?'Current list':'Aktuelle Liste'} (${fmtNum(S.drinks.length)}) ${S.lang==='en'?'will be replaced.':'wird ersetzt.'}</span>`;if(errors.length)html+=`<br>⚠️ ${fmtNum(errors.length)} übersprungen`;document.getElementById('csvInfo').innerHTML=html;document.getElementById('csvModalTitle').textContent=T('modal.csv.import');document.getElementById('csvPrevLabel').textContent=T('csv.preview');document.getElementById('csvImportBtn').textContent=T('csv.replace.btn');document.getElementById('csvCancelBtn').textContent=T('modal.cancel');const pw=document.getElementById('csvPrevWrap'),pt=document.getElementById('csvPrevTable');pt.innerHTML='<tr><th>Kategorie</th><th>Name</th><th>Preis</th><th>⬤</th></tr>'+prev.map(r=>`<tr><td>${esc(r.cat)}</td><td>${esc(r.name)}</td><td>${eur(r.price)}</td><td>${r.included?'⬤':''}</td></tr>`).join('');pw.style.display='';_ovShow('csvOv','show-bottom');}catch(err){showToast('⚠️ Fehler: '+err.message,'error',5000);}};r.readAsText(f,'UTF-8');inp.value='';}
-function doCSVImport(){if(!_csv){closeCSV();return;}const{drinks,nt1,nt2,importedCurrency}=_csv;_csv=null;S.drinks=drinks;invCC();if(nt1){S.appTitle1=nt1;S.appTitle2=nt2!==null?nt2:S.appTitle2;applyTitle();}if(importedCurrency){S.currency=importedCurrency.slice(0,6);}rebuildCounts();saveState();S.stableOrder=[];S.drinkExpandedCats=new Set();_lastDrinksHash='';closeCSV();renderVerwaltung();renderDrinks(true);updateHeader();switchTab(0);showToast('✅ Getränkeliste '+T('toast.imported'));}
-function closeCSV(){_ovHide('csvOv');_csv=null;}
+const rawId=iI!==-1?(f[iI]||'').trim():'';if(!cat||!name){errors.push('Zeile '+(i+1)+': fehlt');continue;}if(isNaN(price)||price<0){errors.push('Zeile '+(i+1)+': Preis ungültig');continue;}const dr={id:rawId||uid(),cat:cat.slice(0,100),name:name.slice(0,200),price:Math.round(price*100)/100};if(iIncl!==-1){const iv=(f[iIncl]||'').trim();if(iv==='●'||iv==='1'||iv.toLowerCase()==='ja'||iv.toLowerCase()==='yes'||iv.toLowerCase()==='true')dr.included=true;}if(!isVD(dr)){errors.push('Zeile '+(i+1)+': Validierung');continue;}drinks.push(dr);if(prev.length<5)prev.push(dr);}if(!drinks.length){showToast('⚠️ '+(S.lang==='en'?'No valid drinks found.':'Keine gültigen Getränke.')+(errors.length?' ('+fmtNum(errors.length)+' Fehler)':''),'error',5000);return;}_csv={drinks,nt1,nt2,importedCurrency};const cCount=new Set(drinks.map(d=>d.cat)).size;const inclCount=drinks.filter(d=>d.included).length;let html=`<strong>${fmtNum(drinks.length)} ${T('tab.drinks')}</strong> in <strong>${cCount} ${S.lang==='en'?'Categories':'Kategorien'}</strong>.`;if(inclCount>0)html+=` <span style="color:var(--ac)">⬤ ${fmtNum(inclCount)} ${S.lang==='en'?'included':'inklusive'}</span>`;html+='<br>';if(nt1&&(nt1!==S.appTitle1||nt2!==S.appTitle2))html+=`📛 Titel: <strong style="color:${CV.ac}">${esc(nt1)}</strong>${nt2?' · '+esc(nt2):''}<br>`;if(importedCurrency&&importedCurrency!==S.currency)html+=`💱 ${T('settings.currency')}: <strong style="color:${CV.ac}">${esc(importedCurrency)}</strong><br>`;html+=`<span class="csv-warn">⚠️ ${S.lang==='en'?'Current list':'Aktuelle Liste'} (${fmtNum(S.drinks.length)}) ${S.lang==='en'?'will be replaced.':'wird ersetzt.'}</span>`;if(errors.length)html+=`<br>⚠️ ${fmtNum(errors.length)} übersprungen`;document.getElementById('csvInfo').innerHTML=html;document.getElementById('csvModalTitle').textContent=T('modal.csv.import');document.getElementById('csvPrevLabel').textContent=T('csv.preview');document.getElementById('csvImportBtn').textContent=T('csv.replace.btn');document.getElementById('csvCancelBtn').textContent=T('modal.cancel');const pw=document.getElementById('csvPrevWrap'),pt=document.getElementById('csvPrevTable');pt.innerHTML='<tr><th>Kategorie</th><th>Name</th><th>Preis</th><th>⬤</th></tr>'+prev.map(r=>`<tr><td>${esc(r.cat)}</td><td>${esc(r.name)}</td><td>${eur(r.price)}</td><td>${r.included?'⬤':''}</td></tr>`).join('');pw.style.display='';
+// ── Datumsbereich anzeigen und initialisieren ─────────────────
+const _ds=document.getElementById('csvDateSection');
+_ds.style.display='';
+const _L2=S.lang==='en';
+document.getElementById('csvDateTitle').textContent=_L2?'🗓 When does this menu take effect?':'🗓 Ab wann gilt diese Karte?';
+document.getElementById('csvWhenNowLbl').textContent=_L2?'From now on (new entries only)':'Ab sofort (nur neue Einträge)';
+document.getElementById('csvWhenRetroLbl').textContent=_L2?'Retroactively from:':'Rückwirkend ab:';
+const _rdi=document.getElementById('csvRetroDate');
+if(!_rdi.value)_rdi.value=todayStr();
+document.getElementById('csvWhenNow').checked=true;
+csvUpdateRetroHint();
+_ovShow('csvOv','show-bottom');}catch(err){showToast('⚠️ Fehler: '+err.message,'error',5000);}};r.readAsText(f,'UTF-8');inp.value='';}
+/* ── Hilfsfunktion: Retroaktiv-Hinweis aktualisieren ────────── */
+function csvUpdateRetroHint(){
+  if(!_csv)return;
+  const L2=S.lang==='en';
+  const dateStr=document.getElementById('csvRetroDate').value;
+  if(!dateStr){document.getElementById('csvRetroHint').textContent='';return;}
+  const priceMap={};
+  _csv.drinks.forEach(d=>{priceMap[d.id]=d;});
+  let matchCount=0,priceChanges=0;
+  S.log.forEach(e=>{
+    if(!e.drinkId||!priceMap[e.drinkId])return;
+    if(entryLogicalDayStr(e)>=dateStr){
+      matchCount++;
+      if(e.price!==priceMap[e.drinkId].price)priceChanges++;
+    }
+  });
+  const hint=document.getElementById('csvRetroHint');
+  if(matchCount===0){
+    hint.textContent=L2?'No matching log entries found for this date.':'Keine übereinstimmenden Einträge ab diesem Datum.';
+  } else {
+    hint.textContent=L2
+      ?matchCount+' log entr'+(matchCount===1?'y':'ies')+' from this date · '+priceChanges+' price'+(priceChanges===1?'':'s')+' will change.'
+      :matchCount+' Protokolleintrag/-einträge ab diesem Datum · '+priceChanges+' Preis'+(priceChanges===1?' wird':' werden')+' geändert.';
+  }
+}
+
+function doCSVImport(){
+  if(!_csv){closeCSV();return;}
+  const{drinks,nt1,nt2,importedCurrency}=_csv;
+  _csv=null;
+  const L2=S.lang==='en';
+
+  /* ── Rückwirkende Preisanpassung ──────────────────────────── */
+  let retroCount=0;
+  const isRetro=document.getElementById('csvWhenRetro')&&document.getElementById('csvWhenRetro').checked;
+  if(isRetro){
+    const retroDateStr=(document.getElementById('csvRetroDate').value||'').trim();
+    if(retroDateStr){
+      const priceMap={};
+      drinks.forEach(d=>{priceMap[d.id]=d;});
+      S.log.forEach(e=>{
+        if(!e.drinkId||!priceMap[e.drinkId])return;
+        if(entryLogicalDayStr(e)>=retroDateStr){
+          const nd=priceMap[e.drinkId];
+          if(e.price!==nd.price){e.price=Math.round(nd.price*100)/100;retroCount++;}
+        }
+      });
+    }
+  }
+
+  S.drinks=drinks;invCC();
+  if(nt1){S.appTitle1=nt1;S.appTitle2=nt2!==null?nt2:S.appTitle2;applyTitle();}
+  if(importedCurrency){S.currency=importedCurrency.slice(0,6);}
+  rebuildCounts();saveState();
+  S.stableOrder=[];S.drinkExpandedCats=new Set();_lastDrinksHash='';
+  closeCSV();renderVerwaltung();renderDrinks(true);updateHeader();switchTab(0);
+  let msg='✅ Getränkeliste '+T('toast.imported');
+  if(retroCount>0)msg+=' · '+(L2?retroCount+' price'+(retroCount===1?'':'s')+' updated':retroCount+' Preis'+(retroCount===1?' aktualisiert':' aktualisiert'));
+  showToast(msg);
+}
+function closeCSV(){_ovHide('csvOv');_csv=null;const ds=document.getElementById('csvDateSection');if(ds)ds.style.display='none';}
 
 /* ═══ TABS ═══════════════════════════════════════════════════ */
 function switchTab(i){
