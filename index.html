@@ -6797,6 +6797,10 @@ function confirmPartialReset(){
   if(!checked.length)return;
   const labels=checked.map(item=>L?item.labelEN:item.labelDE).join('\n• ');
   const msg=(L?'Reset the following areas?\n\n• ':'Folgende Bereiche zurücksetzen?\n\n• ')+labels;
+  // FIX: Auswahl-Sheet muss schließen, bevor der finale Bestätigungsdialog erscheint –
+  // sonst bleibt resetPartialOv nach dem Bestätigen sichtbar offen liegen (Tabs bleiben
+  // per body.ov-open ausgeblendet), obwohl die Daten im Hintergrund bereits zurückgesetzt wurden.
+  _ovHide('resetPartialOv');
   showCfm(
     L?'🔧 Confirm partial reset':'🔧 Teilweisen Reset bestätigen',
     msg,
