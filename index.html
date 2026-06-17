@@ -6739,12 +6739,18 @@ function closeResetAll2(){
 function doResetAll(){
   clearInterval(_resetCountdownTimer);
   _ovHide('resetAllOv2');
+  // FIX: Flag setzen, damit der pagehide-Handler (iOS-Datenpersistenz) den
+  // alten S-Zustand NICHT nochmal zurückschreibt, wenn location.reload()
+  // gleich das pagehide-Event auslöst – sonst wird der gesamte Reset durch
+  // den eigenen "Letzt-Speichern"-Mechanismus wieder rückgängig gemacht.
+  window._resetAllInProgress=true;
   exportBackupSilent();
   // V46 Fix: auch IndexedDB vollständig leeren (localStorage allein reicht nicht mehr)
   setTimeout(async ()=>{
     try{
       await db.logs.clear();
       await db.config.clear();
+      await db.iconlib.clear(); // FIX: Custom-Icon-Library gehört ebenfalls zu "ALLES", sonst überleben eigene Icons den Reset
       // Migrated-Flag entfernen damit beim Neustart kein alter Stand aus localStorage übernommen wird
     }catch(e){console.warn('[doResetAll] IDB clear error:',e);}
     localStorage.clear();
@@ -12359,6 +12365,10 @@ document.addEventListener('visibilitychange',function(){if(document.visibilitySt
    läuft asynchron (fire-and-forget), localStorage-Fallback ist
    synchron und sichert die Daten zuverlässig auf dem Gerät. ─────── */
 window.addEventListener('pagehide',function(){
+  // FIX: Während "Alles zurücksetzen" löst location.reload() ebenfalls pagehide
+  // aus – ohne diese Sperre würde der alte (noch im Speicher befindliche)
+  // S-Zustand hier nochmal geschrieben und der gesamte Reset wäre wirkungslos.
+  if(window._resetAllInProgress)return;
   // Synchroner localStorage-Write (überlebt App-Neustart auf iOS)
   _saveStateLocalStorageFallback();
   // Async IndexedDB-Write (best-effort, kann nicht auf Abschluss warten)
